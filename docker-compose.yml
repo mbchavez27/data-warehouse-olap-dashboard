@@ -1,0 +1,59 @@
+name: stadvdb-mco1
+
+services:
+  source_db:
+    image: postgres:16-alpine
+    container_name: stadvdb-mco1-source-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${SOURCE_DB:-source_db}
+      POSTGRES_USER: ${SOURCE_USER:-postgres}
+      POSTGRES_PASSWORD: ${SOURCE_PASSWORD:-postgres}
+    ports:
+      - "${SOURCE_PORT:-5433}:5432"
+    volumes:
+      - pg_source_data:/var/lib/postgresql/data
+      - ./db/source/init:/docker-entrypoint-initdb.d:ro
+      - ./db/raw-dumps:/raw-dumps:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - dw-net
+
+  dw_db:
+    image: postgres:16-alpine
+    container_name: stadvdb-mco1-dw-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DW_DB:-dw_db}
+      POSTGRES_USER: ${DW_USER:-postgres}
+      POSTGRES_PASSWORD: ${DW_PASSWORD:-postgres}
+    ports:
+      - "${DW_PORT:-5434}:5432"
+    volumes:
+      - pg_dw_data:/var/lib/postgresql/data
+      - ./db/dw/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - dw-net
+
+volumes:
+  pg_source_data:
+  pg_dw_data:
+
+networks:
+  dw-net:
+    driver: bridge
