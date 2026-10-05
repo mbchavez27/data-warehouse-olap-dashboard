@@ -19,3 +19,7 @@ frontend/build/
 
 # Env vars
 .env
+
+# macOS
+.DS_Store
+**/.DS_Store
