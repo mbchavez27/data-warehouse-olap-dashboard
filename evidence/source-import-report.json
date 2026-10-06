@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-06T17:02:43.339Z",
+  "command": "import",
+  "sourceDatabase": {
+    "engine": "PostgreSQL",
+    "version": 16,
+    "container": "stadvdb-mco1-source-db",
+    "database": "source_db"
+  },
+  "importFailures": [],
+  "archive": {
+    "file": "MCO1_dataset_ecommerce.zip",
+    "bytes": 40743497,
+    "sha256": "a10f11865ef05253672090e4d73d15a3d7fad96adffe6dbc6fb8c09c8037e862",
+    "expectedSha256": "a10f11865ef05253672090e4d73d15a3d7fad96adffe6dbc6fb8c09c8037e862",
+    "hashMatches": true,
+    "entries": {
+      "Couriers": "Dump20250923/faker_Couriers.sql",
+      "Riders": "Dump20250923/faker_Riders.sql",
+      "Users": "Dump20250923/faker_Users.sql",
+      "Products": "Dump20250923/faker_Products.sql",
+      "Orders": "Dump20250923/faker_Orders.sql",
+      "OrderItems": "Dump20250923/faker_OrderItems.sql"
+    },
+    "counts": {
+      "Couriers": 3,
+      "Riders": 100,
+      "Users": 100000,
+      "Products": 10000,
+      "Orders": 1000000,
+      "OrderItems": 1999824
+    },
+    "expectedCounts": {
+      "Couriers": 3,
+      "Riders": 100,
+      "Users": 100000,
+      "Products": 10000,
+      "Orders": 1000000,
+      "OrderItems": 1999824
+    },
+    "countMismatches": [],
+    "orphans": {
+      "riderCourier": 0,
+      "orderUser": 0,
+      "orderRider": 0,
+      "itemOrder": 0,
+      "itemProduct": 0
+    },
+    "duplicateIds": {
+      "Couriers": 0,
+      "Riders": 0,
+      "Users": 0,
+      "Products": 0,
+      "Orders": 0
+    },
+    "passed": true
+  },
+  "import": {
+    "transaction": "committed",
+    "psqlOutput": [
+      "--------",
+      "    100",
+      "(1 row)",
+      "",
+      " setval ",
+      "--------",
+      " 100000",
+      "(1 row)",
+      "",
+      " setval ",
+      "--------",
+      "  10000",
+      "(1 row)",
+      "",
+      " setval  ",
+      "---------",
+      " 1000000",
+      "(1 row)",
+      "",
+      "COMMIT"
+    ]
+  },
+  "database": {
+    "counts": {
+      "Couriers": 3,
+      "Riders": 100,
+      "Users": 100000,
+      "Products": 10000,
+      "Orders": 1000000,
+      "OrderItems": 1999824
+    },
+    "orphans": {
+      "riderCourier": 0,
+      "orderUser": 0,
+      "orderRider": 0,
+      "itemOrder": 0,
+      "itemProduct": 0
+    },
+    "schema": {
+      "tableCount": 6,
+      "columnCounts": {
+        "Couriers": 4,
+        "Riders": 9,
+        "Users": 14,
+        "Products": 8,
+        "Orders": 7,
+        "OrderItems": 6
+      },
+      "primaryKeyCount": 6,
+      "foreignKeyCount": 2,
+      "identityColumnCount": 5,
+      "productIdIndex": true
+    },
+    "countMismatches": [],
+    "orphanViolations": [],
+    "schemaViolations": [],
+    "passed": true
+  },
+  "passed": true
+}

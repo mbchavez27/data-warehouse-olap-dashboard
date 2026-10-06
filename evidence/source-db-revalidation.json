@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-06T17:11:33.120Z",
+  "command": "validate",
+  "sourceDatabase": {
+    "engine": "PostgreSQL",
+    "version": 16,
+    "container": "stadvdb-mco1-source-db",
+    "database": "source_db"
+  },
+  "importFailures": [],
+  "database": {
+    "counts": {
+      "Couriers": 3,
+      "Riders": 100,
+      "Users": 100000,
+      "Products": 10000,
+      "Orders": 1000000,
+      "OrderItems": 1999824
+    },
+    "orphans": {
+      "riderCourier": 0,
+      "orderUser": 0,
+      "orderRider": 0,
+      "itemOrder": 0,
+      "itemProduct": 0
+    },
+    "schema": {
+      "tableCount": 6,
+      "columnCounts": {
+        "Couriers": 4,
+        "Riders": 9,
+        "Users": 14,
+        "Products": 8,
+        "Orders": 7,
+        "OrderItems": 6
+      },
+      "primaryKeyCount": 6,
+      "foreignKeyCount": 2,
+      "identityColumnCount": 5,
+      "productIdIndex": true
+    },
+    "countMismatches": [],
+    "orphanViolations": [],
+    "schemaViolations": [],
+    "passed": true
+  },
+  "passed": true
+}
