@@ -96,3 +96,14 @@ Inferred edges will be promoted to enforced `FOREIGN KEY`s in
 | Products | ~10,000 | 1.8 MB |
 | Orders | ~1,000,000 | 84 MB |
 | OrderItems | ~2,000,000 | 124 MB |
+
+## Known source-data issues → Phase 3 ETL checklist
+
+| # | Issue | Evidence in dump | ETL action (`transform.py`) |
+|---|-------|------------------|-----------------------------|
+| 1 | Mixed date-string formats | `deliveryDate`: `'2025-05-24'` vs `'06/25/2025'` in `faker_Orders.sql`; `dateOfBirth` same faker pipeline (verify empirically) | Try `YYYY-MM-DD` then `MM/DD/YYYY` parse; reject/quarantine unparseable; load warehouse as `DATE` |
+| 2 | `gender` value inconsistency | `Riders`: `'M'`, `'F'`, `'Male'`, `'Female'` in `faker_Riders.sql` | Normalize to single coding (`M`/`F`) in dim table |
+| 3 | `price` is approximate | `float` in MySQL → `REAL` in source; binary-float rounding | Cast to `NUMERIC(12,2)` in warehouse fact; never sum `REAL` directly |
+| 4 | MySQL string escapes | `Emard\'s` in `faker_Products.sql` descriptions | Converter rewrites `\'`→`''` at import; ETL spot-checks apostrophes render correctly |
+| 5 | Bulk-identical timestamps | `createdAt`/`updatedAt` = `'2025-09-22 16:56:36'` across nearly all rows | Not meaningful event times — warehouse `dim_date` must derive from `deliveryDate`, not these |
+| 6 | Undeclared FKs | `userId`, `deliveryRiderId`, `courierId` have no constraints in dump | Scaffold enforces them; import fails fast on orphans — resolve before ETL, not during |
