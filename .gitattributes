@@ -1,0 +1,8 @@
+# Force LF line endings on checkout everywhere.
+# Prevents CRLF breakage on Windows clones (autocrlf=true):
+#   - broken `#!/usr/bin/env bash\r` shebangs in *.sh
+#   - trailing `\r` in sourced .env values (wrong DB password)
+*.sh text eol=lf
+*.sql text eol=lf
+.env text eol=lf
+.env.example text eol=lf

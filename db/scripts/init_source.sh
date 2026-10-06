@@ -2,6 +2,10 @@
 # Applies db/source/init/01_source_schema.sql to source_db.
 # Idempotent: safe to re-run anytime (DDL is DROP...CASCADE + CREATE).
 # Usage (from repo root): ./db/scripts/init_source.sh
+#   macOS/Linux: ./db/scripts/init_source.sh
+#   Windows (Git Bash or WSL): bash db/scripts/init_source.sh
+#   Windows (CMD/PowerShell, no bash): run the equivalent directly —
+#     docker exec -i stadvdb-mco1-source-db psql -U postgres -d source_db -v ON_ERROR_STOP=1 -f /docker-entrypoint-initdb.d/01_source_schema.sql
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
