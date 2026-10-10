@@ -165,7 +165,7 @@ the design doc); the table shape already accommodates them.
 | 3 | Q14 payday rule (15th + month-end) | `isPayDay` rule documented here, applied at ETL date-build |
 | 4 | Idle-day grain (rider×date incl. zeros) | None (shape already fits; ETL cross-joins) |
 
-## Fresh-volume verification (R0 pre-ETL)
+## Fresh-volume verification (readiness gate, Report R0 pre-ETL half)
 
 From the repository root (macOS/Linux, or Git Bash/WSL on Windows):
 
@@ -174,7 +174,8 @@ From the repository root (macOS/Linux, or Git Bash/WSL on Windows):
 ```
 
 The script creates `.env` if missing, starts `dw_db` (PostgreSQL 16 @
-`localhost:5434`), and runs the R0 gate in `db/dw/validate/r0_checks.sql`
+`localhost:5434`), and runs the readiness gate in
+`db/dw/validate/warehouse_readiness.sql`
 (shared with the future ETL preflight), printing the JSON report and exiting
 nonzero unless `passed` is true. Re-running without flags never touches data;
 `--schema-only` re-applies the DDL (explicit, destructive).

@@ -1,6 +1,8 @@
--- R0 pre-ETL gate for dw_db. Returns a single JSON row describing the actual
--- warehouse shape plus a server-evaluated `passed` flag, so every consumer
--- (setup_dw.sh today, ETL preflight tomorrow) shares one source of truth.
+-- Warehouse readiness gate for dw_db (the machine-readable half of Report R0,
+-- Data Quality and Reconciliation). Returns a single JSON row describing the
+-- actual warehouse shape plus a server-evaluated `passed` flag, so every
+-- consumer (setup_dw.sh today, ETL preflight tomorrow) shares one source
+-- of truth.
 -- Expectations mirror docs/database/data-warehouse-implementation.md:
 -- 9 tables; dim columns 11/9/4/5/6/6; fact columns 10/10/7; 9 PKs; 13 FKs;
 -- 5 key-0 Unknown rows (+ 4 static order-size bands); 0 fact rows; DIM_DATE
