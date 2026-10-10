@@ -13,7 +13,7 @@ This implementation satisfies the stated requirement to download and import the 
 | Import is safe | Schema creation and six table loads occur in one transaction; parsing, `COPY`, or constraint failure rolls the transaction back |
 | Orphans are documented | Five relationship counts are calculated from the archive and independently queried in PostgreSQL |
 | Failures are documented | Command failures append timestamped diagnostics to `evidence/source-import-failures.log`; the successful report records `importFailures: []` |
-| Another member can reproduce it | Only Docker, Node.js, `tar`, the repository, and the official ZIP are needed; commands are below |
+| Another member can reproduce it | Only Docker, Python 3.10+ via `uv`, the repository, and the official ZIP are needed; commands are below |
 
 ## Expected official-dataset results
 
@@ -31,13 +31,13 @@ Expected orphan counts are zero for `Riders.courierId`, `Orders.userId`, `Orders
 
 ## Reproduce from a fresh clone
 
-1. Install and start Docker Desktop. Install Node.js 18 or newer. The importer requires bsdtar/libarchive available as `tar` (built into Windows 10/11 and macOS; Debian/Ubuntu package: `libarchive-tools`). Confirm these commands work:
+1. Install and start Docker Desktop. Install Python 3.10 or newer via [`uv`](https://github.com/astral-sh/uv) (the importer is stdlib-only Python; `uv` pins the interpreter and provides pytest). Confirm these commands work:
 
    ```powershell
    docker version
    docker compose version
-   node --version
-   tar --version
+   uv --version
+   uv run --project db python --version
    ```
 
 2. Clone or copy the repository. Keep `MCO1_dataset_ecommerce.zip` outside Git; do not extract or rename its contents.
@@ -51,8 +51,8 @@ Expected orphan counts are zero for `Riders.courierId`, `Orders.userId`, `Orders
    Native Windows CMD/PowerShell (no bash) — the equivalent commands, which the script wraps:
 
    ```powershell
-   npm run test:source
-   npm run source:verify -- --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip"
+   uv run --project db pytest db/source/importer
+   uv run --project db python db/source/importer/cli.py verify --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip"
    ```
 
 4. The script creates the local ignored environment file and starts only the source database, waiting for its health check (manual equivalent below):
@@ -67,7 +67,7 @@ Expected orphan counts are zero for `Riders.courierId`, `Orders.userId`, `Orders
 5. The script then imports and validates (manual equivalent below). The explicit `--reset` acknowledges that the six source tables will be replaced:
 
    ```powershell
-   npm run source:import -- --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip" --reset
+   uv run --project db python db/source/importer/cli.py import --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip" --reset
    ```
 
 6. Open `evidence/source-import-report.json`. Completion requires all of the following:
@@ -84,10 +84,10 @@ Expected orphan counts are zero for `Riders.courierId`, `Orders.userId`, `Orders
 7. Any member can independently re-query the populated database without reimporting:
 
    ```powershell
-   npm run source:validate
+   uv run --project db python db/source/importer/cli.py validate
    ```
 
-`db/scripts/setup_source.sh` is a bash shortcut over the `npm run source:*` commands above (no-arg run = env + container + tests + validation; `--archive <zip> --reset` = full fresh-clone path). Windows CMD/PowerShell users run the `npm` commands directly. `setup_source.sh --schema-only` remains available for empty-schema resets and is explicitly destructive to data.
+`db/scripts/setup_source.sh` is a bash shortcut over the `uv run --project db` importer commands above (no-arg run = env + container + tests + validation; `--archive <zip> --reset` = full fresh-clone path). Windows CMD/PowerShell users run the `uv` commands directly. `setup_source.sh --schema-only` remains available for empty-schema resets and is explicitly destructive to data.
 
 ## Failure and recovery rules
 
@@ -99,7 +99,7 @@ Expected orphan counts are zero for `Riders.courierId`, `Orders.userId`, `Orders
 
 ## Current Source Database Acceptance Checklist
 
-- [x] `npm run test:source` passes (9 tests).
+- [x] `uv run --project db pytest db/source/importer` passes (33 tests).
 - [x] Offline archive verification passes with the expected SHA-256.
 - [x] The PostgreSQL container reports `healthy`.
 - [x] The import transaction reports `committed`.

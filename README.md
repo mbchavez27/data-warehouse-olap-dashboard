@@ -31,7 +31,7 @@ From the repository root (macOS/Linux, or Git Bash/WSL on Windows):
 
 The script creates `.env` from `.env.example` if missing (local-only, never commit it), starts `source_db` (PostgreSQL 16 @ `localhost:5433`) via `docker compose up -d --wait source_db`, then runs the importer tests, archive verification, atomic import (3,109,927 rows), and database validation. Re-running without flags (`./db/scripts/setup_source.sh`) re-checks env, container health, tests, and validation without touching data.
 
-_Native Windows CMD/PowerShell (no bash): run the equivalent commands directly — `Copy-Item .env.example .env`, `docker compose up -d --wait source_db`, `npm run test:source`, `npm run source:verify -- --archive <zip>`, `npm run source:import -- --archive <zip> --reset`, `npm run source:validate`._
+_Native Windows CMD/PowerShell (no bash): run the equivalent commands directly — `Copy-Item .env.example .env`, `docker compose up -d --wait source_db`, `uv run --project db pytest db/source/importer`, `uv run --project db python db/source/importer/cli.py verify --archive <zip>`, `uv run --project db python db/source/importer/cli.py import --archive <zip> --reset`, `uv run --project db python db/source/importer/cli.py validate`._
 
 _Confirm: open `evidence/source-import-report.json` — top-level `passed` must be `true`. Full procedure and acceptance checklist: `docs/database/source-database-setup.md`._
 

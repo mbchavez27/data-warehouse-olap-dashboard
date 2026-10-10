@@ -2,6 +2,7 @@
 db/raw-dumps/*.sql
 db/raw-dumps/*.csv
 db/raw-dumps/*.tar.gz
+db/raw-dumps/*.zip
 
 # Python
 __pycache__/

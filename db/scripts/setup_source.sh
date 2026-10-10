@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # setup_source.sh — one-command source database setup and verification.
-# Thin bash shortcut over the documented `npm run source:*` commands
+# Thin bash shortcut over the `uv run --project db` importer commands
 # (see docs/database/source-database-setup.md, the cross-platform contract).
 # Idempotent: safe to re-run anytime, except --schema-only which replaces data.
 # Usage (from repo root):
@@ -12,12 +12,12 @@
 #   ./db/scripts/setup_source.sh --import --archive <zip> --reset [--output <json>]
 #   macOS/Linux: ./db/scripts/setup_source.sh [flags]
 #   Windows (Git Bash or WSL): bash db/scripts/setup_source.sh [flags]
-#   Windows (CMD/PowerShell, no bash): use the npm commands directly —
-#     npm run test:source
-#     npm run source:verify -- --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip"
+#   Windows (CMD/PowerShell, no bash): use the uv commands directly —
+#     uv run --project db pytest db/source/importer
+#     uv run --project db python db/source/importer/cli.py verify --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip"
 #     Copy-Item .env.example .env; docker compose up -d --wait source_db
-#     npm run source:import -- --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip" --reset
-#     npm run source:validate
+#     uv run --project db python db/source/importer/cli.py import --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip" --reset
+#     uv run --project db python db/source/importer/cli.py validate
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -68,15 +68,15 @@ require_healthy() {
 }
 
 cmd_test() {
-  npm run test:source
+  uv run --project db pytest db/source/importer
 }
 
 cmd_verify() {
   [ -n "$ARCHIVE" ] || die "--verify requires --archive <MCO1_dataset_ecommerce.zip>"
   if [ -n "$OUTPUT" ]; then
-    npm run source:verify -- --archive "$ARCHIVE" --output "$OUTPUT"
+    uv run --project db python db/source/importer/cli.py verify --archive "$ARCHIVE" --output "$OUTPUT"
   else
-    npm run source:verify -- --archive "$ARCHIVE"
+    uv run --project db python db/source/importer/cli.py verify --archive "$ARCHIVE"
   fi
 }
 
@@ -84,18 +84,18 @@ cmd_import() {
   [ -n "$ARCHIVE" ] || die "--import requires --archive <MCO1_dataset_ecommerce.zip>"
   [ "$RESET" -eq 1 ] || die "--import is destructive and requires explicit --reset"
   if [ -n "$OUTPUT" ]; then
-    npm run source:import -- --archive "$ARCHIVE" --reset --output "$OUTPUT"
+    uv run --project db python db/source/importer/cli.py import --archive "$ARCHIVE" --reset --output "$OUTPUT"
   else
-    npm run source:import -- --archive "$ARCHIVE" --reset
+    uv run --project db python db/source/importer/cli.py import --archive "$ARCHIVE" --reset
   fi
 }
 
 cmd_validate() {
   require_healthy
   if [ -n "$OUTPUT" ]; then
-    npm run source:validate -- --output "$OUTPUT"
+    uv run --project db python db/source/importer/cli.py validate --output "$OUTPUT"
   else
-    npm run source:validate
+    uv run --project db python db/source/importer/cli.py validate
   fi
 }
 
@@ -119,6 +119,8 @@ cmd_default() {
   ensure_up
   require_healthy
   cmd_test
+  # Keep the import report intact: flow validation goes to the revalidation file.
+  OUTPUT="${OUTPUT:-evidence/source-db-revalidation.json}"
   cmd_validate
 }
 
@@ -131,6 +133,10 @@ cmd_all() {
   cmd_test
   cmd_verify
   cmd_import
+  # Keep the just-written import report intact: flow validation goes to the
+  # revalidation file (standalone --validate without --output still uses the
+  # default report path, matching cli.py behavior).
+  OUTPUT="${OUTPUT:-evidence/source-db-revalidation.json}"
   cmd_validate
   echo "Done. Open evidence/source-import-report.json and confirm top-level passed is true."
 }
