@@ -167,11 +167,22 @@ the design doc); the table shape already accommodates them.
 
 ## Fresh-volume verification (R0 pre-ETL)
 
+From the repository root (macOS/Linux, or Git Bash/WSL on Windows):
+
 ```bash
-docker compose up -d --wait dw_db
-docker exec stadvdb-mco1-dw-db psql -U postgres -d dw_db -c "\dt"
-# expect 9 tables: 6 DIM_* + 3 FACT_*
+./db/scripts/setup_dw.sh
 ```
+
+The script creates `.env` if missing, starts `dw_db` (PostgreSQL 16 @
+`localhost:5434`), and runs the R0 gate in `db/dw/validate/r0_checks.sql`
+(shared with the future ETL preflight), printing the JSON report and exiting
+nonzero unless `passed` is true. Re-running without flags never touches data;
+`--schema-only` re-applies the DDL (explicit, destructive).
+Windows CMD/PowerShell: see the script header for the direct equivalents.
+
+Note: volumes created before `01_dw_schema.sql` existed skip entrypoint init
+(the `pg_dw_data` volume predates the file) — run `--schema-only` once to
+converge those, then `passed` must be true.
 
 Acceptance: 9 tables; dim column counts 11/9/4/5/6/6 (DATE/RIDER/GEO/ORDERSIZE/CUSTOMER/PRODUCT);fact column counts 10/10/7 (DELIVERY/ITEM/RIDERDAILY); 9 PKs; 13 enforced FKs (5 + 6 + 2);
 5 key-0 Unknown rows (+ 4 static order-size bands); 0 fact rows; `DIM_DATE` empty
