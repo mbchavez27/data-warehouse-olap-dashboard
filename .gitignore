@@ -2,6 +2,7 @@
 db/raw-dumps/*.sql
 db/raw-dumps/*.csv
 db/raw-dumps/*.tar.gz
+db/raw-dumps/*.zip
 
 # Python
 __pycache__/
@@ -19,6 +20,9 @@ frontend/build/
 
 # Env vars
 .env
+
+# Local diagnostics (timestamps, absolute paths, unbounded growth)
+evidence/source-import-failures.log
 
 # macOS
 .DS_Store

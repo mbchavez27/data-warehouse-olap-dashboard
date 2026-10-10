@@ -1,6 +1,6 @@
 -- Canonical source database DDL (PostgreSQL 16).
 -- Converted from the six MySQL 8.0 dumps in the official archive.
--- Single source of truth: read by the streaming importer (db/source/importer/cli.js)
+-- Single source of truth: read by the streaming importer (db/source/importer/cli.py)
 -- and auto-applied by Postgres on first volume init via
 -- ./db/source/init:/docker-entrypoint-initdb.d:ro (see docker-compose.yml).
 -- Only constraints declared by those dumps are reproduced (UNDECLARED edges
