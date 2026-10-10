@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # setup_dw.sh — one-command data warehouse setup and verification.
-# Thin bash shortcut over docker + psql against dw_db. The R0 gate itself
-# lives in db/dw/validate/r0_checks.sql (shared with the future ETL preflight).
+# Thin bash shortcut over docker + psql against dw_db. The readiness gate itself
+# lives in db/dw/validate/warehouse_readiness.sql (shared with the future ETL preflight).
 # Idempotent: safe to re-run anytime, except --schema-only which replaces data.
 # Usage (from repo root):
-#   ./db/scripts/setup_dw.sh                # default: env + up + R0 report (no data touched)
-#   ./db/scripts/setup_dw.sh --validate     # R0 checks only (needs healthy container)
+#   ./db/scripts/setup_dw.sh                # default: env + up + readiness report (no data touched)
+#   ./db/scripts/setup_dw.sh --validate     # readiness checks only (needs healthy container)
 #   ./db/scripts/setup_dw.sh --schema-only  # re-apply 01_dw_schema.sql (explicit, destructive)
 #   macOS/Linux: ./db/scripts/setup_dw.sh [flags]
 #   Windows (Git Bash or WSL): bash db/scripts/setup_dw.sh [flags]
 #   Windows (CMD/PowerShell, no bash): run the equivalent directly —
 #     Copy-Item .env.example .env; docker compose up -d --wait dw_db
-#     Get-Content db/dw/validate/r0_checks.sql | docker exec -i stadvdb-mco1-dw-db psql -X -At -U postgres -d dw_db -v ON_ERROR_STOP=1
+#     Get-Content db/dw/validate/warehouse_readiness.sql | docker exec -i stadvdb-mco1-dw-db psql -X -At -U postgres -d dw_db -v ON_ERROR_STOP=1
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -24,7 +24,7 @@ set +a
 DW_USER="${DW_USER:-postgres}"
 DW_DB="${DW_DB:-dw_db}"
 CONTAINER="stadvdb-mco1-dw-db"
-R0_SQL="$ROOT/db/dw/validate/r0_checks.sql"
+R0_SQL="$ROOT/db/dw/validate/warehouse_readiness.sql"
 COMMAND=""
 
 usage() {
@@ -60,7 +60,7 @@ require_healthy() {
 
 cmd_validate() {
   require_healthy
-  [ -f "$R0_SQL" ] || die "R0 gate file missing: $R0_SQL"
+  [ -f "$R0_SQL" ] || die "readiness gate file missing: $R0_SQL"
   local result
   result="$(docker exec -i "$CONTAINER" psql -X -At -U "$DW_USER" -d "$DW_DB" \
     -v ON_ERROR_STOP=1 < "$R0_SQL")"
