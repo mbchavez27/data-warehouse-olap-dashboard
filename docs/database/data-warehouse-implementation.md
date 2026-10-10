@@ -27,6 +27,8 @@ it from a fresh volume.
 - Fact keys are `BIGINT GENERATED ... AS IDENTITY` per the design doc.
 - Every dimension ships a key-0 `Unknown` row (`OVERRIDING SYSTEM VALUE`),
   so ETL maps unparseable or missing references to `0`, never to NULL FKs.
+  Identity sequences restart past seeded keys (`1`, `5` for order-size bands)
+  so generated values never collide with seeds.
 - Fact→dimension FKs are enforced (fail-fast, same stance as the source
   importer): a bad ETL load aborts instead of silently orphaning facts.
 - Money is `NUMERIC(12,2)` everywhere (`listPrice`, `lineValue`); the source
