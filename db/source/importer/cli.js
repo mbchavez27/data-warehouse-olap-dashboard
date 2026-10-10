@@ -17,7 +17,7 @@ const {
 const { openArchiveEntry } = require('./archive-reader');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
-const SOURCE_SCHEMA = path.join(__dirname, 'source-schema.sql');
+const SOURCE_SCHEMA = path.join(__dirname, '..', 'init', '01_source_schema.sql');
 const DEFAULT_REPORT = path.join(REPO_ROOT, 'evidence', 'source-import-report.json');
 const FAILURE_LOG = path.join(REPO_ROOT, 'evidence', 'source-import-failures.log');
 const EXPECTED_SHA256 = 'a10f11865ef05253672090e4d73d15a3d7fad96adffe6dbc6fb8c09c8037e862';
