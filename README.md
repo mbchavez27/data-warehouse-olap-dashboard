@@ -21,15 +21,19 @@ Query Processing in a Data Warehouse. Covers ETL data wrangling, dimensional mod
 
 ### 1. Database Initialization
 
-The raw SQL dumps are too large for version control and are ignored by Git. You must place them in the project manually before starting the environment.
+The official dataset ZIP is too large for version control and is ignored by Git. Keep `MCO1_dataset_ecommerce.zip` outside the repository; do not extract or rename its contents. The importer reads the ZIP directly (expected SHA-256 `a10f1186...862`).
 
-1. Navigate to the `db/raw-dumps/` directory (the folder exists via `.gitkeep`).
-2. Place your raw SQL dump files inside `db/raw-dumps/`.
-3. Start the PostgreSQL instances:
-   ```bash
-   docker-compose up -d
-   ```
-   _Note: The `docker-compose.yml` mounts the `db/` folder to a volume and runs the initialization scripts (`01_source_schema.sql` and `02_dw_schema.sql`) to scaffold both the operational source database and the dimensional warehouse._
+From the repository root (macOS/Linux, or Git Bash/WSL on Windows):
+
+```bash
+./db/scripts/setup_source.sh --archive "/absolute/path/MCO1_dataset_ecommerce.zip" --reset
+```
+
+The script creates `.env` from `.env.example` if missing (local-only, never commit it), starts `source_db` (PostgreSQL 16 @ `localhost:5433`) via `docker compose up -d --wait source_db`, then runs the importer tests, archive verification, atomic import (3,109,927 rows), and database validation. Re-running without flags (`./db/scripts/setup_source.sh`) re-checks env, container health, tests, and validation without touching data.
+
+_Native Windows CMD/PowerShell (no bash): run the equivalent commands directly — `Copy-Item .env.example .env`, `docker compose up -d --wait source_db`, `npm run test:source`, `npm run source:verify -- --archive <zip>`, `npm run source:import -- --archive <zip> --reset`, `npm run source:validate`._
+
+_Confirm: open `evidence/source-import-report.json` — top-level `passed` must be `true`. Full procedure and acceptance checklist: `docs/database/source-database-setup.md`._
 
 ### 2. Running the ETL Pipeline
 

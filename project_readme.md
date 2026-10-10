@@ -18,15 +18,13 @@ This repository contains an end-to-end Data Warehousing, ETL, and OLAP applicati
 ## Setup Instructions
 
 ### 1. Database Initialization
-The raw SQL dumps are too large for version control and are ignored by Git. You must place them in the project manually before starting the environment.
+The official dataset ZIP is too large for version control and is ignored by Git. Keep `MCO1_dataset_ecommerce.zip` outside the repository; do not extract or rename its contents. The importer reads the ZIP directly (expected SHA-256 `a10f1186...862`).
 
-1. Navigate to the `db/raw-dumps/` directory (the folder exists via `.gitkeep`).
-2. Place your raw SQL dump files inside `db/raw-dumps/`.
-3. Start the PostgreSQL instances:
-   ```bash
-   docker-compose up -d
-   ```
-   *Note: The `docker-compose.yml` mounts the `db/` folder to a volume and runs the initialization scripts (`01_source_schema.sql` and `02_dw_schema.sql`) to scaffold both the operational source database and the dimensional warehouse.*
+From the repository root (macOS/Linux, or Git Bash/WSL on Windows):
+```bash
+./db/scripts/setup_source.sh --archive "/absolute/path/MCO1_dataset_ecommerce.zip" --reset
+```
+*The script creates `.env` from `.env.example` if missing (local-only, never commit it), starts `source_db` (PostgreSQL 16 @ `localhost:5433`), then runs the importer tests, archive verification, atomic import (3,109,927 rows), and database validation. Re-running without flags re-checks env, container health, tests, and validation without touching data. Native Windows CMD/PowerShell: use the `npm`/`docker compose` equivalents in `docs/database/source-database-setup.md`. Confirm `evidence/source-import-report.json` reports top-level `passed: true`.*
 
 ### 2. Running the ETL Pipeline
 The ETL script extracts the raw data, applies data wrangling (handling nulls, aggregating, generating synthetic data if needed), and loads it into the Data Warehouse fact and dimension tables. We use `uv` for lightning-fast environment setup.

@@ -7,7 +7,7 @@
 -- courierId/userId/deliveryRiderId are COUNTED by the importer as orphans,
 -- not enforced here, so bad archives report per-relationship counts instead
 -- of aborting mid-COPY on a hard FK).
--- Idempotent: DROP ... CASCADE first, safe to re-run via db/scripts/init_source.sh
+-- Idempotent: DROP ... CASCADE first, safe to re-run via db/scripts/setup_source.sh --schema-only
 --             and safe as a /docker-entrypoint-initdb.d auto-init script.
 -- ETL NOTE (Phase 3): Users.dateOfBirth and Orders.deliveryDate stay VARCHAR
 -- to mimic the raw dump (mixed 'YYYY-MM-DD' and 'MM/DD/YYYY'). transform.py
