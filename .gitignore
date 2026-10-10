@@ -4,8 +4,8 @@ db/raw-dumps/*.csv
 db/raw-dumps/*.tar.gz
 
 # Python
-etl/__pycache__/
-etl/.venv/
+__pycache__/
+.venv/
 *.pyc
 
 # Go
