@@ -1,0 +1,12 @@
+[project]
+name = "stadvdb-mco1-etl"
+version = "0.1.0"
+description = "ETL pipeline: source_db -> dw_db"
+requires-python = ">=3.10"
+dependencies = ["psycopg[binary]>=3.1"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

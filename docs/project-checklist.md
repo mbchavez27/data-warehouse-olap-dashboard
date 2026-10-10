@@ -30,7 +30,7 @@
 ## 3. ETL Pipeline Setup
 
 - [x] Select a programming language (Python, Java, etc.) for the ETL script.
-  - Evidence: Python via `uv` — proven by the `stadvdb-mco1-db` importer env; ETL follows the same stack (`stadvdb-mco1-etl` convention specced, `etl/` implementation pending).
+  - Evidence: Python via `uv` — `stadvdb-mco1-etl` env live (`etl/pyproject.toml`, psycopg + pytest) with `etl/main.py --check` readiness gate proven green; Extract/Transform/Load implementation pending.
 - [ ] Write code to **Extract** data from the source database.
 - [ ] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
   - Known issues queued in `docs/database/source-schema.md` (mixed date formats, gender codes, float price, MySQL escapes, bulk timestamps, undeclared FKs), plus 4 profiling findings (constant `createdAt` kills lead time/benchmark/time-dim, single-age customers, uniform geography, flat demand).

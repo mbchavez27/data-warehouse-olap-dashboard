@@ -40,14 +40,11 @@ _Confirm: open `evidence/source-import-report.json` — top-level `passed` must 
 The ETL script extracts the raw data, applies data wrangling (handling nulls, aggregating, generating synthetic data if needed), and loads it into the Data Warehouse fact and dimension tables. We use `uv` for lightning-fast environment setup.
 
 ```bash
-cd etl
-uv venv
-source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
-uv pip install -r requirements.txt
-python main.py
+uv sync --project etl
+uv run --project etl python etl/main.py --check
 ```
 
-_(Alternatively, you can skip activation and run directly with: `uv run main.py`)_
+_The `--check` readiness gate (exact source counts + warehouse readiness) runs first; the full Extract/Transform/Load run command lands with the next ETL phase._
 
 ### 3. Starting the Backend (Go OLAP API)
 
