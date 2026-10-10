@@ -18,7 +18,7 @@ erDiagram
         int leadTimeDays
         int totalQuantity
         int lineItemCount
-        int isWithinBenchmark "Fact 0 or 1"
+        int isWithinBenchmark "Fact: 0 or 1 (internal benchmark)"
     }
 
     DIM_DATE {
@@ -38,15 +38,15 @@ erDiagram
     DIM_TIME {
         int timeKey PK
         int hour24
-        string dayPrt
+        string dayPart
     }
 
     DIM_RIDER {
         int riderKey PK
-        int riderID
+        int riderId
         string fullName
         string vehicleType
-        int courierID
+        int courierId
         string courierName
         int age
         string ageBand
@@ -70,11 +70,12 @@ erDiagram
 
     DIM_CUSTOMER {
         int customerKey PK
-        string customerID
+        int customerId
+        string username
         string firstName
         string lastName
-        string email
-        string customerSegment
+        string gender
+        string ageBand
     }
 
     DIM_DATE ||--o{ FACT_ORDERDELIVERY : "created date"
