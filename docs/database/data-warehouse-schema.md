@@ -7,18 +7,14 @@ erDiagram
     FACT_ORDERDELIVERY {
         bigint orderDeliveryKey PK
         string orderNumber "Degenerate Dimension"
-        int createdDateKey FK
         int deliveryDateKey FK
-        int createdTimeKey FK
         int riderKey FK
         int geoKey FK
         int basketBandKey FK
         int customerKey FK
         int orderCount "Fact: Always 1 (Additive)"
-        int leadTimeDays
         int totalQuantity
         int lineItemCount
-        int isWithinBenchmark "Fact: 0 or 1 (internal benchmark)"
     }
 
     DIM_DATE {
@@ -35,17 +31,11 @@ erDiagram
         int year
     }
 
-    DIM_TIME {
-        int timeKey PK
-        int hour24
-        string dayPart
-    }
-
     DIM_RIDER {
         int riderKey PK
         int riderId
         string fullName
-        string vehicleType
+        string vehicleType "Bicycle, Motorcycle, Car, Trike"
         int courierId
         string courierName
         int age
@@ -62,8 +52,8 @@ erDiagram
 
     DIM_BASKETBAND {
         int basketBandKey PK
-        string bandName
-        string bandGroup
+        string bandName "Small, Medium, Large, Bulk"
+        string bandGroup "Light, Heavy"
         int minQuantity
         int maxQuantity
     }
@@ -78,9 +68,7 @@ erDiagram
         string ageBand
     }
 
-    DIM_DATE ||--o{ FACT_ORDERDELIVERY : "created date"
     DIM_DATE ||--o{ FACT_ORDERDELIVERY : "delivery date"
-    DIM_TIME ||--o{ FACT_ORDERDELIVERY : "created time"
     DIM_RIDER ||--o{ FACT_ORDERDELIVERY : "assigned rider"
     DIM_GEOGRAPHY ||--o{ FACT_ORDERDELIVERY : "delivery geography"
     DIM_BASKETBAND ||--o{ FACT_ORDERDELIVERY : "basket category"
