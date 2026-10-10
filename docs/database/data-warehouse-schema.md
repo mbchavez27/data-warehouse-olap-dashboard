@@ -88,7 +88,6 @@ erDiagram
         string firstName
         string lastName
         string gender
-        string ageBand
     }
 
     DIM_PRODUCT {
@@ -136,7 +135,7 @@ Question 16 (drill-across) uses `FACT_ORDERDELIVERY` and `FACT_RIDERDAILY` toget
 | `DIM_GEOGRAPHY` | Country > City > Zip Code                                   |
 | `DIM_ORDERSIZE` | Size Group > Size                                           |
 | `DIM_PRODUCT`   | Category > Product                                          |
-| `DIM_CUSTOMER`  | Age Band > Gender                                           |
+| `DIM_CUSTOMER`  | Gender (ageBand removed — constant in source, see corrections) |
 
 ## Business questions
 
@@ -163,7 +162,7 @@ Question 16 (drill-across) uses `FACT_ORDERDELIVERY` and `FACT_RIDERDAILY` toget
 | 19  | Product             | How does category demand move by month?                                                             | ORDERITEM                  | Year > Month × Category, units                      | Roll-up          | Seasonal capacity by category                 |
 | 20  | Geography           | Where is demand concentrated? _(conditional)_                                                       | ORDERDELIVERY              | Country > City > Zip, orders                        | Drill-down       | Where to position fleet                       |
 | 21  | Geography           | Which zones or countries have the most Heavy orders, and which vehicles serve them? _(conditional)_ | ORDERDELIVERY              | Country > Zip × Size Group × Vehicle                | Dice             | Heavier vehicles to heavier zones             |
-| 22  | Customer            | How concentrated are orders across customers, and do age bands buy different order sizes?           | ORDERDELIVERY              | Customer, Customer Age Band × Size                  | Drill-down, dice | Customer targeting                            |
+| 22  | Customer            | How concentrated are orders across customers? _(age-band half not supported — single-age source)_ | ORDERDELIVERY              | Customer concentration                                                  | Drill-down   | Customer targeting                            |
 
 ## Reports
 
@@ -182,6 +181,18 @@ Question 16 (drill-across) uses `FACT_ORDERDELIVERY` and `FACT_RIDERDAILY` toget
 ### Question Feasibility
 
 The business questions represent candidate analyses supported by the dimensional model. Their feasibility depends on the availability and quality of the source data. Each question is validated through data profiling before analysis. Questions are marked as **Not Supported** when the data cannot produce valid results, such as when a field is too sparse, nearly unique, or constant.
+
+### Applied Corrections
+
+The following profiling findings are resolved in `db/dw/init/01_dw_schema.sql`
+(build record: `docs/database/data-warehouse-implementation.md`):
+
+- Q20/Q21 report the flat uniform geography as the finding; the dimension is
+  built as designed so drill-down paths exist.
+- Q22 answers concentration only (`DIM_CUSTOMER.ageBand` dropped as constant).
+- Q14 `isPayDay` rule: 15th and last day of month, applied at ETL date-build.
+- `FACT_RIDERDAILY` grain includes zero-order days via the rider×date cross
+  join at ETL time.
 
 ### Interpretation of Results
 

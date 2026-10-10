@@ -17,15 +17,15 @@
 ## 2. Data Warehouse Construction
 
 - [x] Design the dimensional model (Star or Snowflake schema).
-  - State: `docs/database/data-warehouse-schema.md` specifies a star schema with 3 facts (`FACT_ORDERDELIVERY`, `FACT_ORDERITEM`, `FACT_RIDERDAILY`) + 6 dims + 5 hierarchies + 22 questions with OLAP ops. Four corrections queued from profiling (Q20/21 + Q22-age marked not supported, Q14 payday rule, customer `ageBand` removal, idle-day note).
+  - State: `docs/database/data-warehouse-schema.md` specifies a star schema with 3 facts (`FACT_ORDERDELIVERY`, `FACT_ORDERITEM`, `FACT_RIDERDAILY`) + 6 dims + 5 hierarchies + 22 questions with OLAP ops. Four profiling corrections applied in DDL (Q20/21 flat-geography note, Q22 concentration-only, Q14 payday rule, customer `ageBand` removal, idle-day grain note).
 - [x] Include at least one (1) fact table.
-  - Evidence: 3 fact tables in `docs/database/data-warehouse-schema.md` (implementation pending).
+  - Evidence: 3 fact tables implemented in `db/dw/init/01_dw_schema.sql`.
 - [x] Include at least three (3) dimension tables.
-  - Evidence: 6 dimension tables in `docs/database/data-warehouse-schema.md` (implementation pending).
+  - Evidence: 6 dimension tables implemented in `db/dw/init/01_dw_schema.sql`.
 - [x] Incorporate dimensional hierarchies required for OLAP operations (e.g. date day→month→quarter→year, product→category, city→country, rider→courier).
-  - Evidence: 5 hierarchies documented in `docs/database/data-warehouse-schema.md` (date, rider→courier, city→country, band group, category→product).
-- [ ] Implement the data warehouse schema in MySQL or Postgres.
-  - State: `db/dw/init/` contains only `.gitkeep`; no DDL committed.
+  - Evidence: 5 hierarchies in `docs/database/data-warehouse-schema.md` (date, rider→courier, city→country, band group, category→product); customer hierarchy is Gender-only after the `ageBand` removal.
+- [x] Implement the data warehouse schema in MySQL or Postgres.
+  - Evidence: `db/dw/init/01_dw_schema.sql` (9 tables, 9 PKs, 13 enforced FKs, 5 Unknown rows + 4 order-size bands, idempotent re-runnable); verified live on `dw_db` (Postgres 16 @ `:5434`): 11/9/4/5/6/6 dim columns, 10/10/7 fact columns, 0 fact rows pre-ETL. Build record: `docs/database/data-warehouse-implementation.md`.
 
 ## 3. ETL Pipeline Setup
 
