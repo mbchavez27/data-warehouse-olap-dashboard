@@ -15,6 +15,7 @@
 -- Products.price stays REAL to mimic the dump; warehouse casts to NUMERIC(12,2).
 
 DROP TABLE IF EXISTS "OrderItems" CASCADE;
+DROP TABLE IF EXISTS "Orders" CASCADE;
 DROP TABLE IF EXISTS "Products" CASCADE;
 DROP TABLE IF EXISTS "Users" CASCADE;
 DROP TABLE IF EXISTS "Riders" CASCADE;

@@ -215,3 +215,18 @@ def test_parse_requires_table_and_column_count():
         list(parse_mysql_rows(["x"], table="", column_count=4))
     with pytest.raises(TypeError):
         list(parse_mysql_rows(["x"], table="Couriers", column_count=0))
+
+
+def test_canonical_ddl_drops_all_six_tables_before_recreate():
+    ddl = (
+        Path(__file__).resolve().parent.parent / "init" / "01_source_schema.sql"
+    ).read_text(encoding="utf-8")
+
+    for table in ("OrderItems", "Orders", "Products", "Users", "Riders", "Couriers"):
+        assert f'DROP TABLE IF EXISTS "{table}" CASCADE;' in ddl, table
+    # Every dropped table must be recreated later in the same script, and
+    # drops must precede the first CREATE so re-runs are idempotent.
+    first_create = ddl.index("CREATE TABLE")
+    for table in ("OrderItems", "Orders", "Products", "Users", "Riders", "Couriers"):
+        assert f'DROP TABLE IF EXISTS "{table}" CASCADE;' in ddl[:first_create]
+        assert f'CREATE TABLE "{table}" (' in ddl
