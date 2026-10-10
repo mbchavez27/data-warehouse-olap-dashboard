@@ -1,0 +1,65 @@
+# Project Checklist — Data Warehouse OLAP Dashboard
+
+> Status as of 2026-10-10. Checked items have repository evidence; unchecked items are scaffold-only (`.gitkeep`) or empty.
+
+## 1. Source Database Setup
+
+- [x] Download the source dataset.
+  - Evidence: `db/raw-dumps/faker_{Couriers,Riders,Users,Products,Orders,OrderItems}.sql`; `evidence/source-import-report.json: archive.file = MCO1_dataset_ecommerce.zip`, `sha256 = a10f1186...`, `hashMatches: true`.
+- [x] Import the dataset into a local MySQL or Postgres database.
+  - Evidence: Postgres 16 `source_db` via `docker-compose.yml` (`source_db`, port 5433); `db/source/init/01_source_schema.sql` + `db/source/importer/`; `evidence/source-import-report.json: import.transaction = committed`, `database.passed: true`; `evidence/source-db-revalidation.json: passed: true`. Counts: Couriers 3, Riders 100, Users 100000, Products 10000, Orders 1000000, OrderItems 1999824 (3,109,927 rows total), 0 orphans.
+  - Docs: `docs/database/source-database-setup.md`, `docs/database/source-schema.md`.
+- [x] *(If necessary)* Generate synthetic data to increase the size of the source database.
+  - Evidence: N/A — `docs/database/source-database-setup.md` records 3,109,927 rows already sufficient; no synthetic rows added.
+- [ ] Second team member reproduces fresh-clone procedure (`docs/database/source-database-setup.md` acceptance list).
+
+## 2. Data Warehouse Construction
+
+- [ ] Design the dimensional model (Star or Snowflake schema).
+  - State: `docs/database/data-warehouse-schema.md` is a placeholder (only `FACT_SALES` + `DIM_PRODUCT`, no hierarchy). Needs ≥3 dims + hierarchies before this can be checked.
+- [ ] Include at least one (1) fact table.
+- [ ] Include at least three (3) dimension tables.
+- [ ] Incorporate dimensional hierarchies required for OLAP operations (e.g. date day→month→quarter→year, product→category, city→country, rider→courier).
+- [ ] Implement the data warehouse schema in MySQL or Postgres.
+  - State: `db/dw/init/` contains only `.gitkeep`; no DDL committed.
+
+## 3. ETL Pipeline Setup
+
+- [ ] Select a programming language (Python, Java, etc.) for the ETL script.
+  - State: `README.md` plans Python + `uv`, but `etl/` contains only `.gitkeep`.
+- [ ] Write code to **Extract** data from the source database.
+- [ ] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
+  - Known issues queued in `docs/database/source-schema.md` (mixed date formats, gender codes, float price, MySQL escapes, bulk timestamps, undeclared FKs).
+- [ ] Write code to **Load** the transformed data into the data warehouse.
+
+## 4. OLAP Application Development
+
+- [ ] Formulate complex queries utilizing OLAP operations (roll-up, drill-down, slice, dice, pivot).
+- [ ] Develop a web-based dashboard application.
+  - State: `olap-backend/` and `olap-frontend/` contain only `.gitkeep`; `README.md` plans Go API (`:8080`) + React (`:3000`).
+- [ ] Implement UI features allowing users to specify query parameters and filters (for slice and dice).
+- [ ] Implement UI features allowing users to view reports at varying levels of granularity (for drill-down and roll-up).
+
+## 5. Functional Testing
+
+- [ ] Prepare functional test scripts designed for efficient testing.
+  - State: `tests/` contains only `.gitkeep`; planned `tests/functional_test.py` not present.
+- [ ] Execute each query multiple times using different parameter values.
+- [ ] Verify that the resulting reports and analytical data are correct.
+
+## 6. Performance Testing & Optimization
+
+- [ ] Run each query multiple times (varying parameters, structure, or setup) and record baseline execution times.
+  - State: planned `tests/perf_test.py` not present.
+- [ ] Evaluate performance and identify bottlenecks using the `EXPLAIN` feature.
+- [ ] Apply database optimization strategies (e.g., secondary indexes, query reformulation, denormalization).
+  - State: planned `db/03_indexes.sql` not present.
+- [ ] Compare execution times between the original implementation and the optimized implementation.
+- [ ] Analyze and explain the causes for performance improvement (or lack thereof) to include in the final report.
+
+## 7. Final Technical Report
+
+- [ ] Download the prescribed Technical Report template.
+- [ ] Gather all data, execution times, and analyses collected from Steps 1 through 6.
+- [ ] Complete and finalize the Technical Report.
+  - State: `docs/technical-documentation/` is empty.
