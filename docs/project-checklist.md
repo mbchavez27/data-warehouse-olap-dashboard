@@ -15,11 +15,14 @@
 
 ## 2. Data Warehouse Construction
 
-- [ ] Design the dimensional model (Star or Snowflake schema).
-  - State: `docs/database/data-warehouse-schema.md` is a placeholder (only `FACT_SALES` + `DIM_PRODUCT`, no hierarchy). Needs ≥3 dims + hierarchies before this can be checked.
-- [ ] Include at least one (1) fact table.
-- [ ] Include at least three (3) dimension tables.
-- [ ] Incorporate dimensional hierarchies required for OLAP operations (e.g. date day→month→quarter→year, product→category, city→country, rider→courier).
+- [x] Design the dimensional model (Star or Snowflake schema).
+  - State: `docs/database/data-warehouse-schema.md` specifies a star schema with 3 facts (`FACT_ORDERDELIVERY`, `FACT_ORDERITEM`, `FACT_RIDERDAILY`) + 6 dims + 5 hierarchies + 22 questions with OLAP ops. Four corrections queued from profiling (Q20/21 + Q22-age marked not supported, Q14 payday rule, customer `ageBand` removal, idle-day note).
+- [x] Include at least one (1) fact table.
+  - Evidence: 3 fact tables in `docs/database/data-warehouse-schema.md` (implementation pending).
+- [x] Include at least three (3) dimension tables.
+  - Evidence: 6 dimension tables in `docs/database/data-warehouse-schema.md` (implementation pending).
+- [x] Incorporate dimensional hierarchies required for OLAP operations (e.g. date day→month→quarter→year, product→category, city→country, rider→courier).
+  - Evidence: 5 hierarchies documented in `docs/database/data-warehouse-schema.md` (date, rider→courier, city→country, band group, category→product).
 - [ ] Implement the data warehouse schema in MySQL or Postgres.
   - State: `db/dw/init/` contains only `.gitkeep`; no DDL committed.
 
@@ -29,12 +32,13 @@
   - State: `README.md` plans Python + `uv`, but `etl/` contains only `.gitkeep`.
 - [ ] Write code to **Extract** data from the source database.
 - [ ] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
-  - Known issues queued in `docs/database/source-schema.md` (mixed date formats, gender codes, float price, MySQL escapes, bulk timestamps, undeclared FKs).
+  - Known issues queued in `docs/database/source-schema.md` (mixed date formats, gender codes, float price, MySQL escapes, bulk timestamps, undeclared FKs), plus 4 profiling findings (constant `createdAt` kills lead time/benchmark/time-dim, single-age customers, uniform geography, flat demand).
 - [ ] Write code to **Load** the transformed data into the data warehouse.
 
 ## 4. OLAP Application Development
 
 - [ ] Formulate complex queries utilizing OLAP operations (roll-up, drill-down, slice, dice, pivot).
+  - State: 22 questions with OLAP ops specified in `docs/database/data-warehouse-schema.md`; no executable SQL yet.
 - [ ] Develop a web-based dashboard application.
   - State: `olap-backend/` and `olap-frontend/` contain only `.gitkeep`; `README.md` plans Go API (`:8080`) + React (`:3000`).
 - [ ] Implement UI features allowing users to specify query parameters and filters (for slice and dice).
