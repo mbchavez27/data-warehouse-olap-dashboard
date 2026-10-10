@@ -42,14 +42,20 @@ Expected orphan counts are zero for `Riders.courierId`, `Orders.userId`, `Orders
 
 2. Clone or copy the repository. Keep `MCO1_dataset_ecommerce.zip` outside Git; do not extract or rename its contents.
 
-3. From the repository root, run the importer tests and verify the ZIP without touching a database:
+3. From the repository root, run the one-command setup (bash: macOS/Linux, or Git Bash/WSL on Windows). Without `--archive` it performs every step that needs no dataset (env, container, tests, validation of an existing database):
+
+   ```bash
+   ./db/scripts/setup_source.sh --archive "/absolute/path/MCO1_dataset_ecommerce.zip" --reset
+   ```
+
+   Native Windows CMD/PowerShell (no bash) — the equivalent commands, which the script wraps:
 
    ```powershell
    npm run test:source
    npm run source:verify -- --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip"
    ```
 
-4. Create the local ignored environment file, then start only the source database and wait for its health check:
+4. The script creates the local ignored environment file and starts only the source database, waiting for its health check (manual equivalent below):
 
    ```powershell
    Copy-Item .env.example .env
@@ -58,7 +64,7 @@ Expected orphan counts are zero for `Riders.courierId`, `Orders.userId`, `Orders
 
    Defaults are `source_db`, user `postgres`, password `postgres`, host port `5433`. Edit the local `.env` before starting the service if overrides are needed. Do not commit it.
 
-5. Import and validate. The explicit `--reset` acknowledges that the six source tables will be replaced:
+5. The script then imports and validates (manual equivalent below). The explicit `--reset` acknowledges that the six source tables will be replaced:
 
    ```powershell
    npm run source:import -- --archive "C:\absolute\path\MCO1_dataset_ecommerce.zip" --reset
@@ -81,7 +87,7 @@ Expected orphan counts are zero for `Riders.courierId`, `Orders.userId`, `Orders
    npm run source:validate
    ```
 
-The repository's pre-existing `db/scripts/init_source.sh` is a schema-only scaffold and does not import the dataset. For complete source-database reproduction on every platform, use the `npm run source:import` command above.
+`db/scripts/setup_source.sh` is a bash shortcut over the `npm run source:*` commands above (no-arg run = env + container + tests + validation; `--archive <zip> --reset` = full fresh-clone path). Windows CMD/PowerShell users run the `npm` commands directly. `setup_source.sh --schema-only` remains available for empty-schema resets and is explicitly destructive to data.
 
 ## Failure and recovery rules
 
