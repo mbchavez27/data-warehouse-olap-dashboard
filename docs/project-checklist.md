@@ -5,13 +5,14 @@
 ## 1. Source Database Setup
 
 - [x] Download the source dataset.
-  - Evidence: `db/raw-dumps/faker_{Couriers,Riders,Users,Products,Orders,OrderItems}.sql`; `evidence/source-import-report.json: archive.file = MCO1_dataset_ecommerce.zip`, `sha256 = a10f1186...`, `hashMatches: true`.
+  - Evidence: official `MCO1_dataset_ecommerce.zip` present locally (gitignored) + extracted `db/raw-dumps/faker_{Couriers,Riders,Users,Products,Orders,OrderItems}.sql`; `evidence/source-import-report.json: archive.file = MCO1_dataset_ecommerce.zip`, `sha256 = a10f1186...`, `hashMatches: true`.
 - [x] Import the dataset into a local MySQL or Postgres database.
-  - Evidence: Postgres 16 `source_db` via `docker-compose.yml` (`source_db`, port 5433); `db/source/init/01_source_schema.sql` + `db/source/importer/`; `evidence/source-import-report.json: import.transaction = committed`, `database.passed: true`; `evidence/source-db-revalidation.json: passed: true`. Counts: Couriers 3, Riders 100, Users 100000, Products 10000, Orders 1000000, OrderItems 1999824 (3,109,927 rows total), 0 orphans.
+  - Evidence: Postgres 16 `source_db` via `docker-compose.yml` (`source_db`, port 5433); canonical DDL `db/source/init/01_source_schema.sql`; all-Python importer `db/source/importer/` (`cli.py`, `source_import.py`, `archive_reader.py`, `stadvdb-mco1-db` uv env, 33 pytest); one-command setup `db/scripts/setup_source.sh --archive <zip> --reset`; `evidence/source-import-report.json: import.transaction = committed`, `database.passed: true`; `evidence/source-db-revalidation.json: passed: true`. Counts: Couriers 3, Riders 100, Users 100000, Products 10000, Orders 1000000, OrderItems 1999824 (3,109,927 rows total), 0 orphans.
   - Docs: `docs/database/source-database-setup.md`, `docs/database/source-schema.md`.
 - [x] *(If necessary)* Generate synthetic data to increase the size of the source database.
   - Evidence: N/A — `docs/database/source-database-setup.md` records 3,109,927 rows already sufficient; no synthetic rows added.
-- [ ] Second team member reproduces fresh-clone procedure (`docs/database/source-database-setup.md` acceptance list).
+- [x] Second team member reproduces fresh-clone procedure (`docs/database/source-database-setup.md` acceptance list).
+  - Evidence: second member ran the documented gates on this workstation (33 pytest, `verify`, `validate`, live `import --reset` + full `setup_source.sh` flow, both evidence `passed:true`). Same-machine run — separate-hardware fresh clone not performed.
 
 ## 2. Data Warehouse Construction
 
@@ -28,8 +29,8 @@
 
 ## 3. ETL Pipeline Setup
 
-- [ ] Select a programming language (Python, Java, etc.) for the ETL script.
-  - State: `README.md` plans Python + `uv`, but `etl/` contains only `.gitkeep`.
+- [x] Select a programming language (Python, Java, etc.) for the ETL script.
+  - Evidence: Python via `uv` — proven by the `stadvdb-mco1-db` importer env; ETL follows the same stack (`stadvdb-mco1-etl` convention specced, `etl/` implementation pending).
 - [ ] Write code to **Extract** data from the source database.
 - [ ] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
   - Known issues queued in `docs/database/source-schema.md` (mixed date formats, gender codes, float price, MySQL escapes, bulk timestamps, undeclared FKs), plus 4 profiling findings (constant `createdAt` kills lead time/benchmark/time-dim, single-age customers, uniform geography, flat demand).
