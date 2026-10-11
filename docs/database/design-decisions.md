@@ -20,15 +20,15 @@ Declare every AI-assisted row in the report's GenAI declaration (§9.1).
 | D2 | Smart date key `YYYYMMDD`; other dimensions use identity surrogate keys with a natural-key `UNIQUE` | Date keys need no lookup and sort naturally; surrogates isolate the warehouse from source IDs | Team |
 | D3 | Every dimension has a key-0 `Unknown` row (`DIM_DATE` has none) | Facts never need NULL foreign keys | Team |
 | D4 | Money is `NUMERIC(12,2)`; `lineValue` is labeled indicative basket value, not revenue | Exact arithmetic; `OrderItems` carries no historical price | Team |
-| D5 | Customer `ageBand` dropped | Every source customer is about the same age, so the column would be constant | Team |
-| D6 | Payday = 15th and last day of each month | Philippine semimonthly payroll convention (Q14) | Team |
-| D7 | `FACT_RIDERDAILY` includes zero-order days (rider × date) | A periodic snapshot must show idle capacity, not just activity | Team |
+| D5 | Customer `ageBand` dropped | Profiling correction COR-1; canonical measurements: `docs/technical-documentation/profiling.md` | Team |
+| D6 | Payday = 15th and last day of each month | Profiling correction COR-2; canonical rationale: `docs/technical-documentation/profiling.md` | Team |
+| D7 | `FACT_RIDERDAILY` includes zero-order days (rider × date) | Profiling correction COR-3; canonical rationale: `docs/technical-documentation/profiling.md` | Team |
 | D8 | Calendar weeks: Jan 1–7 = week 1, so a week never crosses a year | ISO weeks under the calendar year put 2024-12-30/31 in "2024 week 1"; calendar weeks keep Year > Week clean without a schema change. Trade-off: week 53 is a 1–2 day partial week, so weekly reports compare per-day averages | Team (AI-prepared options) |
 | D9 | Order-size bands at the data's quartiles: Small 1–6, Medium 7–10, Large 11–15, Bulk 16+; Light ≤ 10, Heavy ≥ 11 | The original cutoffs put 72% of orders in Large; quartiles give ~25% per band and a median Light/Heavy split, so size slices have real contrast | AI-assisted |
 | D10 | Rider age bands by decade: 18–29, 30–39, 40–49, 50–60 | Natural labels; with 100 riders every band still has ≥ 20 riders (20/26/23/31) | AI-assisted |
 | D11 | Geography drills Country > City; zip stays an attribute | Every zip belongs to one customer, so a zip level shows single customers; city names repeat across countries, so a city is always grouped with its country | AI-assisted |
 | D12 | An order's geography is its customer's address (`Users`) | `Orders` has no delivery address; the customer address is the only location in the source | AI-assisted |
-| D13 | `FACT_RIDERDAILY` measures: `itemsDelivered` = units, `maxBasket` = units in the rider's largest single order that day; no extra product-count column | Units match `totalQuantity`; product counts per order are flat (1/2/3 products, ⅓ each) and already in `FACT_ORDERDELIVERY.lineItemCount` | AI-assisted |
+| D13 | `FACT_RIDERDAILY` measures: `itemsDelivered` = units, `maxBasket` = units in the rider's largest single order that day; no extra product-count column | Units match `totalQuantity`; measured demand shape is recorded as PRF-4 in `docs/technical-documentation/profiling.md`, while product counts already exist in `FACT_ORDERDELIVERY.lineItemCount` | AI-assisted |
 | D14 | `FACT_RIDERDAILY` is built inside the warehouse from `FACT_ORDERDELIVERY` | The snapshot cannot disagree with the order fact it summarizes, and needs no second pass over the source | AI-assisted |
 
 ## ETL

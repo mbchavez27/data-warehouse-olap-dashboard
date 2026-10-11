@@ -305,6 +305,23 @@ def test_run_date_load_calls_preflight_before_opening_write_connections(monkeypa
     assert events == ["preflight"]
 
 
+def test_run_date_load_reports_measured_table_seconds(monkeypatch):
+    """Removing the measured DIM_DATE duration must fail the evidence contract."""
+    source = SourceConnection(["2025-01-01"])
+    warehouse = WarehouseConnection()
+    ticks = iter([4.0, 4.375])
+
+    monkeypatch.setattr(load_date.preflight, "run_preflight", lambda: None)
+    monkeypatch.setattr(load_date.db, "connect_source", lambda: source)
+    monkeypatch.setattr(load_date.db, "connect_warehouse", lambda: warehouse)
+    source.close = lambda: None
+    warehouse.close = lambda: None
+
+    report = load_date.run_date_load(clock=lambda: next(ticks))
+
+    assert report["seconds"] == 0.375
+
+
 def test_main_date_mode_invokes_loader_and_keeps_check_mode(monkeypatch, capsys):
     import main as main_module
 
@@ -338,10 +355,13 @@ def test_main_date_mode_invokes_loader_and_keeps_check_mode(monkeypatch, capsys)
     assert "preflight passed" in output
 
 
-def test_cli_exit_codes_distinguish_usage_errors_from_runtime_failures(monkeypatch, capsys):
+def test_cli_exit_codes_distinguish_usage_errors_from_runtime_failures(
+    monkeypatch, capsys, tmp_path
+):
     import main as main_module
 
-    assert main_module.run_cli(["--bogus"]) == 2
+    ledger = tmp_path / "runs.jsonl"
+    assert main_module.run_cli(["--bogus"], ledger_path=ledger) == 2
     assert "Usage:" in capsys.readouterr().err
 
     monkeypatch.setattr(
@@ -349,5 +369,5 @@ def test_cli_exit_codes_distinguish_usage_errors_from_runtime_failures(monkeypat
         "run_date_load",
         lambda: (_ for _ in ()).throw(RuntimeError("warehouse unavailable")),
     )
-    assert main_module.run_cli(["--date"]) == 1
+    assert main_module.run_cli(["--date"], ledger_path=ledger) == 1
     assert "ERROR: warehouse unavailable" in capsys.readouterr().err
