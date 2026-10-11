@@ -76,7 +76,7 @@ calendar day, including dates with no orders, and replaces `DIM_DATE` using
 measures `2024-09-24` through `2025-09-23` (365 rows), but those endpoints are
 validated results, not hardcoded loader inputs.
 
-### `DIM_RIDER`
+### `DIM_RIDER` (populated by `etl/main.py --dims`)
 
 | Column | Type | Key / constraint |
 |---|---|---|
@@ -87,12 +87,22 @@ validated results, not hardcoded loader inputs.
 | `courierId` | `INTEGER NOT NULL` | — |
 | `courierName` | `VARCHAR(255) NOT NULL` | — |
 | `age` | `INTEGER` | nullable (source may lack it) |
-| `ageBand` | `VARCHAR(16)` | kept: Q8/Q12 need rider bands; the profiling flag was customers-only |
+| `ageBand` | `VARCHAR(16)` | decade bands, rule below; kept for Q8/Q12 (the profiling flag was customers-only) |
 | `gender` | `CHAR(1) NOT NULL` | normalized `M`/`F` (see `source-schema.md` issue 2) |
 
 Unknown row: `(0, -1, 'Unknown', 'Unknown', -1, 'Unknown', NULL, 'Unknown', 'U')`.
 
-### `DIM_GEOGRAPHY`
+Vehicle cleanup: the source spells two vehicles two ways. `Bike` → `Bicycle`
+and `Motorbike` → `Motorcycle`; `Car` and `Trike` pass through. Result: 4
+vehicles (Motorcycle 42, Bicycle 29, Car 15, Trike 14 riders).
+
+Age-band rule: decade bands `18-29`, `30-39`, `40-49`, `50-60` (20 / 26 / 23 /
+31 riders on the official data). Decades read naturally on a dashboard, and
+with only 100 riders every band still holds at least 20 riders, so band
+comparisons are not driven by a handful of people. A narrower scheme (e.g. a
+`55+` band) would leave single-digit groups.
+
+### `DIM_GEOGRAPHY` (populated by `etl/main.py --dims`)
 
 | Column | Type | Key / constraint |
 |---|---|---|
@@ -106,20 +116,30 @@ Profiling note: source geography is approximately uniform, so Q20/Q21 read
 flat — the dimension is still built (drill-down paths must exist); the
 questions report the flat distribution as the finding.
 
+Hierarchy: Country > City. Every `zipCode` is unique to one customer
+(100,000 triples for 100,000 users), so a zip level would only list single
+customers; it stays as an attribute, not a drill level. City names repeat
+across countries, so reports always group a city together with its country.
+
 ### `DIM_ORDERSIZE` (static seed in DDL)
 
 | `orderSizeKey` | `sizeName` | `sizeGroup` | `minQuantity` | `maxQuantity` |
 |---:|---|---|---:|---:|
-| 1 | Small | Light | 1 | 1 |
-| 2 | Medium | Light | 2 | 5 |
-| 3 | Large | Heavy | 6 | 20 |
-| 4 | Bulk | Heavy | 21 | 2147483647 |
+| 1 | Small | Light | 1 | 6 |
+| 2 | Medium | Light | 7 | 10 |
+| 3 | Large | Heavy | 11 | 15 |
+| 4 | Bulk | Heavy | 16 | 2147483647 |
 
-Cutoffs are total order quantity (`SUM(quantity)` per order). Identity PK is
+Cutoffs are total order quantity (`SUM(quantity)` per order), set at the
+measured quartiles of the official data (25% ≤ 6, median 10, 75% ≤ 15; max
+34). The bands hold 25.6% / 26.7% / 23.5% / 24.2% of orders, and the Light /
+Heavy split falls at the median (52.3% / 47.7%). The original cutoffs (1 /
+2–5 / 6–20 / 21+) put 72% of orders in Large, which left slices by size with
+almost nothing to compare. Identity PK is
 overridden to these fixed keys so facts and reports can rely on stable IDs.
 Unknown row: `(0, 'Unknown', 'Unknown', 0, 0)` (excluded from Light/Heavy).
 
-### `DIM_CUSTOMER`
+### `DIM_CUSTOMER` (populated by `etl/main.py --dims`)
 
 | Column | Type | Key / constraint |
 |---|---|---|
@@ -134,7 +154,7 @@ No `ageBand`: source customers are effectively single-age (profiling), so the
 column would be constant. The hierarchy collapses to Gender; Q22 answers the
 concentration half only. Unknown row: `(0, -1, 'Unknown', 'Unknown', 'Unknown', NULL)`.
 
-### `DIM_PRODUCT`
+### `DIM_PRODUCT` (populated by `etl/main.py --dims`)
 
 | Column | Type | Key / constraint |
 |---|---|---|
@@ -143,9 +163,22 @@ concentration half only. Unknown row: `(0, -1, 'Unknown', 'Unknown', 'Unknown', 
 | `productCode` | `VARCHAR(64) NOT NULL` | — |
 | `productName` | `VARCHAR(255) NOT NULL` | — |
 | `category` | `VARCHAR(128) NOT NULL` | — |
-| `listPrice` | `NUMERIC(12,2) NOT NULL` | current list price |
+| `listPrice` | `NUMERIC(12,2) NOT NULL` | current list price, rounded to centavos |
 
 Unknown row: `(0, -1, 'Unknown', 'Unknown', 'Unknown', 0.00)`.
+
+Category cleanup: the source spells four categories several ways. Labels
+that differ only in case, spacing, or singular/plural merge (`TOYS`/`Toy`/
+`Toys` → `Toys`, `BAG`/`Bags` → `Bags`, `make up`/`Makeup` → `Makeup`,
+`GADGETS`/`Gadgets` → `Gadgets`); distinct concepts stay separate (`Clothes`
+vs `Men's Apparel`, `Gadgets` vs `Electronics`), since merging those would be
+interpretation, not cleaning. Result: 9 categories covering all 10,000
+products.
+
+Price rounding: the dump stores MySQL `FLOAT` prices with up to 5 decimals
+(e.g. `1.77046`; 920 of 10,000 products have more than 2). `listPrice` rounds
+half away from zero to 2 decimals in SQL (`price::numeric(12,2)`), so
+`1.77046` → `1.77` and `3.27517` → `3.28`.
 
 ### `FACT_ORDERDELIVERY` (one row per order)
 
@@ -163,16 +196,25 @@ parent-order FKs copied from the delivery grain plus
 `productKey → DIM_PRODUCT` (all `NOT NULL`, enforced); measures
 `quantity INTEGER NOT NULL`, `lineValue NUMERIC(12,2) NOT NULL`
 (`quantity × current list price` — **indicative basket value, not revenue**,
-because `OrderItems` carries no historical price).
+because `OrderItems` carries no historical price). The multiplier is the
+rounded `DIM_PRODUCT.listPrice`, so `lineValue` reconciles exactly against the
+warehouse's own price column.
 
 ### `FACT_RIDERDAILY` (one row per rider per delivery date, zero-order days included)
 
 `riderDailyKey BIGINT` identity PK; FKs `dateKey → DIM_DATE`,
-`riderKey → DIM_RIDER` (enforced); measures `ordersDelivered`,
-`itemsDelivered` (`0` on idle days), `maxBasket` (non-additive: peak-day
-basket, never summed across days), `isActiveDay SMALLINT 0/1`.
+`riderKey → DIM_RIDER` (enforced); measures `ordersDelivered` (orders that
+day), `itemsDelivered` (total units, `SUM(quantity)`, the same unit as
+`FACT_ORDERDELIVERY.totalQuantity`), `maxBasket` (units in the rider's largest
+single order that day; non-additive, never summed across days),
+`isActiveDay SMALLINT 0/1`. All measures are `0` on idle days. Product counts
+are not repeated here: they stay in `FACT_ORDERDELIVERY.lineItemCount`
+(drill-across through `DIM_DATE` and `DIM_RIDER`).
 Idle days come from the rider×date cross join at ETL time (see grain note in
-the design doc); the table shape already accommodates them.
+the design doc). The official data has no idle rider-days (all 100 riders
+deliver on all 365 days), so the zero-row path is proven by a unit-test
+fixture and the live load is checked by counts: 36,500 rows, 1,000,000 orders
+in total, 0 idle rows.
 
 ## Profiling corrections applied
 
@@ -182,6 +224,9 @@ the design doc); the table shape already accommodates them.
 | 2 | Q22 customer age → concentration only | `DIM_CUSTOMER.ageBand` dropped |
 | 3 | Q14 payday rule (15th + month-end) | `isPayDay` rule documented here, applied at ETL date-build |
 | 4 | Idle-day grain (rider×date incl. zeros) | None (shape already fits; ETL cross-joins) |
+| 5 | Order-size cutoffs moved to the data's quartiles (1–6 / 7–10 / 11–15 / 16+) | `DIM_ORDERSIZE` seed rows |
+| 6 | Calendar weeks (Jan 1–7 = week 1) so Year > Week never crosses a year | None (ETL date-build rule) |
+| 7 | Geography drills Country > City; zip kept as an attribute | None (reporting rule) |
 
 ## Fresh-volume verification (readiness gate, Report R0 pre-ETL half)
 
@@ -215,8 +260,12 @@ are removed with `docker compose down -v dw_db` only when intentionally wiping.
 ## Explicit non-scope
 
 - No secondary indexes (Step 6 owns the baseline-vs-optimized experiment).
-- No source-driven dimensions or fact loads yet. ETL-1 loads only `DIM_DATE`;
-  the five static `DIM_ORDERSIZE` rows remain DDL-owned and are verified, not
-  rebuilt, by the date loader.
+- No fact loads yet (ETL-2b). `--date` loads `DIM_DATE`; `--dims` upserts the four
+  source-driven dimensions by natural key in one transaction (SCD Type 1:
+  changed attributes overwrite in place, surrogate keys never change, rows
+  are never deleted). The five static `DIM_ORDERSIZE` rows remain DDL-owned
+  and are verified, not rebuilt, by the date loader.
+- Rejected source rows abort the load before commit and are listed in
+  `evidence/etl-rejects.json` (empty on the official dataset).
 - Design-doc amendments for the customer-`ageBand` removal ship alongside
   this implementation (mermaid + hierarchy table + corrections note).

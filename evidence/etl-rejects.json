@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "modes": {
+    "dims": {
+      "generatedAt": "2026-10-11T04:12:57.486Z",
+      "rejectCount": 0,
+      "byReason": {},
+      "rejects": [],
+      "passed": true
+    }
+  },
+  "passed": true
+}

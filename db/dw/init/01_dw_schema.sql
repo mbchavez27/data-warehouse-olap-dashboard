@@ -121,10 +121,10 @@ INSERT INTO "DIM_ORDERSIZE"
   ("orderSizeKey", "sizeName", "sizeGroup", "minQuantity", "maxQuantity")
 OVERRIDING SYSTEM VALUE VALUES
   (0, 'Unknown', 'Unknown', 0, 0),
-  (1, 'Small', 'Light', 1, 1),
-  (2, 'Medium', 'Light', 2, 5),
-  (3, 'Large', 'Heavy', 6, 20),
-  (4, 'Bulk', 'Heavy', 21, 2147483647);
+  (1, 'Small', 'Light', 1, 6),
+  (2, 'Medium', 'Light', 7, 10),
+  (3, 'Large', 'Heavy', 11, 15),
+  (4, 'Bulk', 'Heavy', 16, 2147483647);
 
 INSERT INTO "DIM_CUSTOMER"
   ("customerKey", "customerId", "username", "firstName", "lastName", "gender")

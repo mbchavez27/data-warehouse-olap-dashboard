@@ -7,6 +7,25 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dw_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d dw_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # Load tests run against this disposable database; in CI a missing
+      # database fails the run instead of skipping the tests.
+      ETL_TEST_DSN: host=localhost port=5432 dbname=dw_test user=postgres password=postgres
+      ETL_REQUIRE_DB_TESTS: "1"
     steps:
       - uses: actions/checkout@v4
 

@@ -75,7 +75,7 @@ erDiagram
 
     DIM_ORDERSIZE {
         int orderSizeKey PK
-        string sizeName "Small, Medium, Large, Bulk"
+        string sizeName "Small 1-6, Medium 7-10, Large 11-15, Bulk 16+"
         string sizeGroup "Light, Heavy"
         int minQuantity
         int maxQuantity
@@ -131,8 +131,8 @@ Question 16 (drill-across) uses `FACT_ORDERDELIVERY` and `FACT_RIDERDAILY` toget
 | Dimension       | Hierarchy                                                   |
 | --------------- | ----------------------------------------------------------- |
 | `DIM_DATE`      | Year > Quarter > Month > Day (alternate: Year > Week > Day) |
-| `DIM_RIDER`     | Courier > Vehicle Type > Rider (alternate: Age Band > Age)  |
-| `DIM_GEOGRAPHY` | Country > City > Zip Code                                   |
+| `DIM_RIDER`     | Courier > Vehicle Type > Rider (alternate: Age Band > Age; decade bands) |
+| `DIM_GEOGRAPHY` | Country > City (zip is an attribute: one per customer)       |
 | `DIM_ORDERSIZE` | Size Group > Size                                           |
 | `DIM_PRODUCT`   | Category > Product                                          |
 | `DIM_CUSTOMER`  | Gender (ageBand removed — constant in source, see corrections) |
@@ -160,8 +160,8 @@ Question 16 (drill-across) uses `FACT_ORDERDELIVERY` and `FACT_RIDERDAILY` toget
 | 17  | Product             | Which categories make up Heavy orders?                                                              | ORDERITEM                  | Category × Size Group, units                        | Pivot            | Vehicle planning by category                  |
 | 18  | Product             | Which products and categories lead by units and list-price value?                                   | ORDERITEM                  | Category > Product, units, value                    | Drill-down       | Category focus                                |
 | 19  | Product             | How does category demand move by month?                                                             | ORDERITEM                  | Year > Month × Category, units                      | Roll-up          | Seasonal capacity by category                 |
-| 20  | Geography           | Where is demand concentrated? _(conditional)_                                                       | ORDERDELIVERY              | Country > City > Zip, orders                        | Drill-down       | Where to position fleet                       |
-| 21  | Geography           | Which zones or countries have the most Heavy orders, and which vehicles serve them? _(conditional)_ | ORDERDELIVERY              | Country > Zip × Size Group × Vehicle                | Dice             | Heavier vehicles to heavier zones             |
+| 20  | Geography           | Where is demand concentrated? _(conditional)_                                                       | ORDERDELIVERY              | Country > City, orders                              | Drill-down       | Where to position fleet                       |
+| 21  | Geography           | Which zones or countries have the most Heavy orders, and which vehicles serve them? _(conditional)_ | ORDERDELIVERY              | Country × Size Group × Vehicle                      | Dice             | Heavier vehicles to heavier zones             |
 | 22  | Customer            | How concentrated are orders across customers? _(age-band half not supported — single-age source)_ | ORDERDELIVERY              | Customer concentration                                                  | Drill-down   | Customer targeting                            |
 
 ## Reports
@@ -193,6 +193,10 @@ The following profiling findings are resolved in `db/dw/init/01_dw_schema.sql`
 - Q14 `isPayDay` rule: 15th and last day of month, applied at ETL date-build.
 - `FACT_RIDERDAILY` grain includes zero-order days via the rider×date cross
   join at ETL time.
+- Order-size cutoffs sit at the data's quartiles (1–6 / 7–10 / 11–15 / 16+);
+  the original cutoffs put 72% of orders in one band.
+- Weeks are calendar weeks (Jan 1–7 = week 1) so Year > Week never crosses a year.
+- Geography drills Country > City; zip is unique per customer, so it stays an attribute.
 
 ### Interpretation of Results
 

@@ -48,8 +48,16 @@ def check_warehouse(conn) -> Dict[str, Any]:
     return json.loads(row[0])
 
 
-def run_preflight(env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-    """Open both databases, run both gates, or raise naming the failure."""
+def run_preflight(
+    env: Optional[Dict[str, str]] = None, *, require_empty_facts: bool = True
+) -> Dict[str, Any]:
+    """Open both databases, run both gates, or raise naming the failure.
+
+    ``require_empty_facts`` selects the warehouse verdict: True (the default,
+    used by --check and --date) needs the pre-load state, ``passed``; False
+    (used by the reloadable --dims/--facts modes) needs only
+    ``structurallyReady``, which still holds after facts are loaded.
+    """
     try:
         source = db.connect_source(env)
     except ConnectionError as exc:
@@ -73,8 +81,10 @@ def run_preflight(env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
             warehouse_report = check_warehouse(warehouse)
     finally:
         warehouse.close()
-    if warehouse_report.get("passed") is not True:
+    verdict = "passed" if require_empty_facts else "structurallyReady"
+    if warehouse_report.get(verdict) is not True:
         raise PreflightError(
-            f"preflight: warehouse not ready: {warehouse_report}"
+            f"preflight: warehouse not ready ({verdict} is not true): "
+            f"{warehouse_report}"
         )
     return {"passed": True, "source": source_report, "warehouse": warehouse_report}
