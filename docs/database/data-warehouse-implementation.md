@@ -76,7 +76,7 @@ calendar day, including dates with no orders, and replaces `DIM_DATE` using
 measures `2024-09-24` through `2025-09-23` (365 rows), but those endpoints are
 validated results, not hardcoded loader inputs.
 
-### `DIM_RIDER`
+### `DIM_RIDER` (populated by `etl/main.py --dims`)
 
 | Column | Type | Key / constraint |
 |---|---|---|
@@ -102,7 +102,7 @@ with only 100 riders every band still holds at least 20 riders, so band
 comparisons are not driven by a handful of people. A narrower scheme (e.g. a
 `55+` band) would leave single-digit groups.
 
-### `DIM_GEOGRAPHY`
+### `DIM_GEOGRAPHY` (populated by `etl/main.py --dims`)
 
 | Column | Type | Key / constraint |
 |---|---|---|
@@ -139,7 +139,7 @@ almost nothing to compare. Identity PK is
 overridden to these fixed keys so facts and reports can rely on stable IDs.
 Unknown row: `(0, 'Unknown', 'Unknown', 0, 0)` (excluded from Light/Heavy).
 
-### `DIM_CUSTOMER`
+### `DIM_CUSTOMER` (populated by `etl/main.py --dims`)
 
 | Column | Type | Key / constraint |
 |---|---|---|
@@ -154,7 +154,7 @@ No `ageBand`: source customers are effectively single-age (profiling), so the
 column would be constant. The hierarchy collapses to Gender; Q22 answers the
 concentration half only. Unknown row: `(0, -1, 'Unknown', 'Unknown', 'Unknown', NULL)`.
 
-### `DIM_PRODUCT`
+### `DIM_PRODUCT` (populated by `etl/main.py --dims`)
 
 | Column | Type | Key / constraint |
 |---|---|---|
@@ -260,8 +260,12 @@ are removed with `docker compose down -v dw_db` only when intentionally wiping.
 ## Explicit non-scope
 
 - No secondary indexes (Step 6 owns the baseline-vs-optimized experiment).
-- No source-driven dimensions or fact loads yet. ETL-1 loads only `DIM_DATE`;
-  the five static `DIM_ORDERSIZE` rows remain DDL-owned and are verified, not
-  rebuilt, by the date loader.
+- No fact loads yet (ETL-2b). `--date` loads `DIM_DATE`; `--dims` upserts the four
+  source-driven dimensions by natural key in one transaction (SCD Type 1:
+  changed attributes overwrite in place, surrogate keys never change, rows
+  are never deleted). The five static `DIM_ORDERSIZE` rows remain DDL-owned
+  and are verified, not rebuilt, by the date loader.
+- Rejected source rows abort the load before commit and are listed in
+  `evidence/etl-rejects.json` (empty on the official dataset).
 - Design-doc amendments for the customer-`ageBand` removal ship alongside
   this implementation (mermaid + hierarchy table + corrections note).

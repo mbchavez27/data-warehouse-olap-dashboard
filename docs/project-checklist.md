@@ -32,6 +32,7 @@
 - [x] Select a programming language (Python, Java, etc.) for the ETL script.
   - Evidence: Python via `uv` — `stadvdb-mco1-etl` env live (`etl/pyproject.toml`, psycopg + pytest) with `etl/main.py --check` readiness gate proven green; Extract/Transform/Load implementation pending.
 - [ ] Write code to **Extract** data from the source database.
+  - State: `DIM_DATE` (`etl/main.py --date`) and the four source-driven dimensions (`--dims`: 100 riders, 100,000 geographies, 100,000 customers, 10,000 products; 0 rejects in `evidence/etl-rejects.json`) load from source; fact loads pending (ETL-2b).
 - [ ] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
   - Known issues queued in `docs/database/source-schema.md` (mixed date formats, gender codes, float price, MySQL escapes, bulk timestamps, undeclared FKs), plus 4 profiling findings (constant `createdAt` kills lead time/benchmark/time-dim, single-age customers, uniform geography, flat demand).
 - [ ] Write code to **Load** the transformed data into the data warehouse.

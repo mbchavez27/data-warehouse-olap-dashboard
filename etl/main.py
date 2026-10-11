@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import preflight
 import load_date
+import load_dims
 
 
 class UsageError(ValueError):
@@ -23,9 +24,11 @@ def usage() -> str:
             "Usage:",
             "  uv run --project etl python etl/main.py --check",
             "  uv run --project etl python etl/main.py --date",
+            "  uv run --project etl python etl/main.py --dims",
             "",
             "--check runs the read-only readiness gate.",
             "--date replaces DIM_DATE from the parsed source delivery-date range.",
+            "--dims upserts DIM_RIDER, DIM_GEOGRAPHY, DIM_CUSTOMER, DIM_PRODUCT.",
         ]
     )
 
@@ -47,6 +50,17 @@ def main(argv: Optional[List[str]] = None) -> None:
             f"({report['minDate']} through {report['maxDate']}); "
             f"DIM_ORDERSIZE seeds:{report['orderSizeSeedCount']}"
         )
+        return
+    if argv == ["--dims"]:
+        summary = load_dims.run_dims_load()
+        for table, counts in summary.items():
+            print(
+                f"{table}: {counts['loaded']:,} rows from source "
+                f"(inserted {counts['inserted']:,}, updated {counts['updated']:,}, "
+                f"unchanged {counts['unchanged']:,}); table now {counts['tableRows']:,} "
+                f"+ Unknown; {counts['seconds']}s"
+            )
+        print("rejects: 0 (evidence/etl-rejects.json)")
         return
     raise UsageError(usage())
 
