@@ -30,12 +30,13 @@
 ## 3. ETL Pipeline Setup
 
 - [x] Select a programming language (Python, Java, etc.) for the ETL script.
-  - Evidence: Python via `uv` — `stadvdb-mco1-etl` env live (`etl/pyproject.toml`, psycopg + pytest) with `etl/main.py --check` readiness gate proven green; Extract/Transform/Load implementation pending.
-- [ ] Write code to **Extract** data from the source database.
-  - State: `DIM_DATE` (`etl/main.py --date`) and the four source-driven dimensions (`--dims`: 100 riders, 100,000 geographies, 100,000 customers, 10,000 products; 0 rejects in `evidence/etl-rejects.json`) load from source; fact loads pending (ETL-2b).
-- [ ] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
-  - Known issues queued in `docs/database/source-schema.md` (mixed date formats, gender codes, float price, MySQL escapes, bulk timestamps, undeclared FKs), plus 4 profiling findings (constant `createdAt` kills lead time/benchmark/time-dim, single-age customers, uniform geography, flat demand).
-- [ ] Write code to **Load** the transformed data into the data warehouse.
+  - Evidence: Python via `uv` (`etl/pyproject.toml`, psycopg + pytest); CI runs every test on each push (`.github/workflows/tests.yml`).
+- [x] Write code to **Extract** data from the source database.
+  - Evidence: `etl/load_date.py`, `etl/load_dims.py`, `etl/load_facts.py` stream all six source tables through server-side cursors (10,000-row batches; no full-table reads).
+- [x] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
+  - Evidence: `etl/transform.py` + loaders: two date formats parsed to `DATE`; gender M/F/Male/Female → M/F; vehicles 6 → 4; categories 14 → 9; prices `REAL` → `NUMERIC(12,2)` (920 rounded, catalog total +₱0.42); names merged; orders aggregated (total units, line items, size band); rider-day snapshot built with zero-order days. Every source issue and decision: `docs/database/source-schema.md` (issues 1–9), `docs/database/design-decisions.md`.
+- [x] Write code to **Load** the transformed data into the data warehouse.
+  - Evidence: `etl/main.py --date` / `--dims` / `--facts`: 365 dates; 100 / 100,000 / 100,000 / 10,000 dimension rows; 1,000,000 / 1,999,824 / 36,500 fact rows; 0 rejects (`evidence/etl-rejects.json`); full rebuild ~40 s; reruns byte-identical; 154 tests. Formal source-vs-warehouse reconciliation evidence: ETL-3.
 
 ## 4. OLAP Application Development
 
