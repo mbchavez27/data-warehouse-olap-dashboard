@@ -82,6 +82,16 @@ def run_preflight(
     finally:
         warehouse.close()
     verdict = "passed" if require_empty_facts else "structurallyReady"
+    if (
+        require_empty_facts
+        and warehouse_report.get("structurallyReady") is True
+        and warehouse_report.get("factRows", 0) > 0
+    ):
+        raise PreflightError(
+            f"preflight: {warehouse_report['factRows']:,} fact rows are loaded; this mode "
+            "only runs before the fact load. Reset with ./db/scripts/setup_dw.sh "
+            "--schema-only, then run --date, --dims, --facts in order."
+        )
     if warehouse_report.get(verdict) is not True:
         raise PreflightError(
             f"preflight: warehouse not ready ({verdict} is not true): "

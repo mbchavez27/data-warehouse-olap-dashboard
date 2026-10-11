@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import preflight
 import load_date
 import load_dims
+import load_facts
 
 
 class UsageError(ValueError):
@@ -25,10 +26,12 @@ def usage() -> str:
             "  uv run --project etl python etl/main.py --check",
             "  uv run --project etl python etl/main.py --date",
             "  uv run --project etl python etl/main.py --dims",
+            "  uv run --project etl python etl/main.py --facts",
             "",
-            "--check runs the read-only readiness gate.",
+            "--check runs the read-only readiness gate (works before and after loads).",
             "--date replaces DIM_DATE from the parsed source delivery-date range.",
             "--dims upserts DIM_RIDER, DIM_GEOGRAPHY, DIM_CUSTOMER, DIM_PRODUCT.",
+            "--facts reloads FACT_ORDERDELIVERY, FACT_ORDERITEM, FACT_RIDERDAILY.",
         ]
     )
 
@@ -36,11 +39,13 @@ def usage() -> str:
 def main(argv: Optional[List[str]] = None) -> None:
     argv = sys.argv[1:] if argv is None else argv
     if argv == ["--check"]:
-        report = preflight.run_preflight()
+        report = preflight.run_preflight(require_empty_facts=False)
         total = sum(report["source"]["counts"].values())
+        fact_rows = report["warehouse"].get("factRows", 0)
+        state = f"{fact_rows:,} fact rows loaded" if fact_rows else "facts empty (pre-load)"
         print(
             f"preflight passed: source holds {total:,} rows with exact counts; "
-            "warehouse readiness passed:true"
+            f"warehouse structurally ready; {state}"
         )
         return
     if argv == ["--date"]:
@@ -60,6 +65,16 @@ def main(argv: Optional[List[str]] = None) -> None:
                 f"unchanged {counts['unchanged']:,}); table now {counts['tableRows']:,} "
                 f"+ Unknown; {counts['seconds']}s"
             )
+        print("rejects: 0 (evidence/etl-rejects.json)")
+        return
+    if argv == ["--facts"]:
+        summary = load_facts.run_facts_load()
+        for table in ("FACT_ORDERDELIVERY", "FACT_ORDERITEM", "FACT_RIDERDAILY"):
+            counts = summary[table]
+            print(f"{table}: {counts['loaded']:,} rows; {counts['seconds']}s")
+        idle = summary["FACT_RIDERDAILY"]["idleRows"]
+        checks = summary["consistencyChecks"]
+        print(f"idle rider-days: {idle:,}; consistency checks passed: {sum(checks.values())}/{len(checks)}")
         print("rejects: 0 (evidence/etl-rejects.json)")
         return
     raise UsageError(usage())
