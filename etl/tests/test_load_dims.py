@@ -14,48 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import load_dims
 import rejects
-
-TS = "2025-09-22 16:56:36"
-
-
-def seed_source(conn, *, riders=None, products=None):
-    """A small source dataset carrying every dirty variant the real one has."""
-    conn.execute(
-        'INSERT INTO "Couriers" ("id", "name", "createdAt", "updatedAt") VALUES '
-        "(1, 'JNT', %s, %s), (2, 'LBCD', %s, %s)",
-        (TS, TS, TS, TS),
-    )
-    riders = riders or [
-        (1, "Ana", "Cruz", "Bike", 1, 18, "Female"),
-        (2, "Ben", "Reyes", "Motorbike", 2, 40, "M"),
-        (3, "Cara", "Lim", "Trike", 1, 60, "F"),
-    ]
-    conn.cursor().executemany(
-        'INSERT INTO "Riders" ("id", "firstName", "lastName", "vehicleType", "courierId", '
-        '"age", "gender", "createdAt", "updatedAt") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
-        [r + (TS, TS) for r in riders],
-    )
-    users = [
-        (1, "u1", "Dan", "Tan", "Manila", "Philippines", "1000", "Male"),
-        (2, "u2", "Eve", "Go", "Manila", "Philippines", "1000", "female"),  # same triple as u1
-        (3, "u3", "Fay", "Uy", "Manila", "Chile", "2000", "F"),  # same city, other country
-    ]
-    conn.cursor().executemany(
-        'INSERT INTO "Users" ("id", "username", "firstName", "lastName", "city", "country", '
-        '"zipCode", "gender", "createdAt", "updatedAt") VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-        [u + (TS, TS) for u in users],
-    )
-    products = products or [
-        (1, "P1", "Tasty Wooden Fish", "TOYS", 1.77046),
-        (2, "P2", "Practical Silk Keyboard", "make up", 3.27517),
-        (3, "P3", "Incredible Metal Shirt", "Men's Apparel", 19.99),
-    ]
-    conn.cursor().executemany(
-        'INSERT INTO "Products" ("id", "productCode", "name", "category", "price", '
-        '"createdAt", "updatedAt") VALUES (%s, %s, %s, %s, %s, %s, %s)',
-        [p + (TS, TS) for p in products],
-    )
-    conn.commit()
+from source_fixtures import seed_source
 
 
 def run_load(dsn):

@@ -206,7 +206,7 @@ def test_default_preflight_still_requires_empty_facts(monkeypatch):
         db_module, "connect_warehouse", lambda env=None: FakeConn(payload=(LOADED_JSON,))
     )
 
-    with pytest.raises(PreflightError, match="passed is not true"):
+    with pytest.raises(PreflightError, match="fact rows are loaded; this mode only runs before"):
         run_preflight()
 
 
@@ -234,6 +234,6 @@ def test_main_rejects_anything_but_check(monkeypatch):
     monkeypatch.setattr(
         preflight,
         "run_preflight",
-        lambda env=None: {"passed": True, "source": {"counts": FULL_COUNTS}, "warehouse": {}},
+        lambda env=None, **_: {"passed": True, "source": {"counts": FULL_COUNTS}, "warehouse": {}},
     )
     assert main_module.main(["--check"]) is None

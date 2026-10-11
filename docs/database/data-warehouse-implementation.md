@@ -180,7 +180,7 @@ Price rounding: the dump stores MySQL `FLOAT` prices with up to 5 decimals
 half away from zero to 2 decimals in SQL (`price::numeric(12,2)`), so
 `1.77046` → `1.77` and `3.27517` → `3.28`.
 
-### `FACT_ORDERDELIVERY` (one row per order)
+### `FACT_ORDERDELIVERY` (one row per order; populated by `etl/main.py --facts`)
 
 `orderDeliveryKey BIGINT` identity PK; `orderNumber VARCHAR(255)` degenerate
 dimension; FKs `deliveryDateKey → DIM_DATE`, `riderKey → DIM_RIDER`,
@@ -188,8 +188,11 @@ dimension; FKs `deliveryDateKey → DIM_DATE`, `riderKey → DIM_RIDER`,
 `customerKey → DIM_CUSTOMER` (all `NOT NULL`, enforced); measures
 `orderCount INTEGER NOT NULL DEFAULT 1` (always 1, additive),
 `totalQuantity INTEGER NOT NULL`, `lineItemCount INTEGER NOT NULL`.
+`geoKey` is the customer's address (`Users`), the only location in the source
+(decision D12). `orderSizeKey` is looked up from `DIM_ORDERSIZE` by
+`totalQuantity`, so the seed rows stay the single source of the cutoffs.
 
-### `FACT_ORDERITEM` (one row per product in an order)
+### `FACT_ORDERITEM` (one row per product in an order; populated by `etl/main.py --facts`)
 
 `orderItemKey BIGINT` identity PK; `orderNumber` degenerate; the five
 parent-order FKs copied from the delivery grain plus
@@ -200,7 +203,7 @@ because `OrderItems` carries no historical price). The multiplier is the
 rounded `DIM_PRODUCT.listPrice`, so `lineValue` reconciles exactly against the
 warehouse's own price column.
 
-### `FACT_RIDERDAILY` (one row per rider per delivery date, zero-order days included)
+### `FACT_RIDERDAILY` (one row per rider per delivery date, zero-order days included; populated by `etl/main.py --facts`)
 
 `riderDailyKey BIGINT` identity PK; FKs `dateKey → DIM_DATE`,
 `riderKey → DIM_RIDER` (enforced); measures `ordersDelivered` (orders that
@@ -210,8 +213,9 @@ single order that day; non-additive, never summed across days),
 `isActiveDay SMALLINT 0/1`. All measures are `0` on idle days. Product counts
 are not repeated here: they stay in `FACT_ORDERDELIVERY.lineItemCount`
 (drill-across through `DIM_DATE` and `DIM_RIDER`).
-Idle days come from the rider×date cross join at ETL time (see grain note in
-the design doc). The official data has no idle rider-days (all 100 riders
+It is built inside the warehouse from `FACT_ORDERDELIVERY` (decision D14):
+every real rider × every `DIM_DATE` day, left-joined to that rider's daily
+order totals, so the snapshot cannot disagree with the order fact. The official data has no idle rider-days (all 100 riders
 deliver on all 365 days), so the zero-row path is proven by a unit-test
 fixture and the live load is checked by counts: 36,500 rows, 1,000,000 orders
 in total, 0 idle rows.
@@ -228,6 +232,46 @@ in total, 0 idle rows.
 | 6 | Calendar weeks (Jan 1–7 = week 1) so Year > Week never crosses a year | None (ETL date-build rule) |
 | 7 | Geography drills Country > City; zip kept as an attribute | None (reporting rule) |
 
+## ETL run order and performance
+
+Fresh build, in order (each mode runs the preflight first):
+
+| Step | Command | Result on the official data | Time |
+|---|---|---|---:|
+| 1 | `etl/main.py --date` | 365 dates | < 1 s |
+| 2 | `etl/main.py --dims` | 100 riders, 100,000 geographies, 100,000 customers, 10,000 products | ~5 s |
+| 3 | `etl/main.py --facts` | 1,000,000 orders, 1,999,824 order items, 36,500 rider-days | ~30 s |
+
+A full rebuild from an empty warehouse takes about 40 s. Reruns are
+idempotent: `--dims` upserts in place, and `--facts` truncates and reloads all
+three facts in one transaction (identities restart, so a second reload is
+byte-identical).
+
+Fact-load design:
+- Orders and order items stream from the source in 10,000-row batches through
+  server-side cursors; no table is read whole into memory.
+- Natural references resolve to surrogate keys through in-memory maps built
+  from the loaded dimensions (365 dates, 100 riders, 100,000 customers and
+  their addresses, 10,000 products). The source and warehouse are separate
+  databases, so a SQL join across them is not possible.
+- Rows arrive through `COPY`, the fastest bulk path into PostgreSQL.
+- **Foreign keys are suspended during the bulk copy and re-added before
+  commit.** Checking 13 FKs row by row (about 12 million single-row lookups)
+  made the first version take 3 min 56 s. Re-adding the constraints validates
+  every row in one set-based pass (1.4 s), cutting the load to 14 s with the
+  same integrity guarantee. Both steps sit inside the load transaction: if
+  validation fails, the rows and the dropped constraints roll back together
+  (covered by a test).
+- Before commit the load verifies its own output: row counts equal the source
+  (orders, order items, riders × dates) and five consistency checks hold
+  (rider-day orders = deliveries, rider-day units = delivered units, item units
+  = delivered units, item rows = line-item count, `lineValue = quantity ×
+  listPrice`). Any failure aborts the load.
+
+Independent check against the source after the load: 10,999,917 units in the
+source equal the units in all three facts; per-day order counts (365 days) and
+per-rider order counts match exactly.
+
 ## Fresh-volume verification (readiness gate, Report R0 pre-ETL half)
 
 From the repository root (macOS/Linux, or Git Bash/WSL on Windows):
@@ -239,8 +283,10 @@ From the repository root (macOS/Linux, or Git Bash/WSL on Windows):
 The script creates `.env` if missing, starts `dw_db` (PostgreSQL 16 @
 `localhost:5434`), and runs the readiness gate in
 `db/dw/validate/warehouse_readiness.sql`
-(shared with the future ETL preflight), printing the JSON report and exiting
-nonzero unless `passed` is true. Re-running without flags never touches data;
+(shared with the ETL preflight), printing the JSON report and exiting
+nonzero unless `structurallyReady` is true; it then reports whether facts are
+loaded. `passed` (structure and empty facts) is the pre-load verdict that
+`--date` requires. Re-running without flags never touches data;
 `--schema-only` re-applies the DDL (explicit, destructive).
 Windows CMD/PowerShell: see the script header for the direct equivalents.
 
@@ -260,11 +306,12 @@ are removed with `docker compose down -v dw_db` only when intentionally wiping.
 ## Explicit non-scope
 
 - No secondary indexes (Step 6 owns the baseline-vs-optimized experiment).
-- No fact loads yet (ETL-2b). `--date` loads `DIM_DATE`; `--dims` upserts the four
+- `--date` loads `DIM_DATE` (before facts only); `--dims` upserts the four
   source-driven dimensions by natural key in one transaction (SCD Type 1:
   changed attributes overwrite in place, surrogate keys never change, rows
   are never deleted). The five static `DIM_ORDERSIZE` rows remain DDL-owned
-  and are verified, not rebuilt, by the date loader.
+  and are verified, not rebuilt, by the date loader. `--facts` reloads all
+  three facts.
 - Rejected source rows abort the load before commit and are listed in
   `evidence/etl-rejects.json` (empty on the official dataset).
 - Design-doc amendments for the customer-`ageBand` removal ship alongside

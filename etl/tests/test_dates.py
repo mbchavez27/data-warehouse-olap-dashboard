@@ -323,7 +323,7 @@ def test_main_date_mode_invokes_loader_and_keeps_check_mode(monkeypatch, capsys)
     monkeypatch.setattr(
         main_module.preflight,
         "run_preflight",
-        lambda: {
+        lambda **_: {
             "source": {"counts": {"Orders": 1000000}},
             "warehouse": {"passed": True},
         },

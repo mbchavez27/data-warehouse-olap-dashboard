@@ -2,7 +2,14 @@
   "schemaVersion": 1,
   "modes": {
     "dims": {
-      "generatedAt": "2026-10-11T04:12:57.486Z",
+      "generatedAt": "2026-10-11T04:37:08.037Z",
+      "rejectCount": 0,
+      "byReason": {},
+      "rejects": [],
+      "passed": true
+    },
+    "facts": {
+      "generatedAt": "2026-10-11T04:39:52.803Z",
       "rejectCount": 0,
       "byReason": {},
       "rejects": [],

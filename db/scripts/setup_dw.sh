@@ -72,7 +72,11 @@ cmd_validate() {
 import json, sys
 report = json.loads(sys.stdin.read())
 print(json.dumps(report, indent=2))
-sys.exit(0 if report.get('passed') is True else 1)
+# Structure must hold before and after loads; 'passed' adds 'facts are empty'.
+if report.get('structurallyReady') is not True:
+    sys.exit(1)
+facts = report.get('factRows', 0)
+print('warehouse structurally ready; ' + (f'{facts:,} fact rows loaded' if facts else 'facts empty (pre-load)'))
 "
 }
 
