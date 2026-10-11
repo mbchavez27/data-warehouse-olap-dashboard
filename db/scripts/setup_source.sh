@@ -20,6 +20,10 @@
 #     uv run --project db python db/source/importer/cli.py validate
 set -euo pipefail
 
+# Git Bash (MSYS) rewrites Unix-style args such as /docker-entrypoint-initdb.d/...
+# into Windows paths before they reach `docker exec`; keep them verbatim.
+export MSYS_NO_PATHCONV=1
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 

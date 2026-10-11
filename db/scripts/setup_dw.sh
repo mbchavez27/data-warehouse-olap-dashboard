@@ -14,6 +14,10 @@
 #     Get-Content db/dw/validate/warehouse_readiness.sql | docker exec -i stadvdb-mco1-dw-db psql -X -At -U postgres -d dw_db -v ON_ERROR_STOP=1
 set -euo pipefail
 
+# Git Bash (MSYS) rewrites Unix-style args such as /docker-entrypoint-initdb.d/...
+# into Windows paths before they reach `docker exec`; keep them verbatim.
+export MSYS_NO_PATHCONV=1
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
