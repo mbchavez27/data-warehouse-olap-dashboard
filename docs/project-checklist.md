@@ -1,6 +1,6 @@
 # Project Checklist — Data Warehouse OLAP Dashboard
 
-> Status as of 2026-10-10. Checked items have repository evidence; unchecked items are scaffold-only (`.gitkeep`) or empty.
+> Status as of 2026-10-11. Checked items have repository evidence; unchecked items are scaffold-only (`.gitkeep`) or empty.
 
 ## 1. Source Database Setup
 
@@ -36,7 +36,7 @@
 - [x] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
   - Evidence: `etl/transform.py` + loaders: two date formats parsed to `DATE`; gender M/F/Male/Female → M/F; vehicles 6 → 4; categories 14 → 9; prices `REAL` → `NUMERIC(12,2)` (920 rounded, catalog total +₱0.42); names merged; orders aggregated (total units, line items, size band); rider-day snapshot built with zero-order days. Every source issue and decision: `docs/database/source-schema.md` (issues 1–9), `docs/database/design-decisions.md`.
 - [x] Write code to **Load** the transformed data into the data warehouse.
-  - Evidence: `etl/main.py --date` / `--dims` / `--facts`: 365 dates; 100 / 100,000 / 100,000 / 10,000 dimension rows; 1,000,000 / 1,999,824 / 36,500 fact rows; 0 rejects (`evidence/etl-rejects.json`); full rebuild ~40 s; reruns byte-identical; 154 tests. Formal source-vs-warehouse reconciliation evidence: ETL-3.
+  - Evidence: `etl/main.py --date` / `--dims` / `--facts`: 365 dates; 100 / 100,000 / 100,000 / 10,000 dimension rows; 1,000,000 / 1,999,824 / 36,500 fact rows; 0 rejects (`evidence/etl-rejects.json`); full rebuild ~40 s; reruns byte-identical. `etl/main.py --reconcile` produced `evidence/etl-reconciliation.json`: 15/15 source-to-warehouse checks passed, including 10,999,917 units in all three facts, exact Unknown seed rows, and 0 fact references to Unknown members.
 
 ## 4. OLAP Application Development
 
@@ -53,11 +53,21 @@
   - State: `tests/` contains only `.gitkeep`; planned `tests/functional_test.py` not present.
 - [ ] Execute each query multiple times using different parameter values.
 - [ ] Verify that the resulting reports and analytical data are correct.
+  - ETL input baseline: `evidence/etl-reconciliation.json` fixes the official warehouse totals that future report tests must reconcile against (1,000,000 deliveries; 1,999,824 order items; 36,500 rider-days; 10,999,917 units).
 
 ## 6. Performance Testing & Optimization
 
 - [ ] Run each query multiple times (varying parameters, structure, or setup) and record baseline execution times.
   - State: planned `tests/perf_test.py` not present.
+
+  | Baseline input | Current value | Evidence |
+  |---|---:|---|
+  | Loaded delivery facts | 1,000,000 rows | `evidence/etl-reconciliation.json` |
+  | Loaded order-item facts | 1,999,824 rows | `evidence/etl-reconciliation.json` |
+  | Loaded rider-day facts | 36,500 rows | `evidence/etl-reconciliation.json` |
+  | Full ETL rebuild | ~40 seconds | `docs/database/data-warehouse-implementation.md` |
+  | OLAP query timings before optimization | Pending | To be captured by Step 6 performance tests |
+  | OLAP query timings after optimization | Pending | To be captured after applying optimizations |
 - [ ] Evaluate performance and identify bottlenecks using the `EXPLAIN` feature.
 - [ ] Apply database optimization strategies (e.g., secondary indexes, query reformulation, denormalization).
   - State: planned `db/03_indexes.sql` not present.

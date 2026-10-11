@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-11T08:21:05.571Z",
+  "command": "reconcile",
+  "source": {
+    "orders": 1000000,
+    "orderItems": 1999824,
+    "riders": 100,
+    "users": 100000,
+    "products": 10000,
+    "distinctGeographies": 100000,
+    "units": 10999917,
+    "dateCount": 365
+  },
+  "warehouse": {
+    "factOrderDelivery": 1000000,
+    "factOrderItem": 1999824,
+    "factRiderDaily": 36500,
+    "dimDate": 365,
+    "dimRider": 100,
+    "dimGeography": 100000,
+    "dimCustomer": 100000,
+    "dimProduct": 10000,
+    "dimOrderSize": 5,
+    "factOrderDeliveryUnits": 10999917,
+    "factOrderItemUnits": 10999917,
+    "factRiderDailyUnits": 10999917,
+    "unknownSeedRows": {
+      "DIM_RIDER": 1,
+      "DIM_GEOGRAPHY": 1,
+      "DIM_ORDERSIZE": 1,
+      "DIM_CUSTOMER": 1,
+      "DIM_PRODUCT": 1
+    },
+    "unknownFactReferences": {
+      "DIM_RIDER": 0,
+      "DIM_GEOGRAPHY": 0,
+      "DIM_ORDERSIZE": 0,
+      "DIM_CUSTOMER": 0,
+      "DIM_PRODUCT": 0
+    }
+  },
+  "rejects": {
+    "schemaVersion": 1,
+    "modes": {
+      "dims": {
+        "generatedAt": "2026-10-11T04:37:08.037Z",
+        "rejectCount": 0,
+        "byReason": {},
+        "rejects": [],
+        "passed": true
+      },
+      "facts": {
+        "generatedAt": "2026-10-11T04:39:52.803Z",
+        "rejectCount": 0,
+        "byReason": {},
+        "rejects": [],
+        "passed": true
+      }
+    },
+    "passed": true
+  },
+  "checks": {
+    "factOrderDeliveryCount": {
+      "expected": 1000000,
+      "actual": 1000000,
+      "passed": true
+    },
+    "factOrderItemCount": {
+      "expected": 1999824,
+      "actual": 1999824,
+      "passed": true
+    },
+    "factRiderDailyCount": {
+      "expected": 36500,
+      "actual": 36500,
+      "passed": true
+    },
+    "dimDateCount": {
+      "expected": 365,
+      "actual": 365,
+      "passed": true
+    },
+    "dimRiderCount": {
+      "expected": 100,
+      "actual": 100,
+      "passed": true
+    },
+    "dimGeographyCount": {
+      "expected": 100000,
+      "actual": 100000,
+      "passed": true
+    },
+    "dimCustomerCount": {
+      "expected": 100000,
+      "actual": 100000,
+      "passed": true
+    },
+    "dimProductCount": {
+      "expected": 10000,
+      "actual": 10000,
+      "passed": true
+    },
+    "dimOrderSizeCount": {
+      "expected": 5,
+      "actual": 5,
+      "passed": true
+    },
+    "factOrderDeliveryUnits": {
+      "expected": 10999917,
+      "actual": 10999917,
+      "passed": true
+    },
+    "factOrderItemUnits": {
+      "expected": 10999917,
+      "actual": 10999917,
+      "passed": true
+    },
+    "factRiderDailyUnits": {
+      "expected": 10999917,
+      "actual": 10999917,
+      "passed": true
+    },
+    "unknownSeedRows": {
+      "expected": {
+        "DIM_RIDER": 1,
+        "DIM_GEOGRAPHY": 1,
+        "DIM_ORDERSIZE": 1,
+        "DIM_CUSTOMER": 1,
+        "DIM_PRODUCT": 1
+      },
+      "actual": {
+        "DIM_RIDER": 1,
+        "DIM_GEOGRAPHY": 1,
+        "DIM_ORDERSIZE": 1,
+        "DIM_CUSTOMER": 1,
+        "DIM_PRODUCT": 1
+      },
+      "passed": true
+    },
+    "unknownFactReferences": {
+      "expected": {
+        "DIM_RIDER": 0,
+        "DIM_GEOGRAPHY": 0,
+        "DIM_ORDERSIZE": 0,
+        "DIM_CUSTOMER": 0,
+        "DIM_PRODUCT": 0
+      },
+      "actual": {
+        "DIM_RIDER": 0,
+        "DIM_GEOGRAPHY": 0,
+        "DIM_ORDERSIZE": 0,
+        "DIM_CUSTOMER": 0,
+        "DIM_PRODUCT": 0
+      },
+      "passed": true
+    },
+    "rejectCount": {
+      "expected": 0,
+      "actual": 0,
+      "passed": true
+    }
+  },
+  "failedChecks": [],
+  "passed": true
+}
