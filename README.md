@@ -68,7 +68,10 @@ uv run --project etl python etl/run_pipeline.py --rebuild
 
 The default direct command works in PowerShell, CMD, macOS, and Linux.
 `--rebuild` requires Bash because the intentional reset uses the existing
-warehouse safety script.
+warehouse safety script. On Windows the runner uses Git Bash, even when you
+start it from PowerShell or CMD: it skips `C:\Windows\System32\bash.exe`,
+which launches WSL, where this checkout's `uv` environment is not available.
+Set `ETL_BASH` to a specific `bash.exe` to override.
 
 For diagnostics or an individual phase, the stable entry points remain:
 

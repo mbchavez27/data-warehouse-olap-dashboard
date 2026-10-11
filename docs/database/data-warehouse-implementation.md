@@ -250,7 +250,12 @@ the same command with `--rebuild`. The default starts both database services,
 runs the strict pre-load gate, and stops before the first write if facts are
 already loaded. The explicit rebuild delegates only to
 `db/scripts/setup_dw.sh --schema-only`; it never resets the source database.
-The default Python command is cross-platform. The rebuild path requires Bash.
+The default Python command is cross-platform. The rebuild path requires Bash;
+the runner resolves it before any side effect (`ETL_BASH`, else a non-WSL
+`bash` on `PATH`, else the Git Bash beside `git.exe`). A bare `bash` would
+not work on Windows: `CreateProcess` searches System32 before `PATH`, so it
+starts the WSL launcher, where Docker answers but `uv` does not, and the
+reset would stop halfway.
 
 The orchestrated order is:
 
