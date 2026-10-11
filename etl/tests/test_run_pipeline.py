@@ -307,7 +307,7 @@ def test_resolve_bash_accepts_a_non_wsl_bash_on_the_windows_path():
 )
 def test_resolve_bash_skips_the_wsl_launcher_and_finds_git_bash(wsl_launcher):
     git = r"C:\Program Files\Git\cmd\git.exe"
-    expected = str(Path(r"C:\Program Files\Git") / "bin" / "bash.exe")
+    expected = r"C:\Program Files\Git\bin\bash.exe"
 
     assert run_pipeline.resolve_bash(
         environ={"SystemRoot": r"C:\Windows"},

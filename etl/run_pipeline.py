@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import PureWindowsPath
 from typing import Callable, Mapping, Optional, Sequence
 
 import main as etl_main
@@ -89,7 +89,8 @@ def resolve_bash(
         return on_path
     git = which("git")
     if git:
-        for ancestor in list(Path(git).parents)[:3]:
+        # Windows path rules, whatever the host, so the logic is testable anywhere.
+        for ancestor in list(PureWindowsPath(git).parents)[:3]:
             candidate = str(ancestor / "bin" / "bash.exe")
             if is_file(candidate):
                 return candidate
