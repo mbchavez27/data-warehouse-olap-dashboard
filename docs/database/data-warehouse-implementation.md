@@ -39,7 +39,7 @@ it from a fresh volume.
 
 ## Table specs
 
-### `DIM_DATE` (populated by ETL)
+### `DIM_DATE` (populated by `etl/main.py --date`)
 
 | Column | Type | Key / constraint |
 |---|---|---|
@@ -59,6 +59,15 @@ Payday rule (Q14): `isPayDay` is true on the 15th and the last day of each
 month (Philippine semimonthly payroll convention). The rule lives here so the
 flag is deterministic and auditable; ETL implements it when building the date
 dimension over `[min(deliveryDate), max(deliveryDate)]`.
+
+The loader parses the two measured source formats (`YYYY-MM-DD` and
+`MM/DD/YYYY`) before deriving the range. It rejects missing, malformed, and
+calendar-invalid values because `DIM_DATE` intentionally has no key-0 Unknown
+member. It then expands the parsed minimum and maximum to every consecutive
+calendar day, including dates with no orders, and replaces `DIM_DATE` using
+`DELETE` + bulk `INSERT` in one transaction. The current official dataset
+measures `2024-09-24` through `2025-09-23` (365 rows), but those endpoints are
+validated results, not hardcoded loader inputs.
 
 ### `DIM_RIDER`
 
@@ -187,14 +196,20 @@ Note: volumes created before `01_dw_schema.sql` existed skip entrypoint init
 (the `pg_dw_data` volume predates the file) — run `--schema-only` once to
 converge those, then `passed` must be true.
 
-Acceptance: 9 tables; dim column counts 11/9/4/5/6/6 (DATE/RIDER/GEO/ORDERSIZE/CUSTOMER/PRODUCT);fact column counts 10/10/7 (DELIVERY/ITEM/RIDERDAILY); 9 PKs; 13 enforced FKs (5 + 6 + 2);
-5 key-0 Unknown rows (+ 4 static order-size bands); 0 fact rows; `DIM_DATE` empty
-(range derives from source `deliveryDate` at ETL time). Scratch volumes are
-removed with `docker compose down -v dw_db` only when intentionally wiping.
+Acceptance: 9 tables; dim column counts 11/9/4/5/6/6
+(DATE/RIDER/GEO/ORDERSIZE/CUSTOMER/PRODUCT); fact column counts 10/10/7
+(DELIVERY/ITEM/RIDERDAILY); 9 PKs; 13 enforced FKs (5 + 6 + 2); 5 key-0
+Unknown rows (+ 4 static order-size bands); and 0 fact rows. `dimDateRows` is
+reported but deliberately not part of the pass/fail conjunction: a fresh
+schema has 0 rows, while `etl/main.py --date` populates the runtime-derived
+calendar range and must remain structurally ready on rerun. Scratch volumes
+are removed with `docker compose down -v dw_db` only when intentionally wiping.
 
 ## Explicit non-scope
 
 - No secondary indexes (Step 6 owns the baseline-vs-optimized experiment).
-- No ETL loads and no DW data yet (next phase: `etl/` + `stadvdb-mco1-etl` env).
+- No source-driven dimensions or fact loads yet. ETL-1 loads only `DIM_DATE`;
+  the five static `DIM_ORDERSIZE` rows remain DDL-owned and are verified, not
+  rebuilt, by the date loader.
 - Design-doc amendments for the customer-`ageBand` removal ship alongside
   this implementation (mermaid + hierarchy table + corrections note).
