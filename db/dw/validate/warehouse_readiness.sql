@@ -5,8 +5,9 @@
 -- of truth.
 -- Expectations mirror docs/database/data-warehouse-implementation.md:
 -- 9 tables; dim columns 11/9/4/5/6/6; fact columns 10/10/7; 9 PKs; 13 FKs;
--- 5 key-0 Unknown rows (+ 4 static order-size bands); 0 fact rows; DIM_DATE
--- empty (its range derives from source deliveryDate at ETL time).
+-- 5 key-0 Unknown rows (+ 4 static order-size bands); 0 fact rows. DIM_DATE
+-- row count is reported but is not a pass/fail condition: both the fresh empty
+-- schema and the populated ETL-1 state are structurally ready for later phases.
 SELECT json_build_object(
   'tableCount', (SELECT count(*) FROM information_schema.tables
     WHERE table_schema = 'public'
@@ -62,6 +63,5 @@ SELECT json_build_object(
     AND (SELECT count(*) FROM "FACT_ORDERDELIVERY") = 0
     AND (SELECT count(*) FROM "FACT_ORDERITEM") = 0
     AND (SELECT count(*) FROM "FACT_RIDERDAILY") = 0
-    AND (SELECT count(*) FROM "DIM_DATE") = 0
   )
 )::text;
