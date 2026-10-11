@@ -3,9 +3,12 @@
 
 from __future__ import annotations
 
+import os
+import shutil
 import subprocess
 import sys
-from typing import Callable, Optional, Sequence
+from pathlib import Path
+from typing import Callable, Mapping, Optional, Sequence
 
 import main as etl_main
 from core import config
@@ -21,7 +24,7 @@ START_COMMAND = (
     "source_db",
     "dw_db",
 )
-REBUILD_COMMAND = ("bash", "db/scripts/setup_dw.sh", "--schema-only")
+REBUILD_SCRIPT = ("db/scripts/setup_dw.sh", "--schema-only")
 PHASES = ("--date", "--dims", "--facts", "--reconcile", "--check")
 
 
@@ -48,6 +51,55 @@ def usage() -> str:
     )
 
 
+def _is_wsl_launcher(path: str, environ: Mapping[str, str]) -> bool:
+    """True for Windows' bash.exe stubs that start WSL instead of Git Bash."""
+    normalized = path.replace("/", "\\").lower()
+    system_root = (environ.get("SystemRoot") or r"C:\Windows").replace("/", "\\").lower()
+    return normalized.startswith(system_root.rstrip("\\") + "\\system32\\") or (
+        "\\windowsapps\\" in normalized
+    )
+
+
+def resolve_bash(
+    *,
+    environ: Optional[Mapping[str, str]] = None,
+    os_name: Optional[str] = None,
+    which: Callable[[str], Optional[str]] = shutil.which,
+    is_file: Callable[[str], bool] = os.path.isfile,
+) -> str:
+    """Return the Bash that runs setup_dw.sh for --rebuild.
+
+    On Windows, CreateProcess searches System32 before PATH, so a bare "bash"
+    starts the WSL launcher: Docker still answers there, but this checkout's
+    Windows uv environment does not, and the schema reset dies halfway. Use
+    ETL_BASH if set, else a non-WSL bash on PATH, else the Git Bash that ships
+    beside git.exe.
+    """
+    environ = os.environ if environ is None else environ
+    os_name = os.name if os_name is None else os_name
+    override = environ.get("ETL_BASH")
+    if override:
+        if not is_file(override):
+            raise PipelineError(f"ETL_BASH={override!r} is not a file")
+        return override
+    if os_name != "nt":
+        return "bash"
+    on_path = which("bash")
+    if on_path and not _is_wsl_launcher(on_path, environ):
+        return on_path
+    git = which("git")
+    if git:
+        for ancestor in list(Path(git).parents)[:3]:
+            candidate = str(ancestor / "bin" / "bash.exe")
+            if is_file(candidate):
+                return candidate
+    raise PipelineError(
+        "--rebuild runs db/scripts/setup_dw.sh and needs Git Bash on Windows; the "
+        "System32 bash.exe starts WSL, which cannot see this checkout's uv "
+        "environment. Install Git for Windows, or set ETL_BASH to a bash.exe."
+    )
+
+
 def parse_args(argv: Sequence[str]) -> bool:
     """Return whether an explicit warehouse rebuild was requested."""
     args = list(argv)
@@ -64,11 +116,15 @@ def execute_pipeline(
     command_runner: Callable = subprocess.run,
     preflight_runner: Callable = preflight.run_preflight,
     phase_runner: Callable = etl_main.run_cli,
+    bash_resolver: Callable[[], str] = resolve_bash,
 ) -> None:
     """Start dependencies, verify safe state, then run every ETL phase."""
+    # Resolve Bash before any side effect, so a missing Bash changes nothing.
+    rebuild_command = (bash_resolver(), *REBUILD_SCRIPT) if rebuild else None
     command_runner(START_COMMAND, check=True, cwd=config.REPO_ROOT)
-    if rebuild:
-        command_runner(REBUILD_COMMAND, check=True, cwd=config.REPO_ROOT)
+    if rebuild_command:
+        print(f"rebuilding the warehouse schema: {' '.join(REBUILD_SCRIPT)}", flush=True)
+        command_runner(rebuild_command, check=True, cwd=config.REPO_ROOT)
 
     try:
         preflight_runner(require_empty_facts=True)
@@ -93,6 +149,7 @@ def run_cli(
     command_runner: Callable = subprocess.run,
     preflight_runner: Callable = preflight.run_preflight,
     phase_runner: Callable = etl_main.run_cli,
+    bash_resolver: Callable[[], str] = resolve_bash,
 ) -> int:
     """Run the orchestrator with stable usage and runtime exit statuses."""
     args = list(sys.argv[1:] if argv is None else argv)
@@ -103,6 +160,7 @@ def run_cli(
             command_runner=command_runner,
             preflight_runner=preflight_runner,
             phase_runner=phase_runner,
+            bash_resolver=bash_resolver,
         )
         return 0
     except UsageError as error:

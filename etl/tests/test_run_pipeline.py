@@ -117,6 +117,7 @@ def test_rebuild_invokes_only_warehouse_schema_reset_before_preflight_and_phases
         command_runner=boundaries[0],
         preflight_runner=boundaries[1],
         phase_runner=boundaries[2],
+        bash_resolver=lambda: "bash",
     ) == 0
     assert events == [
         ("command", START_COMMAND),
@@ -162,6 +163,7 @@ def test_docker_failure_stops_before_rebuild_preflight_and_phases():
         command_runner=failed_command,
         preflight_runner=forbidden,
         phase_runner=forbidden,
+        bash_resolver=lambda: "bash",
     ) == 1
     assert events == [("command", START_COMMAND)]
 
@@ -183,6 +185,7 @@ def test_rebuild_failure_stops_before_preflight_and_phases():
         command_runner=command_runner,
         preflight_runner=forbidden,
         phase_runner=forbidden,
+        bash_resolver=lambda: "bash",
     ) == 1
     assert events == [
         ("command", START_COMMAND),
@@ -225,6 +228,124 @@ def test_phase_failure_stops_every_later_phase(failed_phase):
     ) == 1
     attempted = [event[1][0] for event in events if event[0] == "phase"]
     assert attempted == list(PHASES[: PHASES.index(failed_phase) + 1])
+
+
+def test_rebuild_runs_the_schema_reset_with_the_resolved_bash():
+    events = []
+    boundaries = successful_boundaries(events)
+    git_bash = "C:/Program Files/Git/bin/bash.exe"
+
+    assert run_pipeline.run_cli(
+        ["--rebuild"],
+        command_runner=boundaries[0],
+        preflight_runner=boundaries[1],
+        phase_runner=boundaries[2],
+        bash_resolver=lambda: git_bash,
+    ) == 0
+    assert ("command", (git_bash, "db/scripts/setup_dw.sh", "--schema-only")) in events
+
+
+def test_unresolvable_bash_stops_rebuild_before_any_command(capsys):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("no boundary may run when Bash cannot be resolved")
+
+    def no_bash():
+        raise run_pipeline.PipelineError("--rebuild needs Bash")
+
+    assert run_pipeline.run_cli(
+        ["--rebuild"],
+        command_runner=forbidden,
+        preflight_runner=forbidden,
+        phase_runner=forbidden,
+        bash_resolver=no_bash,
+    ) == 1
+    assert "--rebuild needs Bash" in capsys.readouterr().err
+
+
+def test_default_run_never_resolves_bash():
+    events = []
+    boundaries = successful_boundaries(events)
+
+    def forbidden():
+        raise AssertionError("the default run does not need Bash")
+
+    assert run_pipeline.run_cli(
+        [],
+        command_runner=boundaries[0],
+        preflight_runner=boundaries[1],
+        phase_runner=boundaries[2],
+        bash_resolver=forbidden,
+    ) == 0
+
+
+def fake_which(table):
+    return lambda name: table.get(name)
+
+
+def test_resolve_bash_uses_plain_bash_outside_windows():
+    assert run_pipeline.resolve_bash(environ={}, os_name="posix", which=fake_which({})) == "bash"
+
+
+def test_resolve_bash_accepts_a_non_wsl_bash_on_the_windows_path():
+    git_bash = r"C:\Program Files\Git\usr\bin\bash.exe"
+
+    assert run_pipeline.resolve_bash(
+        environ={"SystemRoot": r"C:\Windows"},
+        os_name="nt",
+        which=fake_which({"bash": git_bash}),
+        is_file=lambda path: True,
+    ) == git_bash
+
+
+@pytest.mark.parametrize(
+    "wsl_launcher",
+    [
+        r"C:\Windows\System32\bash.exe",
+        r"c:\windows\system32\BASH.EXE",
+        r"C:\Users\User\AppData\Local\Microsoft\WindowsApps\bash.exe",
+    ],
+)
+def test_resolve_bash_skips_the_wsl_launcher_and_finds_git_bash(wsl_launcher):
+    git = r"C:\Program Files\Git\cmd\git.exe"
+    expected = str(Path(r"C:\Program Files\Git") / "bin" / "bash.exe")
+
+    assert run_pipeline.resolve_bash(
+        environ={"SystemRoot": r"C:\Windows"},
+        os_name="nt",
+        which=fake_which({"bash": wsl_launcher, "git": git}),
+        is_file=lambda path: path == expected,
+    ) == expected
+
+
+def test_resolve_bash_honors_an_explicit_override():
+    override = r"D:\tools\bash.exe"
+
+    assert run_pipeline.resolve_bash(
+        environ={"ETL_BASH": override},
+        os_name="nt",
+        which=fake_which({}),
+        is_file=lambda path: path == override,
+    ) == override
+
+
+def test_resolve_bash_rejects_an_override_that_does_not_exist():
+    with pytest.raises(run_pipeline.PipelineError, match="ETL_BASH"):
+        run_pipeline.resolve_bash(
+            environ={"ETL_BASH": r"D:\missing\bash.exe"},
+            os_name="nt",
+            which=fake_which({}),
+            is_file=lambda path: False,
+        )
+
+
+def test_resolve_bash_explains_how_to_fix_a_missing_git_bash():
+    with pytest.raises(run_pipeline.PipelineError, match="Git Bash.*ETL_BASH"):
+        run_pipeline.resolve_bash(
+            environ={"SystemRoot": r"C:\Windows"},
+            os_name="nt",
+            which=fake_which({"bash": r"C:\Windows\System32\bash.exe"}),
+            is_file=lambda path: False,
+        )
 
 
 def test_shell_wrapper_has_valid_bash_syntax():
