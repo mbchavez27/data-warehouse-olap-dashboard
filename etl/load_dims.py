@@ -1,7 +1,7 @@
 """Load the four source-driven dimensions: rider, geography, customer, product.
 
 Each dimension streams from source_db through a server-side cursor, is
-cleaned row by row (etl/transform.py), bulk-copied into a temporary staging
+cleaned row by row (`etl/transform/values.py`), bulk-copied into a temporary staging
 table, and upserted into the warehouse by its natural key, so surrogate keys
 stay stable across reruns (SCD Type 1: changed attributes are overwritten).
 All four run in one warehouse transaction. Any rejected row aborts the whole
@@ -15,10 +15,9 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Sequence, Tuple
 
-import db
 import preflight
-import rejects
-import transform
+from core import db, rejects
+from transform import values
 
 ITERSIZE = 10_000
 
@@ -39,13 +38,13 @@ def _rider(row: Sequence[Any]) -> Tuple[Any, ...]:
         raise ValueError(f"courier {courier_id!r} not found in Couriers")
     return (
         rider_id,
-        transform.full_name(first, last),
-        transform.normalize_vehicle(vehicle),
+        values.full_name(first, last),
+        values.normalize_vehicle(vehicle),
         courier_id,
         _text(courier_name, "courierName"),
         age,
-        transform.rider_age_band(age),
-        transform.normalize_gender(gender),
+        values.rider_age_band(age),
+        values.normalize_gender(gender),
     )
 
 
@@ -61,7 +60,7 @@ def _customer(row: Sequence[Any]) -> Tuple[Any, ...]:
         _text(username, "username"),
         first,
         last,
-        None if gender is None else transform.normalize_gender(gender),
+        None if gender is None else values.normalize_gender(gender),
     )
 
 
@@ -71,8 +70,8 @@ def _product(row: Sequence[Any]) -> Tuple[Any, ...]:
         product_id,
         _text(code, "productCode"),
         _text(name, "productName"),
-        transform.normalize_category(category),
-        transform.to_list_price(price_text),
+        values.normalize_category(category),
+        values.to_list_price(price_text),
     )
 
 

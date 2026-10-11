@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import load_date
 import load_dims
 import load_facts
-import rejects
+from core import rejects
 from source_fixtures import DEFAULT_ITEMS, DEFAULT_ORDERS, seed_source
 
 

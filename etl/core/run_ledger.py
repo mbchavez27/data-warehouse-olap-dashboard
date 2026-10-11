@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
-import config
+from core import config
 
 RUN_LEDGER_PATH = config.REPO_ROOT / "evidence" / "etl-runs.jsonl"
 REJECT_LEDGER_PATH = config.REPO_ROOT / "evidence" / "etl-rejects.json"

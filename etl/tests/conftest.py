@@ -21,7 +21,7 @@ import pytest
 ETL_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ETL_DIR))
 
-import config
+from core import config
 
 DEFAULT_TEST_DSN = "host=localhost port=5434 dbname=dw_test user=postgres password=postgres"
 SOURCE_DDL = config.REPO_ROOT / "db" / "source" / "init" / "01_source_schema.sql"
@@ -44,7 +44,7 @@ def test_db(tmp_path, monkeypatch):
         admin.execute(SOURCE_DDL.read_text(encoding="utf-8"))
         admin.execute(DW_DDL.read_text(encoding="utf-8"))
 
-    import rejects
+    from core import rejects
 
     monkeypatch.setattr(rejects, "LEDGER_PATH", tmp_path / "etl-rejects.json")
     yield dsn

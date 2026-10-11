@@ -15,8 +15,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import dates
 import load_date
+from transform import dates
 
 
 @pytest.mark.parametrize(

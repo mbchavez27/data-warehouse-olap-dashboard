@@ -1,4 +1,4 @@
-"""Tests for etl/transform.py. No database, no network."""
+"""Tests for etl/transform/values.py. No database, no network."""
 
 import sys
 from decimal import Decimal
@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import transform
+from transform import values
 
 BANDS = [(0, 0, 0), (1, 1, 6), (2, 7, 10), (3, 11, 15), (4, 16, 2147483647)]
 
@@ -18,13 +18,13 @@ BANDS = [(0, 0, 0), (1, 1, 6), (2, 7, 10), (3, 11, 15), (4, 16, 2147483647)]
     [("M", "M"), ("Male", "M"), ("male", "M"), ("F", "F"), ("Female", "F"), (" FEMALE ", "F")],
 )
 def test_gender_normalizes_every_source_spelling(raw, expected):
-    assert transform.normalize_gender(raw) == expected
+    assert values.normalize_gender(raw) == expected
 
 
 @pytest.mark.parametrize("raw", [None, "", "X", "Unknown", "Mal"])
 def test_gender_rejects_values_it_cannot_map(raw):
     with pytest.raises(ValueError, match="unmapped gender"):
-        transform.normalize_gender(raw)
+        values.normalize_gender(raw)
 
 
 @pytest.mark.parametrize(
@@ -39,12 +39,12 @@ def test_gender_rejects_values_it_cannot_map(raw):
     ],
 )
 def test_vehicle_merges_only_spelling_variants(raw, expected):
-    assert transform.normalize_vehicle(raw) == expected
+    assert values.normalize_vehicle(raw) == expected
 
 
 def test_vehicle_rejects_unknown_labels():
     with pytest.raises(ValueError, match="unmapped vehicleType"):
-        transform.normalize_vehicle("Scooter")
+        values.normalize_vehicle("Scooter")
 
 
 @pytest.mark.parametrize(
@@ -67,21 +67,21 @@ def test_vehicle_rejects_unknown_labels():
     ],
 )
 def test_category_maps_all_14_source_labels_to_9_categories(raw, expected):
-    assert transform.normalize_category(raw) == expected
+    assert values.normalize_category(raw) == expected
 
 
 def test_category_map_has_exactly_nine_targets():
-    assert len(set(transform.CATEGORIES.values())) == 9
+    assert len(set(values.CATEGORIES.values())) == 9
 
 
 def test_category_keeps_distinct_concepts_apart():
-    assert transform.normalize_category("Clothes") != transform.normalize_category("Men's Apparel")
-    assert transform.normalize_category("Gadgets") != transform.normalize_category("Electronics")
+    assert values.normalize_category("Clothes") != values.normalize_category("Men's Apparel")
+    assert values.normalize_category("Gadgets") != values.normalize_category("Electronics")
 
 
 def test_category_rejects_unknown_labels():
     with pytest.raises(ValueError, match="unmapped category"):
-        transform.normalize_category("Furniture")
+        values.normalize_category("Furniture")
 
 
 @pytest.mark.parametrize(
@@ -90,13 +90,13 @@ def test_category_rejects_unknown_labels():
      (49, "40-49"), (50, "50-60"), (60, "50-60"), (None, None)],
 )
 def test_age_band_uses_inclusive_decade_bounds(age, band):
-    assert transform.rider_age_band(age) == band
+    assert values.rider_age_band(age) == band
 
 
 @pytest.mark.parametrize("age", [17, 61, -1])
 def test_age_band_rejects_ages_outside_the_bands(age):
     with pytest.raises(ValueError, match="outside the defined bands"):
-        transform.rider_age_band(age)
+        values.rider_age_band(age)
 
 
 @pytest.mark.parametrize(
@@ -105,13 +105,13 @@ def test_age_band_rejects_ages_outside_the_bands(age):
      (None, "Cruz", "Cruz"), ("Ana", "", "Ana")],
 )
 def test_full_name_joins_present_parts(first, last, expected):
-    assert transform.full_name(first, last) == expected
+    assert values.full_name(first, last) == expected
 
 
 @pytest.mark.parametrize(("first", "last"), [(None, None), ("", " ")])
 def test_full_name_rejects_empty_names(first, last):
     with pytest.raises(ValueError, match="no first or last part"):
-        transform.full_name(first, last)
+        values.full_name(first, last)
 
 
 @pytest.mark.parametrize(
@@ -126,13 +126,13 @@ def test_full_name_rejects_empty_names(first, last):
     ],
 )
 def test_list_price_rounds_half_up_to_centavos(raw, expected):
-    assert transform.to_list_price(raw) == expected
+    assert values.to_list_price(raw) == expected
 
 
 @pytest.mark.parametrize("raw", [None, "", "abc", "-1", "NaN", "Infinity"])
 def test_list_price_rejects_non_prices(raw):
     with pytest.raises(ValueError, match="price"):
-        transform.to_list_price(raw)
+        values.to_list_price(raw)
 
 
 @pytest.mark.parametrize(
@@ -140,10 +140,10 @@ def test_list_price_rejects_non_prices(raw):
     [(1, 1), (6, 1), (7, 2), (10, 2), (11, 3), (15, 3), (16, 4), (34, 4)],
 )
 def test_size_band_follows_the_warehouse_seed_boundaries(units, key):
-    assert transform.size_band_key(units, BANDS) == key
+    assert values.size_band_key(units, BANDS) == key
 
 
 @pytest.mark.parametrize("units", [0, -3])
 def test_size_band_rejects_quantities_no_band_covers(units):
     with pytest.raises(ValueError, match="size bands"):
-        transform.size_band_key(units, BANDS)
+        values.size_band_key(units, BANDS)

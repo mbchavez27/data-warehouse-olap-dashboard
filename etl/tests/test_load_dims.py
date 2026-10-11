@@ -13,7 +13,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import load_dims
-import rejects
+from core import rejects
 from source_fixtures import seed_source
 
 

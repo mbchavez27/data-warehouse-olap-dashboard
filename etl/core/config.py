@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict, Optional
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 ENV_FILE = REPO_ROOT / ".env"
 
 # Mirror of importer TABLES expectations (db/source/importer/cli.py).

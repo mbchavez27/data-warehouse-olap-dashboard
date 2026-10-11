@@ -20,11 +20,9 @@ from datetime import date
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
-import dates
-import db
 import preflight
-import rejects
-import transform
+from core import db, rejects
+from transform import dates, values
 
 ITERSIZE = 10_000
 
@@ -165,7 +163,7 @@ class KeyMaps:
             raise ValueError(f"customer {user_id!r} address not in DIM_GEOGRAPHY")
         if not units:
             raise ValueError("order has no items")
-        size_key = transform.size_band_key(int(units), self.bands)
+        size_key = values.size_band_key(int(units), self.bands)
         return (number.strip(), self.date_key(raw_date), rider_key, geo_key, size_key, customer_key)
 
 

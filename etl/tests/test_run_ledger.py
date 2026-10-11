@@ -28,7 +28,7 @@ def _record(run_ledger, *, mode="date", exit_status=0, error=None):
 
 def test_build_record_has_report_fields_and_rejects_reversed_timestamps():
     """Dropping a required field or accepting an impossible time order must fail."""
-    import run_ledger
+    from core import run_ledger
 
     record = _record(run_ledger)
 
@@ -62,7 +62,7 @@ def test_build_record_has_report_fields_and_rejects_reversed_timestamps():
 
 def test_append_record_preserves_existing_lines_and_appends_one_json_object(tmp_path):
     """Replacing or corrupting an earlier run must fail this append-only test."""
-    import run_ledger
+    from core import run_ledger
 
     path = tmp_path / "etl-runs.jsonl"
     first = _record(run_ledger)
@@ -108,7 +108,7 @@ def test_append_record_preserves_existing_lines_and_appends_one_json_object(tmp_
 )
 def test_table_metrics_report_real_writes_for_each_kind_of_mode(mode, summary, expected):
     """Counting source rows or inventing writes for read-only modes must fail."""
-    import run_ledger
+    from core import run_ledger
 
     assert run_ledger.table_metrics(mode, summary) == expected
 
@@ -172,7 +172,7 @@ def test_run_cli_appends_success_and_runtime_failure_with_fake_clocks(
 
 def test_reject_count_uses_only_the_current_modes_fresh_evidence(tmp_path):
     """Reporting another mode's or an earlier run's rejects must fail."""
-    import run_ledger
+    from core import run_ledger
 
     path = tmp_path / "etl-rejects.json"
     path.write_text(

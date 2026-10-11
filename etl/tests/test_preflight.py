@@ -12,8 +12,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import db as db_module
 import preflight
+from core import db as db_module
 from preflight import PreflightError, check_source, run_preflight
 
 
