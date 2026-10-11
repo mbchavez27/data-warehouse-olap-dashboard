@@ -1,4 +1,4 @@
-"""Tests for etl/preflight.py and etl/main.py guards.
+"""Tests for etl/validate/preflight.py and etl/main.py guards.
 
 All connections are fakes: nothing here touches a database. The recorded
 statements double as the read-only proof (every issued statement is SELECT).
@@ -12,9 +12,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import preflight
 from core import db as db_module
-from preflight import PreflightError, check_source, run_preflight
+from validate import preflight
+from validate.preflight import PreflightError, check_source, run_preflight
 
 
 class FakeCursor:

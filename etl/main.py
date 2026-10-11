@@ -10,12 +10,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import preflight
-import load_date
-import load_dims
-import load_facts
-import reconcile
 from core import run_ledger
+from load import date as load_date
+from load import dimensions as load_dims
+from load import facts as load_facts
+from validate import preflight, reconcile
 
 
 class UsageError(ValueError):

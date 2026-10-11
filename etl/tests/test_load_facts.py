@@ -1,4 +1,4 @@
-"""Load tests for etl/load_facts.py against a disposable database (conftest.test_db).
+"""Load tests for etl/load/facts.py against a disposable database.
 
 Fixture data (source_fixtures): 3 riders, 3 customers (two share an address),
 3 products, 4 orders on 2025-01-01..03 whose totals (6 / 10 / 11 / 16 units)
@@ -17,10 +17,10 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import load_date
-import load_dims
-import load_facts
 from core import rejects
+from load import date as load_date
+from load import dimensions as load_dims
+from load import facts as load_facts
 from source_fixtures import DEFAULT_ITEMS, DEFAULT_ORDERS, seed_source
 
 

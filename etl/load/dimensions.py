@@ -15,9 +15,10 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Sequence, Tuple
 
-import preflight
 from core import db, rejects
+from extract import queries
 from transform import values
+from validate import preflight
 
 ITERSIZE = 10_000
 
@@ -93,11 +94,7 @@ class Dimension:
 DIMENSIONS: Tuple[Dimension, ...] = (
     Dimension(
         table="DIM_RIDER",
-        source_sql=(
-            'SELECT r."id", r."firstName", r."lastName", r."vehicleType", r."courierId", '
-            'c."name", r."age", r."gender" '
-            'FROM "Riders" r LEFT JOIN "Couriers" c ON c."id" = r."courierId" ORDER BY r."id"'
-        ),
+        source_sql=queries.RIDER_SOURCE_SQL,
         clean=_rider,
         columns=("riderId", "fullName", "vehicleType", "courierId", "courierName", "age", "ageBand", "gender"),
         stage_types=("integer", "text", "text", "integer", "text", "integer", "text", "text"),
@@ -106,7 +103,7 @@ DIMENSIONS: Tuple[Dimension, ...] = (
     ),
     Dimension(
         table="DIM_GEOGRAPHY",
-        source_sql='SELECT DISTINCT "country", "city", "zipCode" FROM "Users" ORDER BY 1, 2, 3',
+        source_sql=queries.GEOGRAPHY_SOURCE_SQL,
         clean=_geography,
         columns=("country", "city", "zipCode"),
         stage_types=("text", "text", "text"),
@@ -115,7 +112,7 @@ DIMENSIONS: Tuple[Dimension, ...] = (
     ),
     Dimension(
         table="DIM_CUSTOMER",
-        source_sql='SELECT "id", "username", "firstName", "lastName", "gender" FROM "Users" ORDER BY "id"',
+        source_sql=queries.CUSTOMER_SOURCE_SQL,
         clean=_customer,
         columns=("customerId", "username", "firstName", "lastName", "gender"),
         stage_types=("integer", "text", "text", "text", "text"),
@@ -124,10 +121,7 @@ DIMENSIONS: Tuple[Dimension, ...] = (
     ),
     Dimension(
         table="DIM_PRODUCT",
-        source_sql=(
-            'SELECT "id", "productCode", "name", "category", "price"::text '
-            'FROM "Products" ORDER BY "id"'
-        ),
+        source_sql=queries.PRODUCT_SOURCE_SQL,
         clean=_product,
         columns=("productId", "productCode", "productName", "category", "listPrice"),
         stage_types=("integer", "text", "text", "text", "numeric(12,2)"),

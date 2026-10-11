@@ -1,4 +1,4 @@
-"""Load tests for etl/load_dims.py against a disposable database (conftest.test_db)."""
+"""Load tests for etl/load/dimensions.py against a disposable database."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import load_dims
 from core import rejects
+from load import dimensions as load_dims
 from source_fixtures import seed_source
 
 

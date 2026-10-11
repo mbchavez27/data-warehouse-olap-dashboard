@@ -7,9 +7,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-import preflight
 from core import config, db
 from transform import dates
+from validate import preflight
 
 
 DEFAULT_OUTPUT = config.REPO_ROOT / "evidence" / "etl-reconciliation.json"
