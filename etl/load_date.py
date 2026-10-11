@@ -25,10 +25,10 @@ DATE_COLUMNS = (
 
 EXPECTED_ORDER_SIZE_SEEDS = [
     (0, "Unknown", "Unknown", 0, 0),
-    (1, "Small", "Light", 1, 1),
-    (2, "Medium", "Light", 2, 5),
-    (3, "Large", "Heavy", 6, 20),
-    (4, "Bulk", "Heavy", 21, 2147483647),
+    (1, "Small", "Light", 1, 6),
+    (2, "Medium", "Light", 7, 10),
+    (3, "Large", "Heavy", 11, 15),
+    (4, "Bulk", "Heavy", 16, 2147483647),
 ]
 
 SOURCE_DATES_SQL = 'SELECT DISTINCT "deliveryDate" FROM "Orders"'
