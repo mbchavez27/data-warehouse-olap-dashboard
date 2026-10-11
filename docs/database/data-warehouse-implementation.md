@@ -49,7 +49,7 @@ it from a fresh volume.
 | `dayName` | `VARCHAR(9) NOT NULL` | — |
 | `isWeekend` | `BOOLEAN NOT NULL` | — |
 | `isPayDay` | `BOOLEAN NOT NULL` | rule below |
-| `weekOfYear` | `SMALLINT NOT NULL` | — |
+| `weekOfYear` | `SMALLINT NOT NULL` | calendar week, rule below |
 | `monthNumber` | `SMALLINT NOT NULL` | — |
 | `monthName` | `VARCHAR(9) NOT NULL` | — |
 | `quarter` | `SMALLINT NOT NULL` | — |
@@ -59,6 +59,13 @@ Payday rule (Q14): `isPayDay` is true on the 15th and the last day of each
 month (Philippine semimonthly payroll convention). The rule lives here so the
 flag is deterministic and auditable; ETL implements it when building the date
 dimension over `[min(deliveryDate), max(deliveryDate)]`.
+
+Week rule (Year > Week > Day hierarchy): `weekOfYear` is a calendar week,
+`(day of year − 1) / 7 + 1`. Jan 1–7 is always week 1, so a week never
+crosses into another `year` and the hierarchy rolls up cleanly. The last
+week of a year is partial: week 53 holds 1 day (2 in leap years), e.g.
+2024-12-30 and 2024-12-31. Weekly reports should compare per-day averages,
+or exclude week 53, so the short week does not read as a demand drop.
 
 The loader parses the two measured source formats (`YYYY-MM-DD` and
 `MM/DD/YYYY`) before deriving the range. It rejects missing, malformed, and

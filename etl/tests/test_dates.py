@@ -84,7 +84,7 @@ def test_parse_delivery_date_rejects_missing_malformed_and_impossible_values(raw
                 "dayName": "Friday",
                 "isWeekend": False,
                 "isPayDay": False,
-                "weekOfYear": 53,
+                "weekOfYear": 1,
                 "monthNumber": 1,
                 "monthName": "January",
                 "quarter": 1,
@@ -108,6 +108,23 @@ def test_derive_date_row_produces_all_eleven_attributes(full_date, expected):
 )
 def test_derive_date_row_handles_quarter_boundaries(full_date, quarter):
     assert dates.derive_date_row(full_date)["quarter"] == quarter
+
+
+@pytest.mark.parametrize(
+    ("full_date", "week", "year"),
+    [
+        (date(2025, 1, 1), 1, 2025),  # Jan 1 always opens week 1
+        (date(2025, 1, 7), 1, 2025),
+        (date(2025, 1, 8), 2, 2025),
+        (date(2024, 12, 29), 52, 2024),  # leap year: day 364 closes week 52
+        (date(2024, 12, 30), 53, 2024),  # 2-day week 53 stays in its own year
+        (date(2024, 12, 31), 53, 2024),
+        (date(2025, 12, 31), 53, 2025),  # non-leap: day 365 is a 1-day week 53
+    ],
+)
+def test_derive_date_row_uses_calendar_weeks_that_never_cross_a_year(full_date, week, year):
+    row = dates.derive_date_row(full_date)
+    assert (row["weekOfYear"], row["year"]) == (week, year)
 
 
 @pytest.mark.parametrize(

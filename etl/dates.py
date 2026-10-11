@@ -38,7 +38,8 @@ def derive_date_row(full_date: date) -> Dict[str, object]:
         "dayName": full_date.strftime("%A"),
         "isWeekend": full_date.isoweekday() in (6, 7),
         "isPayDay": full_date.day in (15, last_day),
-        "weekOfYear": full_date.isocalendar().week,
+        # Calendar week: Jan 1-7 is week 1, so a week never crosses a year (1-53).
+        "weekOfYear": (full_date.timetuple().tm_yday - 1) // 7 + 1,
         "monthNumber": full_date.month,
         "monthName": full_date.strftime("%B"),
         "quarter": ((full_date.month - 1) // 3) + 1,
