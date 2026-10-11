@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import config
+from core import config
 
 LEDGER_PATH = config.REPO_ROOT / "evidence" / "etl-rejects.json"
 MAX_LISTED = 50  # keep the evidence file readable; counts stay complete

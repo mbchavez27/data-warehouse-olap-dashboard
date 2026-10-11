@@ -1,4 +1,4 @@
-"""Tests for etl/config.py. No database, no network."""
+"""Tests for etl/core/config.py. No database, no network."""
 
 import sys
 from pathlib import Path
@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import config
+from core import config
 
 
 def test_load_env_parses_values_and_ignores_noise(tmp_path):

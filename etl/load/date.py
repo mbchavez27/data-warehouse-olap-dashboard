@@ -5,9 +5,10 @@ from __future__ import annotations
 import time
 from typing import Dict, Iterable, List, Tuple
 
-import dates
-import db
-import preflight
+from core import db
+from extract import queries
+from transform import dates
+from validate import preflight
 
 
 DATE_COLUMNS = (
@@ -32,7 +33,6 @@ EXPECTED_ORDER_SIZE_SEEDS = [
     (4, "Bulk", "Heavy", 16, 2147483647),
 ]
 
-SOURCE_DATES_SQL = 'SELECT DISTINCT "deliveryDate" FROM "Orders"'
 INSERT_DATE_SQL = """
 INSERT INTO "DIM_DATE" (
   "dateKey", "fullDate", "dayOfMonth", "dayName", "isWeekend", "isPayDay",
@@ -48,7 +48,7 @@ ORDER BY "orderSizeKey"
 
 def _fetch_source_dates(source_conn) -> List[str]:
     with source_conn.cursor() as cursor:
-        cursor.execute(SOURCE_DATES_SQL)
+        cursor.execute(queries.DATE_SOURCE_SQL)
         return [row[0] for row in cursor.fetchall()]
 
 

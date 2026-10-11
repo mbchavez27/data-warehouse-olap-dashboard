@@ -37,14 +37,55 @@ _Confirm: open `evidence/source-import-report.json` — top-level `passed` must 
 
 ### 2. Running the ETL Pipeline
 
-The ETL script extracts the raw data, applies data wrangling (handling nulls, aggregating, generating synthetic data if needed), and loads it into the Data Warehouse fact and dimension tables. We use `uv` for lightning-fast environment setup.
+The Python pipeline extracts all six source tables, applies the documented
+cleaning and aggregations, loads the dimensional warehouse, reconciles the
+result, and records execution evidence. Install its locked dependencies once:
 
 ```bash
 uv sync --project etl
-uv run --project etl python etl/main.py --check
 ```
 
-_The `--check` readiness gate (exact source counts + warehouse readiness) runs first; the full Extract/Transform/Load run command lands with the next ETL phase._
+Run the complete workflow from the repository root:
+
+```bash
+bash etl/run_etl.sh            # safe: requires an empty/pre-load warehouse
+bash etl/run_etl.sh --rebuild  # explicit: recreates only dw_db, then loads it
+```
+
+The parameterless command is deliberately non-destructive. It starts
+`source_db` and `dw_db`, verifies the exact source counts, and refuses to run
+the first load when warehouse facts already exist. `--rebuild` is the only
+full-pipeline option that replaces the warehouse schema; it delegates to
+`db/scripts/setup_dw.sh --schema-only`. Neither command resets or writes to
+the source database.
+
+The equivalent direct Python commands are:
+
+```powershell
+uv run --project etl python etl/run_pipeline.py
+uv run --project etl python etl/run_pipeline.py --rebuild
+```
+
+The default direct command works in PowerShell, CMD, macOS, and Linux.
+`--rebuild` requires Bash because the intentional reset uses the existing
+warehouse safety script. On Windows the runner uses Git Bash, even when you
+start it from PowerShell or CMD: it skips `C:\Windows\System32\bash.exe`,
+which launches WSL, where this checkout's `uv` environment is not available.
+Set `ETL_BASH` to a specific `bash.exe` to override.
+
+For diagnostics or an individual phase, the stable entry points remain:
+
+```powershell
+uv run --project etl python etl/main.py --check
+uv run --project etl python etl/main.py --date
+uv run --project etl python etl/main.py --dims
+uv run --project etl python etl/main.py --facts
+uv run --project etl python etl/main.py --reconcile
+uv run --project etl python etl/main.py --reconcile --output evidence/etl-reconciliation.json
+```
+
+Implementation is organized by responsibility under `etl/core/`,
+`etl/extract/`, `etl/transform/`, `etl/load/`, and `etl/validate/`.
 
 ### 3. Starting the Backend (Go OLAP API)
 

@@ -20,34 +20,12 @@ from datetime import date
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
-import dates
-import db
-import preflight
-import rejects
-import transform
+from core import db, rejects
+from extract import queries
+from transform import dates, values
+from validate import preflight
 
 ITERSIZE = 10_000
-
-DELIVERY_SQL = """
-SELECT o."id", o."orderNumber", o."deliveryDate", o."deliveryRiderId", o."userId",
-       coalesce(i.units, 0), coalesce(i.lines, 0)
-FROM "Orders" o
-LEFT JOIN (
-  SELECT "OrderId", sum("quantity") AS units, count(*) AS lines
-  FROM "OrderItems" GROUP BY "OrderId"
-) i ON i."OrderId" = o."id"
-ORDER BY o."id"
-"""
-
-ITEM_SQL = """
-SELECT oi."OrderId", oi."ProductId", oi."quantity",
-       o."orderNumber", o."deliveryDate", o."deliveryRiderId", o."userId",
-       sum(oi."quantity") OVER (PARTITION BY oi."OrderId") AS units
-FROM "OrderItems" oi JOIN "Orders" o ON o."id" = oi."OrderId"
-ORDER BY oi."OrderId", oi."ProductId"
-"""
-
-CUSTOMER_ADDRESS_SQL = 'SELECT "id", "country", "city", "zipCode" FROM "Users"'
 
 DELIVERY_COLUMNS = (
     "orderNumber", "deliveryDateKey", "riderKey", "geoKey", "orderSizeKey",
@@ -132,7 +110,7 @@ class KeyMaps:
         self.customer_geo: Dict[int, int] = {}
         with source_conn.cursor(name="src_customer_address") as scur:
             scur.itersize = ITERSIZE
-            scur.execute(CUSTOMER_ADDRESS_SQL)
+            scur.execute(queries.CUSTOMER_ADDRESS_SOURCE_SQL)
             for user_id, country, city, zip_code in scur:
                 key = geo_keys.get(tuple((v or "").strip() for v in (country, city, zip_code)))
                 if key is not None:
@@ -165,7 +143,7 @@ class KeyMaps:
             raise ValueError(f"customer {user_id!r} address not in DIM_GEOGRAPHY")
         if not units:
             raise ValueError("order has no items")
-        size_key = transform.size_band_key(int(units), self.bands)
+        size_key = values.size_band_key(int(units), self.bands)
         return (number.strip(), self.date_key(raw_date), rider_key, geo_key, size_key, customer_key)
 
 
@@ -215,7 +193,7 @@ def _load_deliveries(source_conn, wcur, maps: KeyMaps, ledger: rejects.Ledger) -
     loaded = 0
     with source_conn.cursor(name="src_orders") as scur:
         scur.itersize = ITERSIZE
-        scur.execute(DELIVERY_SQL)
+        scur.execute(queries.DELIVERY_SOURCE_SQL)
         with wcur.copy(f'COPY "FACT_ORDERDELIVERY" ({_quoted(DELIVERY_COLUMNS)}) FROM STDIN') as copy:
             for order_id, number, raw_date, rider_id, user_id, units, lines in scur:
                 source_rows += 1
@@ -237,7 +215,7 @@ def _load_items(source_conn, wcur, maps: KeyMaps, ledger: rejects.Ledger, reject
     parent: Optional[Tuple[Any, ...]] = None
     with source_conn.cursor(name="src_order_items") as scur:
         scur.itersize = ITERSIZE
-        scur.execute(ITEM_SQL)
+        scur.execute(queries.ITEM_SOURCE_SQL)
         with wcur.copy(f'COPY "FACT_ORDERITEM" ({_quoted(ITEM_COLUMNS)}) FROM STDIN') as copy:
             for order_id, product_id, quantity, number, raw_date, rider_id, user_id, units in scur:
                 source_rows += 1

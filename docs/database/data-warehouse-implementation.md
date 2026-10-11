@@ -231,7 +231,33 @@ implemented table and column effects.
 
 ## ETL run order and performance
 
-Fresh build, in order (each mode runs the preflight first):
+The implementation is separated by responsibility: `etl/extract/queries.py`
+owns read-only source SQL; `etl/transform/dates.py` and
+`etl/transform/values.py` own deterministic wrangling; the warehouse writes
+live in `etl/load/date.py`, `etl/load/dimensions.py`, and
+`etl/load/facts.py`; readiness and reconciliation live in
+`etl/validate/preflight.py` and `etl/validate/reconcile.py`.
+
+Run the complete workflow from the repository root:
+
+```bash
+bash etl/run_etl.sh            # safe; warehouse facts must be empty
+bash etl/run_etl.sh --rebuild  # explicitly recreate only dw_db, then load
+```
+
+Direct equivalents are `uv run --project etl python etl/run_pipeline.py` and
+the same command with `--rebuild`. The default starts both database services,
+runs the strict pre-load gate, and stops before the first write if facts are
+already loaded. The explicit rebuild delegates only to
+`db/scripts/setup_dw.sh --schema-only`; it never resets the source database.
+The default Python command is cross-platform. The rebuild path requires Bash;
+the runner resolves it before any side effect (`ETL_BASH`, else a non-WSL
+`bash` on `PATH`, else the Git Bash beside `git.exe`). A bare `bash` would
+not work on Windows: `CreateProcess` searches System32 before `PATH`, so it
+starts the WSL launcher, where Docker answers but `uv` does not, and the
+reset would stop halfway.
+
+The orchestrated order is:
 
 | Step | Command | Result on the official data | Time |
 |---|---|---|---:|
@@ -239,6 +265,11 @@ Fresh build, in order (each mode runs the preflight first):
 | 2 | `etl/main.py --dims` | 100 riders, 100,000 geographies, 100,000 customers, 10,000 products | ~5 s |
 | 3 | `etl/main.py --facts` | 1,000,000 orders, 1,999,824 order items, 36,500 rider-days | ~30 s |
 | 4 | `etl/main.py --reconcile` | 15/15 read-only source-to-warehouse checks; JSON evidence emitted | ~3 s |
+| 5 | `etl/main.py --check` | exact source counts and structurally ready loaded warehouse | < 1 s |
+
+These `etl/main.py` modes remain available for diagnostics and targeted
+reruns. The orchestrator performs a strict preflight before the sequence, and
+the write modes retain their own readiness checks.
 
 Actual run-by-run timings, rows written, reject counts, and exit statuses are
 append-only in `evidence/etl-runs.jsonl`; the values above are orientation only.

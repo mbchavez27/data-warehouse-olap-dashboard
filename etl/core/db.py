@@ -6,7 +6,7 @@ from typing import Dict, Optional
 
 import psycopg
 
-import config
+from core import config
 
 
 def connect_source(env: Optional[Dict[str, str]] = None):

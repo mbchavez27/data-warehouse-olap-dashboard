@@ -10,8 +10,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Optional
 
-import config
-import db
+from core import config, db
 
 
 class PreflightError(RuntimeError):
