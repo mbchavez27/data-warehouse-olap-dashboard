@@ -180,6 +180,49 @@ def test_run_preflight_rejects_unready_warehouse(monkeypatch):
         run_preflight()
 
 
+LOADED_JSON = json.dumps(
+    {"tableCount": 9, "structurallyReady": True, "passed": False, "factRows": 3036324}
+)
+
+
+def test_reload_modes_accept_a_loaded_warehouse_that_is_structurally_ready(monkeypatch):
+    monkeypatch.setattr(
+        db_module, "connect_source", lambda env=None: FakeConn(source_script(FULL_COUNTS))
+    )
+    monkeypatch.setattr(
+        db_module, "connect_warehouse", lambda env=None: FakeConn(payload=(LOADED_JSON,))
+    )
+
+    report = run_preflight(require_empty_facts=False)
+
+    assert report["warehouse"]["structurallyReady"] is True
+
+
+def test_default_preflight_still_requires_empty_facts(monkeypatch):
+    monkeypatch.setattr(
+        db_module, "connect_source", lambda env=None: FakeConn(source_script(FULL_COUNTS))
+    )
+    monkeypatch.setattr(
+        db_module, "connect_warehouse", lambda env=None: FakeConn(payload=(LOADED_JSON,))
+    )
+
+    with pytest.raises(PreflightError, match="passed is not true"):
+        run_preflight()
+
+
+def test_reload_modes_reject_a_broken_structure(monkeypatch):
+    broken = json.dumps({"tableCount": 8, "structurallyReady": False, "passed": False})
+    monkeypatch.setattr(
+        db_module, "connect_source", lambda env=None: FakeConn(source_script(FULL_COUNTS))
+    )
+    monkeypatch.setattr(
+        db_module, "connect_warehouse", lambda env=None: FakeConn(payload=(broken,))
+    )
+
+    with pytest.raises(PreflightError, match="structurallyReady is not true"):
+        run_preflight(require_empty_facts=False)
+
+
 def test_main_rejects_anything_but_check(monkeypatch):
     import main as main_module
 
