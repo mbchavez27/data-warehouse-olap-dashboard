@@ -17,7 +17,7 @@
 ## 2. Data Warehouse Construction
 
 - [x] Design the dimensional model (Star or Snowflake schema).
-  - State: `docs/database/data-warehouse-schema.md` specifies a star schema with 3 facts (`FACT_ORDERDELIVERY`, `FACT_ORDERITEM`, `FACT_RIDERDAILY`) + 6 dims + 5 hierarchies + 22 questions with OLAP ops. Four profiling corrections applied in DDL (Q20/21 flat-geography note, Q22 concentration-only, Q14 payday rule, customer `ageBand` removal, idle-day grain note).
+  - State: `docs/database/data-warehouse-schema.md` specifies a star schema with 3 facts (`FACT_ORDERDELIVERY`, `FACT_ORDERITEM`, `FACT_RIDERDAILY`) + 6 dims + 5 hierarchies + 22 questions with OLAP ops. Canonical profiling findings and corrections: `docs/technical-documentation/profiling.md`.
 - [x] Include at least one (1) fact table.
   - Evidence: 3 fact tables implemented in `db/dw/init/01_dw_schema.sql`.
 - [x] Include at least three (3) dimension tables.
@@ -78,5 +78,6 @@
 
 - [ ] Download the prescribed Technical Report template.
 - [ ] Gather all data, execution times, and analyses collected from Steps 1 through 6.
+  - Evidence trail established in `docs/technical-documentation/index.md`; ETL executions are captured in `evidence/etl-runs.jsonl`. OLAP, functional-test, and performance evidence remains pending with Sections 4–6.
 - [ ] Complete and finalize the Technical Report.
-  - State: `docs/technical-documentation/` is empty.
+  - State: evidence index and consolidated profiling record exist; the prescribed report template and Sections 4–6 results remain pending.

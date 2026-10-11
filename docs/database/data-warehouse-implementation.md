@@ -37,9 +37,9 @@ it from a fresh volume.
   importer): a bad ETL load aborts instead of silently orphaning facts.
 - Money is `NUMERIC(12,2)` everywhere (`listPrice`, `lineValue`); the source
   `REAL` price is never summed directly (see `source-schema.md` issue 3).
-- Source timestamps (`createdAt`/`updatedAt`) are bulk-load constants and are
-  NOT modelled: the warehouse time dimension derives exclusively from
-  `Orders.deliveryDate` (see `source-schema.md` issue 5).
+- Source timestamps are not modeled; per PRF-1 in
+  `docs/technical-documentation/profiling.md`, warehouse time derives from
+  `Orders.deliveryDate`.
 
 ## Table specs
 
@@ -116,9 +116,8 @@ comparisons are not driven by a handful of people. A narrower scheme (e.g. a
 | `zipCode` | `VARCHAR(32) NOT NULL` | part of natural UNIQUE |
 
 `UNIQUE (country, city, zipCode)`. Unknown row: `(0, 'Unknown', 'Unknown', 'Unknown')`.
-Profiling note: source geography is approximately uniform, so Q20/Q21 read
-flat — the dimension is still built (drill-down paths must exist); the
-questions report the flat distribution as the finding.
+Profiling basis: PRF-3 and correction COR-4 in
+`docs/technical-documentation/profiling.md`.
 
 Hierarchy: Country > City. Every `zipCode` is unique to one customer
 (100,000 triples for 100,000 users), so a zip level would only list single
@@ -154,9 +153,9 @@ Unknown row: `(0, 'Unknown', 'Unknown', 0, 0)` (excluded from Light/Heavy).
 | `lastName` | `VARCHAR(255)` | — |
 | `gender` | `CHAR(1)` | normalized `M`/`F`, nullable |
 
-No `ageBand`: source customers are effectively single-age (profiling), so the
-column would be constant. The hierarchy collapses to Gender; Q22 answers the
-concentration half only. Unknown row: `(0, -1, 'Unknown', 'Unknown', 'Unknown', NULL)`.
+No `ageBand`, per profiling correction COR-1. The hierarchy is Gender and Q22
+answers customer concentration only. Unknown row:
+`(0, -1, 'Unknown', 'Unknown', 'Unknown', NULL)`.
 
 ### `DIM_PRODUCT` (populated by `etl/main.py --dims`)
 
@@ -226,15 +225,9 @@ in total, 0 idle rows.
 
 ## Profiling corrections applied
 
-| # | Correction | DDL impact |
-|---|---|---|
-| 1 | Q20/Q21 geography conditional → report flat distribution | None (dimension built as designed) |
-| 2 | Q22 customer age → concentration only | `DIM_CUSTOMER.ageBand` dropped |
-| 3 | Q14 payday rule (15th + month-end) | `isPayDay` rule documented here, applied at ETL date-build |
-| 4 | Idle-day grain (rider×date incl. zeros) | None (shape already fits; ETL cross-joins) |
-| 5 | Order-size cutoffs moved to the data's quartiles (1–6 / 7–10 / 11–15 / 16+) | `DIM_ORDERSIZE` seed rows |
-| 6 | Calendar weeks (Jan 1–7 = week 1) so Year > Week never crosses a year | None (ETL date-build rule) |
-| 7 | Geography drills Country > City; zip kept as an attribute | None (reporting rule) |
+The single source of truth for measured findings and applied corrections is
+`docs/technical-documentation/profiling.md`; this document records only their
+implemented table and column effects.
 
 ## ETL run order and performance
 
@@ -246,6 +239,9 @@ Fresh build, in order (each mode runs the preflight first):
 | 2 | `etl/main.py --dims` | 100 riders, 100,000 geographies, 100,000 customers, 10,000 products | ~5 s |
 | 3 | `etl/main.py --facts` | 1,000,000 orders, 1,999,824 order items, 36,500 rider-days | ~30 s |
 | 4 | `etl/main.py --reconcile` | 15/15 read-only source-to-warehouse checks; JSON evidence emitted | ~3 s |
+
+Actual run-by-run timings, rows written, reject counts, and exit statuses are
+append-only in `evidence/etl-runs.jsonl`; the values above are orientation only.
 
 A full rebuild from an empty warehouse takes about 40 s. Reruns are
 idempotent: `--dims` upserts in place, and `--facts` truncates and reloads all

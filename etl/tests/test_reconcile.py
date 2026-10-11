@@ -344,8 +344,8 @@ def test_main_reconcile_mode_supports_default_and_explicit_output(monkeypatch, c
         ["--reconcile", "--unknown", "custom.json"],
     ],
 )
-def test_main_reconcile_mode_rejects_malformed_arguments(argv):
+def test_main_reconcile_mode_rejects_malformed_arguments(argv, tmp_path):
     """Malformed reconcile arguments must remain usage errors (exit 2)."""
     import main as main_module
 
-    assert main_module.run_cli(argv) == 2
+    assert main_module.run_cli(argv, ledger_path=tmp_path / "runs.jsonl") == 2

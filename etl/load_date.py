@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Dict, Iterable, List, Tuple
 
 import dates
@@ -93,14 +94,17 @@ def load_date_dimension(source_conn, warehouse_conn) -> Dict[str, object]:
     }
 
 
-def run_date_load() -> Dict[str, object]:
+def run_date_load(*, clock=time.perf_counter) -> Dict[str, object]:
     """Run the shared read-only preflight, then perform the date load."""
     preflight.run_preflight()
     source_conn = db.connect_source()
     try:
         warehouse_conn = db.connect_warehouse()
         try:
-            return load_date_dimension(source_conn, warehouse_conn)
+            started = clock()
+            report = load_date_dimension(source_conn, warehouse_conn)
+            report["seconds"] = round(clock() - started, 3)
+            return report
         finally:
             warehouse_conn.close()
     finally:

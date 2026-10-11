@@ -184,27 +184,21 @@ The business questions represent candidate analyses supported by the dimensional
 
 ### Applied Corrections
 
-The following profiling findings are resolved in `db/dw/init/01_dw_schema.sql`
-(build record: `docs/database/data-warehouse-implementation.md`):
-
-- Q20/Q21 report the flat uniform geography as the finding; the dimension is
-  built as designed so drill-down paths exist.
-- Q22 answers concentration only (`DIM_CUSTOMER.ageBand` dropped as constant).
-- Q14 `isPayDay` rule: 15th and last day of month, applied at ETL date-build.
-- `FACT_RIDERDAILY` grain includes zero-order days via the rider×date cross
-  join at ETL time.
-- Order-size cutoffs sit at the data's quartiles (1–6 / 7–10 / 11–15 / 16+);
-  the original cutoffs put 72% of orders in one band.
-- Weeks are calendar weeks (Jan 1–7 = week 1) so Year > Week never crosses a year.
-- Geography drills Country > City; zip is unique per customer, so it stays an attribute.
+The measured findings and the four resulting corrections are maintained in one
+canonical record: `docs/technical-documentation/profiling.md`. Additional
+modeling choices remain in `docs/database/design-decisions.md`.
 
 ### Interpretation of Results
 
-The source dataset exhibits characteristics of synthetic data generation, with several approximately uniform distributions. Flat distributions are treated as valid findings and reported accordingly. All insights are based exclusively on measured query results.
+Interpret reports using the measured limitations in
+`docs/technical-documentation/profiling.md`; flat results remain valid results
+and must not be embellished into unsupported trends.
 
 ### Scope Limitations
 
-The source dataset does not contain a reliable order-creation timestamp because all `createdAt` values share the same bulk-load timestamp. Consequently, analyses involving delivery speed, SLA compliance, and hour-of-day patterns are excluded.
+PRF-1 in `docs/technical-documentation/profiling.md` records why source
+`createdAt` values are not reliable event times. Delivery speed, SLA duration,
+and hour-of-day analyses are therefore excluded.
 
 ### Indicative Basket Value
 
