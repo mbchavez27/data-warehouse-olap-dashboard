@@ -18,6 +18,7 @@ from memory for the final report.
 | [`evidence/etl-rejects.json`](../../evidence/etl-rejects.json) | The latest dimension and fact reject counts, reasons, samples, and pass status. | ETL-2 |
 | [`evidence/etl-reconciliation.json`](../../evidence/etl-reconciliation.json) | Fifteen source-to-warehouse count, unit, Unknown-member, and reject checks from a read-only post-load reconciliation. | ETL-3 |
 | [`evidence/etl-runs.jsonl`](../../evidence/etl-runs.jsonl) | One append-only record per real ETL invocation, including command, timestamps, measured timings, rows written, rejects, and exit status. | ETL-4 |
+| [`etl/run_pipeline.py`](../../etl/run_pipeline.py) and [`etl/run_etl.sh`](../../etl/run_etl.sh) | The reproducible full-pipeline order, fail-fast boundaries, safe empty-warehouse default, and explicit warehouse-only rebuild entry point. | ETL organization refactor |
 | [`docs/project-checklist.md`](../project-checklist.md) | Repository-backed completion status across the full MCO1 methodology. | Project tracking |
 
 ## Evidence convention for future work
@@ -48,4 +49,13 @@ single structured report; JSONL is used for an append-only sequence of runs.
   Invalid dimension or fact rows are rejected and abort the transaction.
 - Both successful and failed invocations are retained. A nonzero `exitStatus`
   must not be removed from the ledger.
+
+## ETL operator workflow
+
+`bash etl/run_etl.sh` runs the complete date, dimension, fact,
+reconciliation, and final-check sequence only when the warehouse has no fact
+rows. `bash etl/run_etl.sh --rebuild` is the explicit full-refresh path and
+recreates only the warehouse schema. The direct cross-platform entry point is
+`uv run --project etl python etl/run_pipeline.py`; its rebuild option requires
+Bash. These commands never reset or write to `source_db`.
 

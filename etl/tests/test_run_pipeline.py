@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import os
+import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -22,6 +25,22 @@ START_COMMAND = (
 )
 REBUILD_COMMAND = ("bash", "db/scripts/setup_dw.sh", "--schema-only")
 PHASES = ("--date", "--dims", "--facts", "--reconcile", "--check")
+
+
+def bash_executable() -> str:
+    """Prefer Git Bash on Windows; otherwise use the Bash available in PATH."""
+    git_bash = Path("C:/Program Files/Git/bin/bash.exe")
+    if git_bash.is_file():
+        return str(git_bash)
+    bash = shutil.which("bash")
+    if bash is None:
+        pytest.skip("Bash is not available")
+    return bash
+
+
+def shell_path(path: Path) -> str:
+    """Render a pathlib path in a form accepted by Git Bash and POSIX Bash."""
+    return path.as_posix()
 
 
 def successful_boundaries(events):
@@ -206,3 +225,68 @@ def test_phase_failure_stops_every_later_phase(failed_phase):
     ) == 1
     attempted = [event[1][0] for event in events if event[0] == "phase"]
     assert attempted == list(PHASES[: PHASES.index(failed_phase) + 1])
+
+
+def test_shell_wrapper_has_valid_bash_syntax():
+    wrapper = config.REPO_ROOT / "etl" / "run_etl.sh"
+
+    result = subprocess.run(
+        [bash_executable(), "-n", shell_path(wrapper)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize(
+    ("arguments", "expected"),
+    [
+        ([], ["run", "--project", "etl", "python", "etl/run_pipeline.py"]),
+        (
+            ["--rebuild"],
+            [
+                "run",
+                "--project",
+                "etl",
+                "python",
+                "etl/run_pipeline.py",
+                "--rebuild",
+            ],
+        ),
+    ],
+)
+def test_shell_wrapper_delegates_default_and_rebuild_arguments_unchanged(
+    tmp_path, arguments, expected
+):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_uv = fake_bin / "uv"
+    fake_uv.write_text(
+        "#!/usr/bin/env bash\n"
+        "printf '%s\\n' \"$@\" > \"$UV_ARGS_FILE\"\n"
+        "exit \"$UV_EXIT_STATUS\"\n",
+        encoding="utf-8",
+    )
+    fake_uv.chmod(0o755)
+    args_file = tmp_path / "uv-args.txt"
+    env = os.environ.copy()
+    env["PATH"] = f"{shell_path(fake_bin)}{os.pathsep}{env.get('PATH', '')}"
+    env["UV_ARGS_FILE"] = shell_path(args_file)
+    env["UV_EXIT_STATUS"] = "23"
+
+    result = subprocess.run(
+        [
+            bash_executable(),
+            shell_path(config.REPO_ROOT / "etl" / "run_etl.sh"),
+            *arguments,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert result.returncode == 23
+    assert args_file.read_text(encoding="utf-8").splitlines() == expected
