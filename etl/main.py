@@ -13,6 +13,7 @@ import preflight
 import load_date
 import load_dims
 import load_facts
+import reconcile
 
 
 class UsageError(ValueError):
@@ -27,11 +28,14 @@ def usage() -> str:
             "  uv run --project etl python etl/main.py --date",
             "  uv run --project etl python etl/main.py --dims",
             "  uv run --project etl python etl/main.py --facts",
+            "  uv run --project etl python etl/main.py --reconcile",
+            "  uv run --project etl python etl/main.py --reconcile --output <path>",
             "",
             "--check runs the read-only readiness gate (works before and after loads).",
             "--date replaces DIM_DATE from the parsed source delivery-date range.",
             "--dims upserts DIM_RIDER, DIM_GEOGRAPHY, DIM_CUSTOMER, DIM_PRODUCT.",
             "--facts reloads FACT_ORDERDELIVERY, FACT_ORDERITEM, FACT_RIDERDAILY.",
+            "--reconcile writes read-only source-to-warehouse JSON evidence.",
         ]
     )
 
@@ -76,6 +80,17 @@ def main(argv: Optional[List[str]] = None) -> None:
         checks = summary["consistencyChecks"]
         print(f"idle rider-days: {idle:,}; consistency checks passed: {sum(checks.values())}/{len(checks)}")
         print("rejects: 0 (evidence/etl-rejects.json)")
+        return
+    if argv and argv[0] == "--reconcile":
+        if argv == ["--reconcile"]:
+            output_path = None
+        elif len(argv) == 3 and argv[1] == "--output" and argv[2]:
+            output_path = Path(argv[2])
+        else:
+            raise UsageError(usage())
+        report = reconcile.run_reconciliation(output_path)
+        passed = sum(check["passed"] for check in report["checks"].values())
+        print(f"reconciliation passed: {passed}/{len(report['checks'])} checks")
         return
     raise UsageError(usage())
 
