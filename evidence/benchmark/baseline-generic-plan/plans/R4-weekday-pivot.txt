@@ -1,0 +1,52 @@
+-- R4-weekday-pivot: Month x weekday pivot
+-- file: olap/queries/r4_demand_calendar/weekday_pivot.sql
+-- params: {}
+
+Sort  (cost=33466.60..33467.11 rows=201 width=293) (actual time=379.602..379.606 rows=14 loops=1)
+  Sort Key: ((GROUPING(daily.year, daily."monthNumber") = 3)), daily.year, daily."monthNumber"
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=10335
+  ->  GroupAggregate  (cost=33427.00..33458.91 rows=201 width=293) (actual time=379.503..379.589 rows=14 loops=1)
+        Group Key: daily.year, daily."monthNumber"
+        Group Key: ()
+        Buffers: shared hit=10335
+        ->  Sort  (cost=33427.00..33427.92 rows=365 width=23) (actual time=379.487..379.500 rows=365 loops=1)
+              Sort Key: daily.year, daily."monthNumber"
+              Sort Method: quicksort  Memory: 44kB
+              Buffers: shared hit=10335
+              ->  Subquery Scan on daily  (cost=33402.35..33411.47 rows=365 width=23) (actual time=379.348..379.425 rows=365 loops=1)
+                    Buffers: shared hit=10335
+                    ->  HashAggregate  (cost=33402.35..33407.82 rows=365 width=31) (actual time=379.347..379.406 rows=365 loops=1)
+                          Group Key: d."dateKey"
+                          Batches: 1  Memory Usage: 93kB
+                          Buffers: shared hit=10335
+                          ->  Hash Right Join  (cost=39.54..28402.35 rows=1000000 width=27) (actual time=0.125..294.881 rows=1000000 loops=1)
+                                Hash Cond: (f."deliveryDateKey" = d."dateKey")
+                                Buffers: shared hit=10335
+                                ->  Hash Join  (cost=27.32..25734.65 rows=1000000 width=12) (actual time=0.050..207.400 rows=1000000 loops=1)
+                                      Hash Cond: (f."orderSizeKey" = s."orderSizeKey")
+                                      Buffers: shared hit=10331
+                                      ->  Hash Join  (cost=4.27..23067.42 rows=1000000 width=16) (actual time=0.025..135.127 rows=1000000 loops=1)
+                                            Hash Cond: (f."riderKey" = r."riderKey")
+                                            Buffers: shared hit=10330
+                                            ->  Seq Scan on "FACT_ORDERDELIVERY" f  (cost=0.00..20328.00 rows=1000000 width=20) (actual time=0.004..42.746 rows=1000000 loops=1)
+                                                  Buffers: shared hit=10328
+                                            ->  Hash  (cost=3.01..3.01 rows=101 width=4) (actual time=0.015..0.015 rows=101 loops=1)
+                                                  Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                                                  Buffers: shared hit=2
+                                                  ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.01 rows=101 width=4) (actual time=0.002..0.006 rows=101 loops=1)
+                                                        Buffers: shared hit=2
+                                      ->  Hash  (cost=15.80..15.80 rows=580 width=4) (actual time=0.006..0.006 rows=5 loops=1)
+                                            Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                            Buffers: shared hit=1
+                                            ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..15.80 rows=580 width=4) (actual time=0.001..0.002 rows=5 loops=1)
+                                                  Buffers: shared hit=1
+                                ->  Hash  (cost=7.65..7.65 rows=365 width=19) (actual time=0.068..0.068 rows=365 loops=1)
+                                      Buckets: 1024  Batches: 1  Memory Usage: 27kB
+                                      Buffers: shared hit=4
+                                      ->  Seq Scan on "DIM_DATE" d  (cost=0.00..7.65 rows=365 width=19) (actual time=0.005..0.029 rows=365 loops=1)
+                                            Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=11
+Planning Time: 0.452 ms
+Execution Time: 379.784 ms
