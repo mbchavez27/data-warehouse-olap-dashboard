@@ -131,9 +131,10 @@ Opaque identifiers: `orderNumber` (e.g. `uCjIujlhtS`), `username` (e.g. `FLDxwbC
   `TOYS` 770, `Clothes` 745, `GADGETS` 735, `Bags` 731, `Men's Apparel` 721,
   `make up` 719, `Electronics` 718, `BAG` 714, `Appliances` 712, `Toy` 711,
   `Toys` 691, `Laptops` 687, `Makeup` 685, `Gadgets` 661.
-  Case/duplicates (`TOYS`/`Toys`/`Toy`, `GADGETS`/`Gadgets`, `make up`/`Makeup`,
-  `Bags`/`BAG`) stay as-is in `DIM_PRODUCT`; product names are faker word-salad
-  (e.g. `Incredible Metal Shirt`, `Tasty Wooden Fish`).
+  ETL merges the case/plural duplicates (`TOYS`/`Toys`/`Toy`, `GADGETS`/`Gadgets`,
+  `make up`/`Makeup`, `Bags`/`BAG`), so `DIM_PRODUCT` holds 9 categories (issue 8
+  above); product names are faker word-salad (e.g. `Incredible Metal Shirt`,
+  `Tasty Wooden Fish`).
 - **Geography (`Users`):** 249 countries, 60,400 cities, 89,318 zip codes,
   100,000 distinct `(country, city, zipCode)` combos — effectively one combo per
   customer. Top `(country, city)` pair has ≤4 users; top zip has 6 users.
