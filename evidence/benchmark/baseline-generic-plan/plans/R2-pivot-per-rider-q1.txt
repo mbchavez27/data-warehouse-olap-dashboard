@@ -1,0 +1,50 @@
+-- R2-pivot-per-rider-q1: Pivot per rider, 2025 Q1
+-- file: olap/queries/r2_fleet_courier_workload/courier_vehicle_pivot.sql
+-- params: {"measure": "per_rider", "year": "2025", "quarter": "1"}
+
+Sort  (cost=52534.99..52535.01 rows=5 width=201) (actual time=289.167..289.173 rows=4 loops=1)
+  Sort Key: pivoted.is_total, pivoted.courier
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=7511 read=2824, temp read=1232 written=1237
+  ->  Subquery Scan on pivoted  (cost=43493.37..52534.94 rows=5 width=201) (actual time=208.738..289.149 rows=4 loops=1)
+        Buffers: shared hit=7511 read=2824, temp read=1232 written=1237
+        ->  GroupAggregate  (cost=43493.37..52534.57 rows=5 width=118) (actual time=208.731..289.123 rows=4 loops=1)
+              Group Key: r."courierName"
+              Group Key: ()
+              Buffers: shared hit=7511 read=2824, temp read=1232 written=1237
+              ->  Sort  (cost=43493.37..43945.43 rows=180822 width=17) (actual time=179.712..199.086 rows=246205 loops=1)
+                    Sort Key: r."courierName"
+                    Sort Method: external merge  Disk: 6960kB
+                    Buffers: shared hit=7511 read=2824, temp read=870 written=874
+                    ->  Hash Join  (cost=37.62..23993.81 rows=180822 width=17) (actual time=0.134..138.237 rows=246205 loops=1)
+                          Hash Cond: (f."orderSizeKey" = s."orderSizeKey")
+                          Buffers: shared hit=7511 read=2824
+                          ->  Hash Join  (cost=14.57..23492.63 rows=180822 width=21) (actual time=0.122..119.504 rows=246205 loops=1)
+                                Hash Cond: (f."riderKey" = r."riderKey")
+                                Buffers: shared hit=7510 read=2824
+                                ->  Hash Join  (cost=10.30..22993.78 rows=180822 width=8) (actual time=0.091..98.622 rows=246205 loops=1)
+                                      Hash Cond: (f."deliveryDateKey" = d."dateKey")
+                                      Buffers: shared hit=7508 read=2824
+                                      ->  Seq Scan on "FACT_ORDERDELIVERY" f  (cost=0.00..20328.00 rows=1000000 width=12) (actual time=0.054..39.455 rows=1000000 loops=1)
+                                            Buffers: shared hit=7504 read=2824
+                                      ->  Hash  (cost=9.47..9.47 rows=66 width=4) (actual time=0.031..0.032 rows=90 loops=1)
+                                            Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                                            Buffers: shared hit=4
+                                            ->  Seq Scan on "DIM_DATE" d  (cost=0.00..9.47 rows=66 width=4) (actual time=0.006..0.022 rows=90 loops=1)
+                                                  Filter: ((year = 2025) AND (quarter = 1))
+                                                  Rows Removed by Filter: 275
+                                                  Buffers: shared hit=4
+                                ->  Hash  (cost=3.01..3.01 rows=101 width=17) (actual time=0.025..0.025 rows=101 loops=1)
+                                      Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                                      Buffers: shared hit=2
+                                      ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.01 rows=101 width=17) (actual time=0.004..0.010 rows=101 loops=1)
+                                            Buffers: shared hit=2
+                          ->  Hash  (cost=15.80..15.80 rows=580 width=4) (actual time=0.005..0.005 rows=5 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=1
+                                ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..15.80 rows=580 width=4) (actual time=0.001..0.002 rows=5 loops=1)
+                                      Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=16
+Planning Time: 0.450 ms
+Execution Time: 290.067 ms

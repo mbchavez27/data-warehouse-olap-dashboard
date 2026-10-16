@@ -1,0 +1,19 @@
+case_id,report,query_file,params,result_rows,result_columns,median_ms,mean_ms,min_ms,max_ms,stdev_ms,explain_execution_ms
+R1-category-all,R1,olap/queries/r1_product_category_value/category.sql,{},10,6,816.41,883.61,792.34,1042.08,137.77,1237.755
+R1-category-dice,R1,olap/queries/r1_product_category_value/category.sql,"{""year"": ""2025"", ""vehicle"": ""Motorcycle"", ""size_group"": ""Heavy""}",10,6,240.33,240.9,239.14,243.23,2.1,183.135
+R1-product-all,R1,olap/queries/r1_product_category_value/product.sql,"{""top_n"": ""10""}",99,7,3724.09,3726.37,3516.96,3938.05,210.55,2146.644
+R1-product-toys,R1,olap/queries/r1_product_category_value/product.sql,"{""category"": ""Toys"", ""top_n"": ""10""}",11,7,1245.7,1261.91,1201.46,1338.57,69.98,496.821
+R2-cube-all,R2,olap/queries/r2_fleet_courier_workload/courier_vehicle_cube.sql,{},20,8,1254.23,1270.6,1233.91,1323.66,47.06,1440.7
+R2-pivot-orders,R2,olap/queries/r2_fleet_courier_workload/courier_vehicle_pivot.sql,"{""measure"": ""orders""}",4,8,946.28,946.03,936.42,955.38,9.48,913.29
+R2-pivot-per-rider-q1,R2,olap/queries/r2_fleet_courier_workload/courier_vehicle_pivot.sql,"{""measure"": ""per_rider"", ""year"": ""2025"", ""quarter"": ""1""}",4,8,438.13,437.93,425.41,450.26,12.43,290.067
+R2-rider-top20,R2,olap/queries/r2_fleet_courier_workload/rider.sql,"{""top_n"": ""20""}",20,13,189.33,204.98,152.79,272.83,61.53,437.046
+R3-deciles-all,R3,olap/queries/r3_customer_value_distribution/deciles.sql,{},10,8,1385.3,1364.48,1283.51,1424.63,72.83,987.067
+R3-deciles-dice,R3,olap/queries/r3_customer_value_distribution/deciles.sql,"{""gender"": ""F"", ""year"": ""2025""}",10,8,1007.55,1014.47,907.92,1127.95,110.18,615.244
+R3-geo-country,R3,olap/queries/r3_customer_value_distribution/geography.sql,"{""level"": ""country"", ""top_n"": ""20""}",63,8,8299.51,8305.76,8213.54,8404.24,95.5,8200.656
+R3-geo-city,R3,olap/queries/r3_customer_value_distribution/geography.sql,"{""level"": ""city"", ""country"": ""Philippines"", ""top_n"": ""20""}",44,8,72.05,75.56,71.46,83.17,6.6,109.192
+R3-customer-top20,R3,olap/queries/r3_customer_value_distribution/customer.sql,"{""top_n"": ""20""}",20,11,4096.11,4081.35,3951.36,4196.58,123.27,2762.777
+R4-rollup-all,R4,olap/queries/r4_demand_calendar/rollup.sql,{},21,9,394.07,387.75,372.58,396.6,13.2,394.239
+R4-trend-month,R4,olap/queries/r4_demand_calendar/trend.sql,"{""level"": ""month""}",13,8,25817.41,25745.27,25576.03,25842.38,147.1,382.886
+R4-trend-day,R4,olap/queries/r4_demand_calendar/trend.sql,"{""level"": ""day""}",365,8,25568.91,25320.5,24735.87,25656.72,508.2,420.917
+R4-weekday-pivot,R4,olap/queries/r4_demand_calendar/weekday_pivot.sql,{},14,10,398.25,410.3,389.17,443.49,29.1,379.784
+R4-busiest-days,R4,olap/queries/r4_demand_calendar/busiest_days.sql,"{""top_n"": ""10""}",10,10,27563.25,27649.2,26776.14,28608.22,919.06,1713.292

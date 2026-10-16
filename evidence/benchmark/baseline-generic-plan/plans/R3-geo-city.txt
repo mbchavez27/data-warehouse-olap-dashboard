@@ -1,0 +1,76 @@
+-- R3-geo-city: Drill into Philippines cities
+-- file: olap/queries/r3_customer_value_distribution/geography.sql
+-- params: {"level": "city", "country": "Philippines", "top_n": "20"}
+
+Sort  (cost=37339.74..37341.73 rows=794 width=158) (actual time=108.645..108.750 rows=44 loops=1)
+  Sort Key: ((r.grouping_level >= 2)), (max(r.value_rank) OVER (?)), r.grouping_level DESC, ((r.gender = 'All'::bpchar)) DESC, r.gender
+  Sort Method: quicksort  Memory: 29kB
+  Buffers: shared hit=32660 read=14542
+  CTE ranked
+    ->  WindowAgg  (cost=37147.13..37185.84 rows=1191 width=156) (actual time=107.813..108.362 rows=828 loops=1)
+          Buffers: shared hit=32660 read=14542
+          ->  Sort  (cost=37147.13..37150.11 rows=1191 width=116) (actual time=107.804..107.928 rows=828 loops=1)
+                Sort Key: grouped.grouping_level, grouped.value DESC
+                Sort Method: quicksort  Memory: 85kB
+                Buffers: shared hit=32660 read=14542
+                ->  Subquery Scan on grouped  (cost=35407.25..37086.28 rows=1191 width=116) (actual time=85.491..107.111 rows=828 loops=1)
+                      Buffers: shared hit=32660 read=14542
+                      ->  GroupAggregate  (cost=35407.25..37074.37 rows=1191 width=392) (actual time=85.490..107.021 rows=828 loops=1)
+                            Group Key: g.city, c.gender
+                            Group Key: g.city
+                            Group Key: ()
+                            Sort Key: c.gender
+                              Group Key: c.gender
+                            Buffers: shared hit=32660 read=14542
+                            ->  Gather Merge  (cost=35407.25..36331.88 rows=7939 width=299) (actual time=85.405..87.253 rows=8328 loops=1)
+                                  Workers Planned: 2
+                                  Workers Launched: 2
+                                  Buffers: shared hit=32660 read=14542
+                                  ->  Sort  (cost=34407.23..34415.50 rows=3308 width=299) (actual time=81.567..81.747 rows=2776 loops=3)
+                                        Sort Key: g.city, c.gender
+                                        Sort Method: quicksort  Memory: 285kB
+                                        Buffers: shared hit=32660 read=14542
+                                        Worker 0:  Sort Method: quicksort  Memory: 260kB
+                                        Worker 1:  Sort Method: quicksort  Memory: 279kB
+                                        ->  Hash Join  (cost=604.53..34213.85 rows=3308 width=299) (actual time=0.772..79.429 rows=2776 loops=3)
+                                              Hash Cond: (i."deliveryDateKey" = d."dateKey")
+                                              Buffers: shared hit=32630 read=14542
+                                              ->  Nested Loop  (cost=592.32..34192.85 rows=3308 width=303) (actual time=0.467..78.544 rows=2776 loops=3)
+                                                    Buffers: shared hit=32524 read=14542
+                                                    ->  Hash Join  (cost=592.03..33160.02 rows=3308 width=301) (actual time=0.432..73.038 rows=2776 loops=3)
+                                                          Hash Cond: (i."geoKey" = g."geoKey")
+                                                          Buffers: shared hit=7538 read=14542
+                                                          ->  Parallel Seq Scan on "FACT_ORDERITEM" i  (cost=0.00..30380.60 rows=833260 width=31) (actual time=0.057..34.064 rows=666608 loops=3)
+                                                                Buffers: shared hit=7512 read=14536
+                                                          ->  Hash  (cost=587.06..587.06 rows=397 width=278) (actual time=0.246..0.247 rows=414 loops=3)
+                                                                Buckets: 1024  Batches: 1  Memory Usage: 28kB
+                                                                Buffers: shared hit=26 read=6
+                                                                ->  Index Scan using "DIM_GEOGRAPHY_country_city_zipCode_key" on "DIM_GEOGRAPHY" g  (cost=0.42..587.06 rows=397 width=278) (actual time=0.051..0.127 rows=414 loops=3)
+                                                                      Index Cond: ((country)::text = 'Philippines'::text)
+                                                                      Buffers: shared hit=26 read=6
+                                                    ->  Index Scan using "DIM_CUSTOMER_pkey" on "DIM_CUSTOMER" c  (cost=0.29..0.31 rows=1 width=6) (actual time=0.002..0.002 rows=1 loops=8328)
+                                                          Index Cond: ("customerKey" = i."customerKey")
+                                                          Buffers: shared hit=24986
+                                              ->  Hash  (cost=7.65..7.65 rows=365 width=4) (actual time=0.117..0.118 rows=365 loops=3)
+                                                    Buckets: 1024  Batches: 1  Memory Usage: 21kB
+                                                    Buffers: shared hit=12
+                                                    ->  Seq Scan on "DIM_DATE" d  (cost=0.00..7.65 rows=365 width=4) (actual time=0.019..0.049 rows=365 loops=3)
+                                                          Buffers: shared hit=12
+  ->  WindowAgg  (cost=97.80..115.66 rows=794 width=158) (actual time=108.599..108.617 rows=44 loops=1)
+        Buffers: shared hit=11410 read=5222
+        ->  Sort  (cost=97.80..99.78 rows=794 width=156) (actual time=108.594..108.596 rows=44 loops=1)
+              Sort Key: r.location
+              Sort Method: quicksort  Memory: 28kB
+              Buffers: shared hit=11410 read=5222
+              ->  CTE Scan on ranked r  (cost=29.78..59.56 rows=794 width=156) (actual time=108.494..108.581 rows=44 loops=1)
+                    Filter: ((grouping_level >= 2) OR (hashed SubPlan 2))
+                    Rows Removed by Filter: 784
+                    Buffers: shared hit=11410 read=5222
+                    SubPlan 2
+                      ->  CTE Scan on ranked  (cost=0.00..29.78 rows=2 width=32) (actual time=0.331..0.666 rows=20 loops=1)
+                            Filter: ((value_rank <= 20) AND (grouping_level = 1))
+                            Rows Removed by Filter: 808
+Planning:
+  Buffers: shared hit=19
+Planning Time: 1.071 ms
+Execution Time: 109.192 ms
