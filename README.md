@@ -148,9 +148,8 @@ results, create `olap-frontend/.env.local` with `VITE_API_MODE=live` and restart
 Vite proxies every `/api/...` call to `http://localhost:8080` (`API_TARGET`
 overrides that), so no CORS setup is needed in development.
 
-R1 (Products & Categories) and R2 (Fleet & Rider Workload) are implemented;
-R3 (Customer Value) and R4 (Demand Calendar) are wired to a placeholder while
-their SQL and API levels are already available.
+All four reports are implemented: R1 (Products & Categories), R2 (Fleet &
+Rider Workload), R3 (Customer Value) and R4 (Demand Calendar).
 
 ## Documentation
 

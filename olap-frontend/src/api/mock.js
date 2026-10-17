@@ -516,6 +516,238 @@ function r3Customer(p) {
   return chosen.slice(0, topN)
 }
 
+// ---------- R4 Demand Calendar ----------
+
+// The warehouse calendar, rebuilt field for field from DIM_DATE: fullDate,
+// dayName, isWeekend, isPayDay (the 15th and the month's last day),
+// weekOfYear = ceil(day-of-year / 7), monthName, quarter, year. All four R4
+// levels read this one series, so every view describes the same days.
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
+  'September', 'October', 'November', 'December']
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+const CALENDAR = (() => {
+  const base = Array.from({ length: 365 }, (_, i) => {
+    const ms = FIRST_DAY + i * 86400000
+    const d = new Date(ms)
+    const year = d.getUTCFullYear()
+    const month = d.getUTCMonth() + 1
+    const day = d.getUTCDate()
+    const dow = (d.getUTCDay() + 6) % 7 // 0 = Monday, like DIM_DATE's ISO weekday
+    return {
+      date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      year,
+      month,
+      quarter: Math.ceil(month / 3),
+      month_name: MONTH_NAMES[month - 1],
+      day_name: DAY_NAMES[dow],
+      dow: dow + 1,
+      is_weekend: dow >= 5,
+      is_payday: day === 15 || day === new Date(Date.UTC(year, month, 0)).getUTCDate(),
+      week_of_year: Math.ceil((Math.floor((ms - Date.UTC(year, 0, 1)) / 86400000) + 1) / 7),
+    }
+  })
+
+  // Largest-remainder apportionment, so the 365 daily counts sum to exactly
+  // 1,000,000 orders the way the warehouse's do. Three uniforms summed give the
+  // warehouse's bell-shaped daily demand: a ±5% tail with a tight centre, which
+  // in turn gives warehouse-like monthly (±1%) and month x weekday (±2%) spreads.
+  const factors = base.map((d) => {
+    const next = seeded(`r4day|${d.date}`)
+    return 0.945 + ((next() + next() + next()) / 3) * 0.11
+  })
+  const factorSum = factors.reduce((s, f) => s + f, 0)
+  const exact = factors.map((f) => (TOTAL_ORDERS * f) / factorSum)
+  const counts = exact.map(Math.floor)
+  const byRemainder = exact
+    .map((x, i) => ({ i, part: x - counts[i] }))
+    .sort((a, b) => b.part - a.part)
+    .map((r) => r.i)
+  const left = TOTAL_ORDERS - counts.reduce((a, b) => a + b, 0)
+  for (let k = 0; k < left; k++) counts[byRemainder[k]] += 1
+
+  return base.map((d, i) => ({ ...d, orders: counts[i], units: Math.round(counts[i] * UNITS_PER_ORDER) }))
+})()
+
+// The days of the slice, with orders and units scaled by the vehicle and
+// order-size dice. Every level builds on this, so the views agree.
+function demandDays(p) {
+  const frac =
+    (p.vehicle ? VEHICLE_RIDERS[p.vehicle] / 100 : 1) * (p.size_group ? SIZE_SHARE[p.size_group] : 1)
+  return CALENDAR.filter(
+    (d) =>
+      (!p.year || d.year === Number(p.year)) &&
+      (!p.quarter || d.quarter === Number(p.quarter)) &&
+      (!p.month || d.month === Number(p.month)) &&
+      (!p.day_type || d.is_weekend === (p.day_type === 'weekend')) &&
+      (!p.payday || d.is_payday === (p.payday === 'yes')),
+  ).map((d) => ({
+    ...d,
+    orders: frac === 1 ? d.orders : Math.round(d.orders * frac),
+    units: frac === 1 ? d.units : Math.round(d.units * frac),
+  }))
+}
+
+function r4Rollup(p) {
+  const days = demandDays(p)
+  const groups = (keyOf) => {
+    const out = new Map()
+    for (const d of days) {
+      const key = keyOf(d)
+      if (!out.has(key)) out.set(key, [])
+      out.get(key).push(d)
+    }
+    return [...out.values()]
+  }
+  const subtotal = (level, key, list) => {
+    if (!list.length) return null
+    const orders = list.reduce((s, d) => s + d.orders, 0)
+    return {
+      hierarchy_level: level,
+      year: key.year ?? null,
+      quarter: key.quarter ?? null,
+      month: key.month ?? null,
+      month_name: key.month ? list[0].month_name : null,
+      days: list.length,
+      orders,
+      units: list.reduce((s, d) => s + d.units, 0),
+      orders_per_day: round1(orders / list.length),
+    }
+  }
+  const rows = [
+    ...groups((d) => `${d.year}|${d.quarter}|${d.month}`).map((l) =>
+      subtotal('month', { year: l[0].year, quarter: l[0].quarter, month: l[0].month }, l),
+    ),
+    ...groups((d) => `${d.year}|${d.quarter}`).map((l) =>
+      subtotal('quarter', { year: l[0].year, quarter: l[0].quarter }, l),
+    ),
+    ...groups((d) => String(d.year)).map((l) => subtotal('year', { year: l[0].year }, l)),
+    subtotal('all', {}, days),
+  ].filter(Boolean)
+
+  // ROLLUP order: year, quarter, month, each NULLS LAST (so 'all' lands last).
+  return rows.sort((a, b) => {
+    for (const k of ['year', 'quarter', 'month']) {
+      const x = a[k] ?? Infinity
+      const y = b[k] ?? Infinity
+      if (x !== y) return x - y
+    }
+    return 0
+  })
+}
+
+function r4Trend(p) {
+  const level = p.level || 'month'
+  const groups = new Map()
+  for (const d of demandDays(p)) {
+    // The SQL groups weeks by year and quarter, so a week that crosses a
+    // quarter boundary appears once for each quarter.
+    const key =
+      level === 'year'
+        ? String(d.year)
+        : level === 'quarter'
+          ? `${d.year}|${d.quarter}`
+          : level === 'week'
+            ? `${d.year}|${d.quarter}|${d.week_of_year}`
+            : level === 'day'
+              ? d.date
+              : `${d.year}|${d.month}`
+    if (!groups.has(key)) {
+      groups.set(key, {
+        period_label:
+          level === 'year'
+            ? String(d.year)
+            : level === 'quarter'
+              ? `${d.year} Q${d.quarter}`
+              : level === 'week'
+                ? `${d.year} W${String(d.week_of_year).padStart(2, '0')}`
+                : level === 'day'
+                  ? d.date
+                  : `${d.year} ${d.month_name}`,
+        period_start: d.date,
+        days: 0,
+        orders: 0,
+        units: 0,
+      })
+    }
+    const g = groups.get(key)
+    g.days += 1
+    g.orders += d.orders
+    g.units += d.units
+    if (d.date < g.period_start) g.period_start = d.date
+  }
+
+  const rows = [...groups.values()]
+    .sort((a, b) => byText(a.period_start, b.period_start))
+    .map((g) => ({ ...g, orders_per_day: round1(g.orders / g.days) }))
+
+  // LAG(orders_per_day) and a 7-row moving window, both over period_start.
+  rows.forEach((row, i) => {
+    const previous = rows[i - 1]
+    const window = rows.slice(Math.max(0, i - 6), i + 1)
+    row.change_vs_previous_pct =
+      previous && previous.orders_per_day
+        ? round1((100 * (row.orders_per_day - previous.orders_per_day)) / previous.orders_per_day)
+        : null
+    row.moving_avg_orders_per_day = round1(
+      window.reduce((s, x) => s + x.orders_per_day, 0) / window.length,
+    )
+  })
+  return rows
+}
+
+function r4WeekdayPivot(p) {
+  const days = demandDays(p)
+  const row = (label, list, isTotal) => {
+    const cells = {}
+    for (const [name, dow] of [['mon', 1], ['tue', 2], ['wed', 3], ['thu', 4], ['fri', 5], ['sat', 6], ['sun', 7]]) {
+      const part = list.filter((d) => d.dow === dow)
+      cells[name] = part.length ? round1(part.reduce((s, d) => s + d.orders, 0) / part.length) : null
+    }
+    return {
+      month_label: label,
+      ...cells,
+      all_days: list.length ? round1(list.reduce((s, d) => s + d.orders, 0) / list.length) : null,
+      is_total: isTotal,
+    }
+  }
+  const months = new Map()
+  for (const d of days) {
+    const key = `${d.year}|${d.month}`
+    if (!months.has(key)) months.set(key, [])
+    months.get(key).push(d)
+  }
+  return [
+    ...[...months.values()].map((list) => row(`${list[0].year} ${list[0].month_name}`, list, false)),
+    row('All months', days, true),
+  ]
+}
+
+function r4BusiestDays(p) {
+  const days = demandDays(p)
+  const average = days.length ? days.reduce((s, d) => s + d.orders, 0) / days.length : 0
+  const riders = p.vehicle ? VEHICLE_RIDERS[p.vehicle] : 100
+  const ranks = rank(days, (d) => d.orders)
+  return days
+    .map((d) => ({
+      demand_rank: ranks.get(d),
+      date: d.date,
+      day_name: d.day_name,
+      is_weekend: d.is_weekend,
+      is_payday: d.is_payday,
+      orders: d.orders,
+      units: d.units,
+      active_riders: riders,
+      orders_per_active_rider: riders ? round1(d.orders / riders) : null,
+      vs_average_pct: average ? round1((100 * (d.orders - average)) / average) : null,
+    }))
+    .sort(
+      (a, b) =>
+        (p.sort === 'quietest' ? a.orders - b.orders : b.orders - a.orders) || byText(a.date, b.date),
+    )
+    .slice(0, Number(p.top_n) || 10)
+}
+
 // ---------- dispatch ----------
 
 const LEVELS = {
@@ -527,6 +759,10 @@ const LEVELS = {
   'r3/deciles': r3Deciles,
   'r3/geography': r3Geography,
   'r3/customer': r3Customer,
+  'r4/rollup': r4Rollup,
+  'r4/trend': r4Trend,
+  'r4/weekday_pivot': r4WeekdayPivot,
+  'r4/busiest_days': r4BusiestDays,
 }
 
 export function mockReport(report, level, params) {

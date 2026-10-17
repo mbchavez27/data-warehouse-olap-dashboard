@@ -1,11 +1,10 @@
 import ProductCategoryReport from './ProductCategoryReport.jsx'
 import FleetWorkloadReport from './FleetWorkloadReport.jsx'
 import CustomerValueReport from './CustomerValueReport.jsx'
-import ComingSoon from './ComingSoon.jsx'
+import DemandCalendarReport from './DemandCalendarReport.jsx'
 import { BoxIcon, TruckIcon, UsersIcon, CalendarIcon } from '../components/Icons.jsx'
 
-// The four reports the group agreed on. R4 follows the same pattern as R1–R3:
-// a component in this folder plus mock data in api/mock.js.
+// The four reports the group agreed on.
 export const REPORTS = [
   {
     id: 'r1',
@@ -33,6 +32,6 @@ export const REPORTS = [
     name: 'Demand calendar',
     icon: CalendarIcon,
     question: 'How does order demand move by year, quarter, month and day, and do weekends or paydays differ?',
-    component: ComingSoon,
+    component: DemandCalendarReport,
   },
 ]

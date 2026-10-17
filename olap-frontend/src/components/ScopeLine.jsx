@@ -1,5 +1,6 @@
 // One sentence that says exactly which slice of the data is on screen, e.g.
-// "Showing JNT motorcycle deliveries, heavy orders only, in Q1 2025."
+// "Showing JNT motorcycle deliveries, heavy orders only, in Q1 2025." or
+// "Showing all deliveries, weekends only, paydays only, in December 2024."
 // `values` = filters plus anything pinned by the drill path; `keys` = the
 // filters that apply at the current level; `noun` names what is being shown
 // ("deliveries" for R1/R2, "customers" for R3). Only keys present in `keys`
@@ -45,6 +46,16 @@ export default function ScopeLine({ values, keys, noun = 'deliveries' }) {
       {on('size_group') && (
         <>
           , <strong>{values.size_group.toLowerCase()} orders</strong> only
+        </>
+      )}
+      {on('day_type') && (
+        <>
+          , <strong>{values.day_type === 'weekend' ? 'weekends' : 'weekdays'}</strong> only
+        </>
+      )}
+      {on('payday') && (
+        <>
+          , <strong>{values.payday === 'yes' ? 'paydays' : 'non-paydays'}</strong> only
         </>
       )}
       {period ? (

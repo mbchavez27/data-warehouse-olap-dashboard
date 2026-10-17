@@ -22,7 +22,7 @@ from memory for the final report.
 | [`olap/queries/README.md`](../../olap/queries/README.md) | Four parameterized reports (12 level files) covering all five OLAP operations, with their parameters, measures and advanced SQL. | OLAP queries |
 | [`evidence/benchmark/README.md`](../../evidence/benchmark/README.md) | An 18-case read-only baseline (median of 5 runs), the `EXPLAIN (ANALYZE, BUFFERS)` plans, the bottlenecks they expose, and the measured generic-plan hazard. | Performance baseline |
 | [`olap-backend/`](../../olap-backend/) | The Go API (`net/http` + `pgx/v5`) that runs the report SQL read-only and serves validated JSON, plus [`olap-backend/README.md`](../../olap-backend/README.md). | OLAP application |
-| [`olap-frontend/`](../../olap-frontend/) | The React dashboard: R1–R3 implemented with filters, drill-down and CSV export; R4 placeholder. | OLAP application |
+| [`olap-frontend/`](../../olap-frontend/) | The React dashboard: all four reports (R1–R4) with filters, drill-down, OLAP-level switching and CSV export, built without UI or chart libraries. | OLAP application |
 | [`docs/technical-documentation/application-architecture.md`](application-architecture.md) | Component map, request flow, and the safety and plan-cache decisions behind the API. | OLAP application |
 | [`docs/project-checklist.md`](../project-checklist.md) | Repository-backed completion status across the full MCO1 methodology. | Project tracking |
 

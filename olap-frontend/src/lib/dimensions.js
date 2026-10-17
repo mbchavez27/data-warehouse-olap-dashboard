@@ -92,6 +92,9 @@ export function changeFilter(values, key, value) {
   return next
 }
 
+// Abbreviated month name, e.g. 9 -> "Sep"; the same shape as the MONTH options.
+export const monthLabel = (month) => MONTH_NAMES[Number(month) - 1] ?? ''
+
 // "Q1 2025", "Mar 2025", "2024", or "the whole year" — used in headings.
 export function periodLabel({ year, quarter, month }) {
   const parts = []

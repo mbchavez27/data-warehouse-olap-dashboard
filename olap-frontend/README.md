@@ -1,8 +1,9 @@
 # OLAP dashboard (React)
 
 The web dashboard for the four warehouse reports. Built with React 18 and Vite,
-no UI, chart or icon libraries: the tables, bars, pivot heat map and icons are
-plain components so every part is easy to explain in the demo.
+no UI, chart or icon libraries: the tables, bars, pivot heat map, line chart,
+demand calendar and icons are plain components so every part is easy to explain
+in the demo.
 
 ## Run it
 
@@ -43,8 +44,14 @@ the API should bind a missing parameter as `''` (the SQL already treats `''` as
 | `GET /api/reports/r3/deciles` | `r3_customer_value_distribution/deciles.sql` | country, gender, year, quarter |
 | `GET /api/reports/r3/geography` | `r3_customer_value_distribution/geography.sql` | level, country, gender, year, quarter, top_n |
 | `GET /api/reports/r3/customer` | `r3_customer_value_distribution/customer.sql` | country, city, gender, decile, year, quarter, top_n |
+| `GET /api/reports/r4/rollup` | `r4_demand_calendar/rollup.sql` | year, day_type, payday, vehicle, size_group |
+| `GET /api/reports/r4/trend` | `r4_demand_calendar/trend.sql` | level, year, quarter, month, day_type, payday, vehicle, size_group |
+| `GET /api/reports/r4/weekday_pivot` | `r4_demand_calendar/weekday_pivot.sql` | year, quarter, payday, vehicle, size_group |
+| `GET /api/reports/r4/busiest_days` | `r4_demand_calendar/busiest_days.sql` | year, quarter, month, day_type, payday, vehicle, size_group, sort, top_n |
 
-R4 follows the same shape, e.g. `/api/reports/r4/trend`.
+The API rejects a parameter a level does not declare, so the dashboard sends
+each level only its own columns: the roll-up takes no quarter or month slice,
+and the weekday pivot is already a month x weekday breakdown.
 
 R3's `country` and `city` are drill state, never dropdown filters: `DIM_GEOGRAPHY`
 holds ~240 countries and ~100,000 cities, so the dashboard only ever asks for the
@@ -65,6 +72,7 @@ message is shown to the user.
 | R1 Products and categories | Click a category to drill to its products; click "All categories" in the route to roll back up | Year, quarter or month | Vehicle and order size together with the period | |
 | R2 Fleet and rider workload | All couriers > courier > vehicle > riders; any grid cell jumps straight to those riders | Year, quarter or month | Courier, vehicle, rider age, order size | Courier x vehicle grid, switchable between total orders and orders per rider |
 | R3 Customer value | Decile > its customers, and country > city > customers, as three peer views you can switch between | Year or quarter | Gender, together with whatever is drilled (a decile, a country, a city) | Decile value distribution: one bar per decile plus the running-total line |
+| R4 Demand calendar | The whole date hierarchy in one table (month, its quarter, its year, the grand total); clicking a period opens the next finer grain in the trend view, and the route rolls the period back up | Year, quarter or month, on weekdays or weekends, on paydays or not | Vehicle and order size together with the period | Month x day-of-week grid of average orders per day, and the ROLLUP that returns every subtotal at once |
 
 R3's deciles view draws the table's own numbers as a **Pareto chart**
 (`src/components/ParetoChart.jsx`): one bar per decile plus the cumulative line,
@@ -72,6 +80,26 @@ on a single 0–100% scale so the line reaches the top gridline when the deciles
 account for everything. The switch above the table (`Deciles` / `Geography` /
 `Customers`) swaps peer views rather than drilling; the route line still shows
 the drill state and rolls it back.
+
+R4's four views are peers over one slice, so the same demand is read four ways:
+the **roll-up** table, the **trend** line at a grain you choose (year, quarter,
+month, week or day, with a 7-period moving average), the **weekday** pivot, and
+**busiest days** (the day grain ranked, each day against the average day in the
+same slice). `src/components/LineChart.jsx` draws the trend, `HeatCell` the
+weekday pivot, and `CalendarGrid` one cell per day. At day grain the calendar
+replaces the table and the chart sits under it: 365 table rows say less than a
+calendar, and hovering a cell gives that day's exact figure.
+
+Two things worth knowing when reading R4:
+
+- **Demand is level.** The busiest weekday is 0.7% above the quietest and the
+  busiest month 0.9% above the quietest, so the heat map and the bars read flat.
+  That is the finding, not a broken colour scale: the network carries an even
+  load all year.
+- **A week that crosses a quarter boundary appears twice**, once for each
+  quarter, because `trend.sql` groups weeks by year *and* quarter. `2024 W40` is
+  a 1-day row (30 Sep) plus a 6-day row (1–6 Oct), each normalized to orders per
+  day, so the two rows are still comparable.
 
 Every table can be downloaded with **Export CSV** (the rows on screen, raw
 numbers, column names as shown).
@@ -101,7 +129,7 @@ from showing at once.
 
 ```
 src/
-  App.jsx                  sidebar + report header; the open report is in the URL hash (#r1, #r2)
+  App.jsx                  sidebar + report header; the open report is in the URL hash (#r1..#r4)
   api/client.js            the only code that calls the API (mock or live)
   api/useReport.js         React hook: loads one report level, keeps old rows while reloading
   api/mock.js              sample rows shaped exactly like each SQL file's output
@@ -117,14 +145,5 @@ src/
   reports/ProductCategoryReport.jsx   R1
   reports/FleetWorkloadReport.jsx     R2
   reports/CustomerValueReport.jsx     R3
-  reports/ComingSoon.jsx              placeholder for R4
+  reports/DemandCalendarReport.jsx    R4
 ```
-
-## Adding R4
-
-1. Copy `ProductCategoryReport.jsx` or `CustomerValueReport.jsx` as a starting
-   point and point `useReport` at the new report and level names
-   (`useReport('r4', 'trend', params)`).
-2. Add a sample-data function for each level to `src/api/mock.js` and register
-   it in `LEVELS`, returning the same columns as the SQL file.
-3. Swap `ComingSoon` for the new component in `src/reports/index.js`.

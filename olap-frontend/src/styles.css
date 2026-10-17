@@ -750,6 +750,12 @@ select {
   padding-top: 0;
 }
 
+/* R4 at day grain ends on a chart, with no table under it: the panel footer
+   already draws a rule there. */
+.panel-chart:last-child {
+  border-bottom: 0;
+}
+
 /* ---------- demand calendar ---------- */
 
 .cal {
@@ -1064,6 +1070,16 @@ tr.is-total td {
 
 .cell-muted {
   color: var(--ink-3);
+}
+
+/* R4's roll-up indents the finer levels: a month sits furthest in, its quarter
+   subtotal one step back, and the year subtotal at the margin. */
+.hier-1 {
+  padding-left: 16px;
+}
+
+.hier-2 {
+  padding-left: 32px;
 }
 
 .link-cell {
