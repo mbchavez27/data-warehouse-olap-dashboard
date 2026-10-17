@@ -146,4 +146,5 @@ src/
   reports/FleetWorkloadReport.jsx     R2
   reports/CustomerValueReport.jsx     R3
   reports/DemandCalendarReport.jsx    R4
+  reports/ComingSoon.jsx              unused placeholder, kept as the starting point for a future report
 ```

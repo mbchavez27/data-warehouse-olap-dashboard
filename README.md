@@ -148,8 +148,20 @@ results, create `olap-frontend/.env.local` with `VITE_API_MODE=live` and restart
 Vite proxies every `/api/...` call to `http://localhost:8080` (`API_TARGET`
 overrides that), so no CORS setup is needed in development.
 
-All four reports are implemented: R1 (Products & Categories), R2 (Fleet &
-Rider Workload), R3 (Customer Value) and R4 (Demand Calendar).
+All four reports are implemented, each with filters, drill-down and CSV export:
+
+- **R1 Products & Categories** — the 9 categories, each drilled into its
+  products, sliced by period and diced by vehicle and order size.
+- **R2 Fleet & Rider Workload** — couriers → vehicles → riders, with a
+  courier × vehicle grid (total orders or orders per rider) that jumps
+  straight into the riders behind a cell.
+- **R3 Customer Value** — deciles, geography and top customers as peer views.
+- **R4 Demand Calendar** — the whole date hierarchy rolled up in one table,
+  the trend at any grain, a month × weekday heat map, and the busiest days
+  down to a daily demand calendar.
+
+`olap-frontend/README.md` lists each report's views, filters and marks in
+detail, and the endpoints each one calls.
 
 ## Documentation
 
@@ -161,15 +173,23 @@ Rider Workload), R3 (Customer Value) and R4 (Demand Calendar).
 | `docs/database/data-warehouse-implementation.md` | Implemented warehouse types, constraints and load order |
 | `olap/queries/README.md` | The four OLAP reports, their parameters and measures |
 | `olap-frontend/README.md` | Dashboard layout and the API contract it expects |
+| `olap-backend/README.md` | API configuration, endpoints and read-only guarantees |
 | `evidence/benchmark/README.md` | Query baseline, plan bottlenecks and the generic-plan hazard |
+| `docs/project-checklist.md` | Repository-backed completion status for every methodology step |
 | `docs/technical-documentation/index.md` | Evidence index for the final report |
 
 ## Testing and Optimization (Steps 5 & 6)
 
 Test suites: `uv run --project etl pytest etl/tests` (ETL),
 `uv run --project db pytest db/source/importer` (source importer), and
-`go test ./...` in `olap-backend` (API). End-to-end report checks against the
-dashboard are still to be added.
+`go test ./...` in `olap-backend` (API). CI runs the suite for each area on the
+paths it covers — `.github/workflows/pipeline-tests.yml` (ETL and importer) and
+`api-tests.yml` (API) — and builds the dashboard
+(`.github/workflows/dashboard-build.yml`).
+
+The dashboard itself has no committed test suite: it runs on sample data
+(`src/api/mock.js`) by default and against the live API in `.env.local`, and
+end-to-end report checks for Step 5 are still to be added.
 
 Performance baseline: `olap/benchmark/run_benchmark.py` runs the 18 report cases
 (1 warm-up plus 5 measured runs each) and writes timings and
@@ -184,3 +204,21 @@ found in the plans, and the measured generic-plan hazard. Optimization
 (secondary indexes, query reformulation, pre-aggregation) has not been applied
 yet, so the "before" side of the comparison exists and the "after" side is
 pending.
+
+## Project status
+
+Steps 1–4 are complete and Step 6 has its baseline; what is left is functional
+testing, the optimization pass, and the report itself.
+
+| Step | State |
+|---|---|
+| 1. Source database setup | Done — 3,109,927 rows imported, validated, and re-validated read-only |
+| 2. Data warehouse construction | Done — 3 facts, 6 dimensions, 5 hierarchies, executable readiness gate |
+| 3. ETL pipeline | Done — 1,000,000 deliveries + 1,999,824 order items + 36,500 rider-days, 15/15 reconciliation checks, 0 rejects |
+| 4. OLAP application | Done — 12 parameterized query levels, the Go API, and the dashboard's four reports |
+| 5. Functional testing | **Pending** — the report queries and the dashboard have no committed end-to-end test script yet |
+| 6. Performance testing | Baseline measured (18 cases, medians 66–8,224 ms) plus the generic-plan comparison; optimization and the before/after comparison **pending** |
+| 7. Final technical report | **Pending** — evidence is indexed in `docs/technical-documentation/index.md`; the report template is not filled in |
+
+`docs/project-checklist.md` carries the same status with the artifact behind
+every checked item.

@@ -30,7 +30,7 @@
 ## 3. ETL Pipeline Setup
 
 - [x] Select a programming language (Python, Java, etc.) for the ETL script.
-  - Evidence: Python via `uv` (`etl/pyproject.toml`, psycopg + pytest); CI runs every test on each push (`.github/workflows/tests.yml`).
+  - Evidence: Python via `uv` (`etl/pyproject.toml`, psycopg + pytest); CI runs the suites on every relevant push (`.github/workflows/pipeline-tests.yml` for the ETL and importer tests, `api-tests.yml` for the Go API, `dashboard-build.yml` for the dashboard build).
 - [x] Write code to **Extract** data from the source database.
   - Evidence: read-only source queries are centralized in `etl/extract/queries.py`; `etl/load/date.py`, `etl/load/dimensions.py`, and `etl/load/facts.py` stream all six source tables through server-side cursors (10,000-row batches; no full-table reads).
 - [x] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
