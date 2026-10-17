@@ -1,6 +1,7 @@
-// Report table. Columns: { key, label, align?, render?(row), title?(row) }.
+// Report table. Columns: { key, label, align?, render?(row), title?(row), tip? }.
 // Rows with isTotal() get the total style; rows that canDrill() are clickable
-// and keyboard-focusable.
+// and keyboard-focusable. A column with tip: true renders its own Tooltip, so
+// the row's drill hint moves to the other cells instead of the whole row.
 export default function DataTable({ columns, rows, rowKey, onRowClick, canDrill, isTotal, caption, drillHint }) {
   return (
     <div className="table-wrap">
@@ -36,10 +37,13 @@ export default function DataTable({ columns, rows, rowKey, onRowClick, canDrill,
                     : undefined
                 }
                 tabIndex={clickable ? 0 : undefined}
-                title={clickable ? drillHint : undefined}
               >
                 {columns.map((c) => (
-                  <td key={c.key} className={c.align === 'right' ? 'num' : undefined} title={c.title?.(row)}>
+                  <td
+                    key={c.key}
+                    className={c.align === 'right' ? 'num' : undefined}
+                    title={c.tip ? undefined : c.title ? c.title(row) : clickable ? drillHint : undefined}
+                  >
                     {c.render ? c.render(row) : row[c.key]}
                   </td>
                 ))}

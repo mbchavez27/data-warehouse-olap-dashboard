@@ -5,6 +5,7 @@ import RoutePath from '../components/RoutePath.jsx'
 import DataTable from '../components/DataTable.jsx'
 import Bar from '../components/Bar.jsx'
 import Legend from '../components/Legend.jsx'
+import Tooltip from '../components/Tooltip.jsx'
 import Figures from '../components/Figures.jsx'
 import Segmented from '../components/Segmented.jsx'
 import ReportStatus from '../components/ReportStatus.jsx'
@@ -80,8 +81,16 @@ export default function ProductCategoryReport() {
           {
             key: 'value',
             label: 'List-price value',
-            render: (r) => <Bar value={Number(r.value)} max={maxValue} track={!r.is_total}>{peso(r.value)}</Bar>,
-            title: (r) => pesoFull(r.value),
+            tip: true,
+            render: (r) => (
+              <Tooltip
+                text={
+                  r.is_total ? null : `${pesoFull(r.value)} — ${pct(r.value_share_pct)} of list-price value`
+                }
+              >
+                <Bar value={Number(r.value)} max={maxValue} track={!r.is_total}>{peso(r.value)}</Bar>
+              </Tooltip>
+            ),
           },
           { key: 'value_share_pct', label: 'Share of value', align: 'right', render: (r) => pct(r.value_share_pct) },
         ]
@@ -97,8 +106,16 @@ export default function ProductCategoryReport() {
           {
             key: 'value',
             label: 'List-price value',
-            render: (r) => <Bar value={Number(r.value)} max={maxValue} track={!r.is_subtotal}>{peso(r.value)}</Bar>,
-            title: (r) => pesoFull(r.value),
+            tip: true,
+            render: (r) => (
+              <Tooltip
+                text={
+                  r.is_subtotal ? null : `${pesoFull(r.value)} — ${pct(r.share_of_category_pct)} of ${r.category}`
+                }
+              >
+                <Bar value={Number(r.value)} max={maxValue} track={!r.is_subtotal}>{peso(r.value)}</Bar>
+              </Tooltip>
+            ),
           },
           { key: 'share_of_category_pct', label: 'Share of category', align: 'right', render: (r) => pct(r.share_of_category_pct) },
         ]

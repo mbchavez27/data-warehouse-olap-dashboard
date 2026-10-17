@@ -580,6 +580,32 @@ select {
   color: var(--ink-3);
 }
 
+/* ---------- tooltip ---------- */
+
+.tip {
+  display: block;
+}
+
+.tip-bubble {
+  position: fixed;
+  z-index: 60;
+  max-width: 260px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.18);
+  transform: translate(-50%, calc(-100% - 8px));
+  pointer-events: none;
+}
+
+.tip-bubble.is-below {
+  transform: translate(-50%, 8px);
+}
+
 .panel-foot {
   padding: 12px 18px;
   border-top: 1px solid var(--line-soft);
