@@ -93,7 +93,8 @@ src/
   api/mock.js              sample rows shaped exactly like each SQL file's output
   components/              FilterBar, Panel, Figures (KPI cards), RoutePath (drill path), ScopeLine
                            (scope sentence), Legend (encoding key), Tooltip (hover hint), DataTable,
-                           Bar, HeatCell (heat matrix cell), LineChart (SVG time series), Segmented,
+                           Bar, HeatCell (heat matrix cell), LineChart (time series), ParetoChart
+                           (concentration), CalendarGrid (demand calendar), Segmented,
                            ExportButton, ReportStatus, Icons
   lib/csv.js               Export CSV
   lib/dimensions.js        filter options shared by all reports (values match the SQL)

@@ -4,8 +4,9 @@ import { createPortal } from 'react-dom'
 // Hover/focus hint that explains what a mark shows (full value, its share, how
 // to read it). The bubble renders in a portal with position: fixed, because the
 // panel and the table both clip their overflow. `text` of null/'' renders the
-// children bare, for rows that should not have a hint.
-export default function Tooltip({ text, children }) {
+// children bare, for rows that should not have a hint. `className`/`style` land
+// on the wrapper, so a caller (a calendar cell, say) can style and place it.
+export default function Tooltip({ text, className, style, children }) {
   const [anchor, setAnchor] = useState(null)
 
   if (!text) return children
@@ -17,7 +18,8 @@ export default function Tooltip({ text, children }) {
 
   return (
     <span
-      className="tip"
+      className={className ? `tip ${className}` : 'tip'}
+      style={style}
       onMouseEnter={(e) => open(e.currentTarget)}
       onMouseLeave={() => setAnchor(null)}
       onFocus={(e) => open(e.currentTarget)}
