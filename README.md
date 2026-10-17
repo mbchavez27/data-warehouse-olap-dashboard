@@ -187,9 +187,13 @@ paths it covers — `.github/workflows/pipeline-tests.yml` (ETL and importer) an
 `api-tests.yml` (API) — and builds the dashboard
 (`.github/workflows/dashboard-build.yml`).
 
-The dashboard itself has no committed test suite: it runs on sample data
-(`src/api/mock.js`) by default and against the live API in `.env.local`, and
-end-to-end report checks for Step 5 are still to be added.
+The dashboard has its own suite. `npm test` in `olap-frontend` checks the
+sample data and the four reports against the generated column contract for all
+12 levels, needs no database, and runs in CI
+(`.github/workflows/dashboard-tests.yml`); `npm run check:contracts` diffs that
+contract against the live API and writes `evidence/contract-check.json`. Both
+are structural: report-level end-to-end checks that reconcile the analytical
+results to the ETL baseline are still to be added.
 
 Performance baseline: `olap/benchmark/run_benchmark.py` runs the 18 report cases
 (1 warm-up plus 5 measured runs each) and writes timings and
@@ -216,7 +220,7 @@ testing, the optimization pass, and the report itself.
 | 2. Data warehouse construction | Done — 3 facts, 6 dimensions, 5 hierarchies, executable readiness gate |
 | 3. ETL pipeline | Done — 1,000,000 deliveries + 1,999,824 order items + 36,500 rider-days, 15/15 reconciliation checks, 0 rejects |
 | 4. OLAP application | Done — 12 parameterized query levels, the Go API, and the dashboard's four reports |
-| 5. Functional testing | **Pending** — the report queries and the dashboard have no committed end-to-end test script yet |
+| 5. Functional testing | **Pending** — the dashboard has a column-contract suite (`npm test`) and a live contract check (`npm run check:contracts`); a report-level script that reconciles analytical results to the ETL baseline is still missing |
 | 6. Performance testing | Baseline measured (18 cases, medians 66–8,224 ms) plus the generic-plan comparison; optimization and the before/after comparison **pending** |
 | 7. Final technical report | **Pending** — evidence is indexed in `docs/technical-documentation/index.md`; the report template is not filled in |
 

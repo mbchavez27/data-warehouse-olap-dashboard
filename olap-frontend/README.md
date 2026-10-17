@@ -125,6 +125,40 @@ keyboard focus, and on a clickable row the remaining cells keep the native
 `DataTable` when it draws its own tooltip, which is what keeps the two hints
 from showing at once.
 
+## Tests
+
+The sample data has to carry exactly the columns each SQL file returns: mock
+mode is the default, so a builder that drifts from its query shows a blank cell
+where live mode shows a value. `src/api/contracts.js` pins that down — it is
+generated from `GET /api/reports` and lists the columns of every path the
+dashboard can ask for.
+
+```bash
+npm test                    # no warehouse needed, runs in CI
+npm run sync:contracts      # regenerate the contract from the API
+npm run check:contracts     # diff the contract against the live API
+```
+
+`npm test` uses Node's built-in runner and needs no database or browser. It
+checks three things:
+
+1. every sample row of every level carries exactly its query's columns;
+2. no report reads a column its queries do not return;
+3. every table column is a real column or derives its own value
+   (`render` / `csv`).
+
+`src/api/mock.js` also enforces (1) at runtime, so a drifting builder fails in
+development rather than rendering a blank column. In a production build it logs
+instead of throwing, so the demo still renders.
+
+`npm run check:contracts` covers the one link CI cannot see — the SQL itself,
+because the source archive is not in the repository, so CI cannot build the
+warehouse. It compares the committed contract and the API's own column list
+against what all 14 requestable paths return, writes
+`evidence/contract-check.json`, and exits non-zero on any difference. Run it
+after changing a query, then `npm run sync:contracts` and extend the sample
+builder for any column you added.
+
 ## Folder layout
 
 ```
@@ -133,6 +167,9 @@ src/
   api/client.js            the only code that calls the API (mock or live)
   api/useReport.js         React hook: loads one report level, keeps old rows while reloading
   api/mock.js              sample rows shaped exactly like each SQL file's output
+  api/contracts.js         generated: the columns each level returns (see Tests above)
+  scripts/                 sync-contracts (regenerate the contract), check-contracts (diff it against the API)
+  tests/                   column-contract tests (npm test)
   components/              FilterBar, Panel, Figures (KPI cards), RoutePath (drill path), ScopeLine
                            (scope sentence), Legend (encoding key), Tooltip (hover hint), DataTable,
                            Bar, HeatCell (heat matrix cell), LineChart (time series), ParetoChart

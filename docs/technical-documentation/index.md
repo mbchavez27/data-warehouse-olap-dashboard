@@ -23,11 +23,13 @@ from memory for the final report.
 | [`evidence/benchmark/README.md`](../../evidence/benchmark/README.md) | An 18-case read-only baseline (median of 5 runs), the `EXPLAIN (ANALYZE, BUFFERS)` plans, the bottlenecks they expose, and the measured generic-plan hazard. | Performance baseline |
 | [`olap-backend/`](../../olap-backend/) | The Go API (`net/http` + `pgx/v5`) that runs the report SQL read-only and serves validated JSON, plus [`olap-backend/README.md`](../../olap-backend/README.md). | OLAP application |
 | [`olap-frontend/`](../../olap-frontend/) | The React dashboard: all four reports (R1–R4) with filters, drill-down, OLAP-level switching and CSV export, built without UI or chart libraries. | OLAP application |
+| [`evidence/contract-check.json`](../../evidence/contract-check.json) | All 14 requestable report levels return exactly the columns the dashboard's committed contract and the API catalog declare. | OLAP application |
 | [`docs/technical-documentation/application-architecture.md`](application-architecture.md) | Component map, request flow, and the safety and plan-cache decisions behind the API. | OLAP application |
 | [`docs/project-checklist.md`](../project-checklist.md) | Repository-backed completion status across the full MCO1 methodology. | Project tracking |
 
-Still pending: functional-test evidence for the reports and the
-post-optimization performance comparison (Step 6).
+Still pending: report-level functional-test evidence (the column-contract check
+above is structural, not a correctness check) and the post-optimization
+performance comparison (Step 6).
 
 ## Evidence convention for future work
 

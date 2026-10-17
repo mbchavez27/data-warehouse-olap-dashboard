@@ -5,6 +5,12 @@
 // needs no UI changes. The numbers are invented but sized like the real
 // warehouse (1M orders, ~11M units, 100 riders, 24 Sep 2024 to 23 Sep 2025)
 // and react to every filter. They are NOT warehouse results.
+//
+// `conform` below enforces the column part of that promise against the
+// generated contract in ./contracts.js, so a builder that drifts from its
+// query fails here instead of rendering a blank column in mock mode.
+
+import { CONTRACTS } from './contracts.js'
 
 // ---------- shared helpers ----------
 
@@ -765,8 +771,39 @@ const LEVELS = {
   'r4/busiest_days': r4BusiestDays,
 }
 
+// The levels this file serves, so a test can check each one against the
+// contract without repeating the list.
+export const MOCKED_LEVELS = Object.keys(LEVELS)
+
+// A stale builder used to show a blank cell in mock mode (the default), which
+// only a live run or a reader would catch. Strict everywhere except a
+// production build, where a warning keeps the demo rendering.
+const strict = !import.meta.env?.PROD
+
+function conform(level, rows) {
+  const columns = CONTRACTS[level]
+  if (!columns) throw new Error(`${level} has no column contract; run npm run sync:contracts.`)
+
+  return rows.map((row) => {
+    const unknown = Object.keys(row).filter((key) => !columns.includes(key))
+    const missing = columns.filter((key) => !(key in row))
+    if (unknown.length || missing.length) {
+      const parts = [
+        unknown.length ? `returns ${unknown.join(', ')}, which the SQL does not` : '',
+        missing.length ? `is missing ${missing.join(', ')}` : '',
+      ].filter(Boolean)
+      const message = `${level}: sample row ${parts.join('; ')}`
+      if (strict) throw new Error(message)
+      console.error(message)
+    }
+    // Built from the contract, so every row carries every column in SQL order.
+    return Object.fromEntries(columns.map((key) => [key, row[key]]))
+  })
+}
+
 export function mockReport(report, level, params) {
-  const build = LEVELS[`${report}/${level}`]
-  if (!build) throw new Error(`No sample data for ${report}/${level} yet.`)
-  return build(params)
+  const key = `${report}/${level}`
+  const build = LEVELS[key]
+  if (!build) throw new Error(`No sample data for ${key} yet.`)
+  return conform(key, build(params))
 }

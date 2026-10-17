@@ -54,11 +54,11 @@
 ## 5. Functional Testing
 
 - [ ] Prepare functional test scripts designed for efficient testing.
-  - State: current coverage is the unit/contract suites (`go test ./...` in `olap-backend`, `uv run --project etl pytest etl/tests`, `uv run --project db pytest db/source/importer`) plus the dashboard's mock/live modes; a standalone functional-test script for the reports is still pending.
+  - State: unit and contract suites exist — `go test ./...` (API), `uv run --project etl pytest etl/tests` (ETL), `uv run --project db pytest db/source/importer` (importer) — plus the dashboard's column-contract suite `npm test` (15 checks over all 12 report levels, run in CI by `.github/workflows/dashboard-tests.yml`). A report-level functional script that drives the reports end to end is still pending.
 - [ ] Execute each query multiple times using different parameter values.
-  - State: `olap/benchmark/run_benchmark.py` already runs all 18 report cases with varied filters; a dedicated correctness pass over parameter combinations is still pending.
+  - State: `olap/benchmark/run_benchmark.py` runs all 18 report cases with varied filters, and `npm run check:contracts` replays all 14 requestable levels against the live API (evidence: `evidence/contract-check.json`). Both check timings and columns rather than results, so a correctness pass over parameter combinations is still pending.
 - [ ] Verify that the resulting reports and analytical data are correct.
-  - ETL input baseline: `evidence/etl-reconciliation.json` fixes the official warehouse totals that future report tests must reconcile against (1,000,000 deliveries; 1,999,824 order items; 36,500 rider-days; 10,999,917 units).
+  - ETL input baseline: `evidence/etl-reconciliation.json` fixes the official warehouse totals that future report tests must reconcile against (1,000,000 deliveries; 1,999,824 order items; 36,500 rider-days; 10,999,917 units). `evidence/contract-check.json` records column-level agreement between the dashboard and the warehouse, but no report total has been reconciled to that baseline yet.
 
 ## 6. Performance Testing & Optimization
 

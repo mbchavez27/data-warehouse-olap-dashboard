@@ -1,0 +1,789 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-17T20:31:53.450Z",
+  "command": "npm run check:contracts",
+  "api": {
+    "base": "http://localhost:8080",
+    "reports": 4,
+    "levels": 14
+  },
+  "criteria": "For every report level the dashboard can request, the committed column contract in olap-frontend/src/api/contracts.js and the API catalog both list the same columns the query returns (compared as a set: Go serialises a row as a JSON object with sorted keys, so the response carries no column order), and every level served by the sample data has a contract.",
+  "levels": {
+    "r1/category": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r1/product": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r2/courier_vehicle_cube": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r2/courier_vehicle_pivot": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r2/cube": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r2/pivot": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r2/rider": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r3/customer": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r3/deciles": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r3/geography": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r4/busiest_days": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r4/rollup": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r4/trend": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    },
+    "r4/weekday_pivot": {
+      "contractMatchesResponse": true,
+      "catalogMatchesResponse": true
+    }
+  },
+  "checks": {
+    "r1/category": {
+      "expected": [
+        "category",
+        "is_total",
+        "units",
+        "value",
+        "value_rank",
+        "value_share_pct"
+      ],
+      "actual": [
+        "category",
+        "is_total",
+        "units",
+        "value",
+        "value_rank",
+        "value_share_pct"
+      ],
+      "passed": true
+    },
+    "r1/category (declared)": {
+      "expected": [
+        "category",
+        "is_total",
+        "units",
+        "value",
+        "value_rank",
+        "value_share_pct"
+      ],
+      "actual": [
+        "category",
+        "is_total",
+        "units",
+        "value",
+        "value_rank",
+        "value_share_pct"
+      ],
+      "passed": true
+    },
+    "r1/product": {
+      "expected": [
+        "category",
+        "is_subtotal",
+        "product",
+        "rank_in_category",
+        "share_of_category_pct",
+        "units",
+        "value"
+      ],
+      "actual": [
+        "category",
+        "is_subtotal",
+        "product",
+        "rank_in_category",
+        "share_of_category_pct",
+        "units",
+        "value"
+      ],
+      "passed": true
+    },
+    "r1/product (declared)": {
+      "expected": [
+        "category",
+        "is_subtotal",
+        "product",
+        "rank_in_category",
+        "share_of_category_pct",
+        "units",
+        "value"
+      ],
+      "actual": [
+        "category",
+        "is_subtotal",
+        "product",
+        "rank_in_category",
+        "share_of_category_pct",
+        "units",
+        "value"
+      ],
+      "passed": true
+    },
+    "r2/courier_vehicle_cube": {
+      "expected": [
+        "courier",
+        "grouping_level",
+        "order_share_pct",
+        "orders",
+        "orders_per_rider",
+        "riders",
+        "units",
+        "vehicle"
+      ],
+      "actual": [
+        "courier",
+        "grouping_level",
+        "order_share_pct",
+        "orders",
+        "orders_per_rider",
+        "riders",
+        "units",
+        "vehicle"
+      ],
+      "passed": true
+    },
+    "r2/courier_vehicle_cube (declared)": {
+      "expected": [
+        "courier",
+        "grouping_level",
+        "order_share_pct",
+        "orders",
+        "orders_per_rider",
+        "riders",
+        "units",
+        "vehicle"
+      ],
+      "actual": [
+        "courier",
+        "grouping_level",
+        "order_share_pct",
+        "orders",
+        "orders_per_rider",
+        "riders",
+        "units",
+        "vehicle"
+      ],
+      "passed": true
+    },
+    "r2/courier_vehicle_pivot": {
+      "expected": [
+        "bicycle",
+        "car",
+        "courier",
+        "is_total",
+        "motorcycle",
+        "riders",
+        "total",
+        "trike"
+      ],
+      "actual": [
+        "bicycle",
+        "car",
+        "courier",
+        "is_total",
+        "motorcycle",
+        "riders",
+        "total",
+        "trike"
+      ],
+      "passed": true
+    },
+    "r2/courier_vehicle_pivot (declared)": {
+      "expected": [
+        "bicycle",
+        "car",
+        "courier",
+        "is_total",
+        "motorcycle",
+        "riders",
+        "total",
+        "trike"
+      ],
+      "actual": [
+        "bicycle",
+        "car",
+        "courier",
+        "is_total",
+        "motorcycle",
+        "riders",
+        "total",
+        "trike"
+      ],
+      "passed": true
+    },
+    "r2/cube": {
+      "expected": [
+        "courier",
+        "grouping_level",
+        "order_share_pct",
+        "orders",
+        "orders_per_rider",
+        "riders",
+        "units",
+        "vehicle"
+      ],
+      "actual": [
+        "courier",
+        "grouping_level",
+        "order_share_pct",
+        "orders",
+        "orders_per_rider",
+        "riders",
+        "units",
+        "vehicle"
+      ],
+      "passed": true
+    },
+    "r2/cube (declared)": {
+      "expected": [
+        "courier",
+        "grouping_level",
+        "order_share_pct",
+        "orders",
+        "orders_per_rider",
+        "riders",
+        "units",
+        "vehicle"
+      ],
+      "actual": [
+        "courier",
+        "grouping_level",
+        "order_share_pct",
+        "orders",
+        "orders_per_rider",
+        "riders",
+        "units",
+        "vehicle"
+      ],
+      "passed": true
+    },
+    "r2/pivot": {
+      "expected": [
+        "bicycle",
+        "car",
+        "courier",
+        "is_total",
+        "motorcycle",
+        "riders",
+        "total",
+        "trike"
+      ],
+      "actual": [
+        "bicycle",
+        "car",
+        "courier",
+        "is_total",
+        "motorcycle",
+        "riders",
+        "total",
+        "trike"
+      ],
+      "passed": true
+    },
+    "r2/pivot (declared)": {
+      "expected": [
+        "bicycle",
+        "car",
+        "courier",
+        "is_total",
+        "motorcycle",
+        "riders",
+        "total",
+        "trike"
+      ],
+      "actual": [
+        "bicycle",
+        "car",
+        "courier",
+        "is_total",
+        "motorcycle",
+        "riders",
+        "total",
+        "trike"
+      ],
+      "passed": true
+    },
+    "r2/rider": {
+      "expected": [
+        "active_days",
+        "age_band",
+        "avg_orders_per_active_day",
+        "calendar_days",
+        "courier",
+        "orders",
+        "peak_day_orders",
+        "rider",
+        "units",
+        "utilization_pct",
+        "vehicle",
+        "workload_percentile",
+        "workload_rank"
+      ],
+      "actual": [
+        "active_days",
+        "age_band",
+        "avg_orders_per_active_day",
+        "calendar_days",
+        "courier",
+        "orders",
+        "peak_day_orders",
+        "rider",
+        "units",
+        "utilization_pct",
+        "vehicle",
+        "workload_percentile",
+        "workload_rank"
+      ],
+      "passed": true
+    },
+    "r2/rider (declared)": {
+      "expected": [
+        "active_days",
+        "age_band",
+        "avg_orders_per_active_day",
+        "calendar_days",
+        "courier",
+        "orders",
+        "peak_day_orders",
+        "rider",
+        "units",
+        "utilization_pct",
+        "vehicle",
+        "workload_percentile",
+        "workload_rank"
+      ],
+      "actual": [
+        "active_days",
+        "age_band",
+        "avg_orders_per_active_day",
+        "calendar_days",
+        "courier",
+        "orders",
+        "peak_day_orders",
+        "rider",
+        "units",
+        "utilization_pct",
+        "vehicle",
+        "workload_percentile",
+        "workload_rank"
+      ],
+      "passed": true
+    },
+    "r3/customer": {
+      "expected": [
+        "avg_order_value",
+        "city",
+        "country",
+        "customer",
+        "decile",
+        "gender",
+        "orders",
+        "units",
+        "value",
+        "value_percentile",
+        "value_rank"
+      ],
+      "actual": [
+        "avg_order_value",
+        "city",
+        "country",
+        "customer",
+        "decile",
+        "gender",
+        "orders",
+        "units",
+        "value",
+        "value_percentile",
+        "value_rank"
+      ],
+      "passed": true
+    },
+    "r3/customer (declared)": {
+      "expected": [
+        "avg_order_value",
+        "city",
+        "country",
+        "customer",
+        "decile",
+        "gender",
+        "orders",
+        "units",
+        "value",
+        "value_percentile",
+        "value_rank"
+      ],
+      "actual": [
+        "avg_order_value",
+        "city",
+        "country",
+        "customer",
+        "decile",
+        "gender",
+        "orders",
+        "units",
+        "value",
+        "value_percentile",
+        "value_rank"
+      ],
+      "passed": true
+    },
+    "r3/deciles": {
+      "expected": [
+        "avg_value_per_customer",
+        "cumulative_share_pct",
+        "customers",
+        "decile",
+        "max_customer_value",
+        "min_customer_value",
+        "value",
+        "value_share_pct"
+      ],
+      "actual": [
+        "avg_value_per_customer",
+        "cumulative_share_pct",
+        "customers",
+        "decile",
+        "max_customer_value",
+        "min_customer_value",
+        "value",
+        "value_share_pct"
+      ],
+      "passed": true
+    },
+    "r3/deciles (declared)": {
+      "expected": [
+        "avg_value_per_customer",
+        "cumulative_share_pct",
+        "customers",
+        "decile",
+        "max_customer_value",
+        "min_customer_value",
+        "value",
+        "value_share_pct"
+      ],
+      "actual": [
+        "avg_value_per_customer",
+        "cumulative_share_pct",
+        "customers",
+        "decile",
+        "max_customer_value",
+        "min_customer_value",
+        "value",
+        "value_share_pct"
+      ],
+      "passed": true
+    },
+    "r3/geography": {
+      "expected": [
+        "customers",
+        "gender",
+        "grouping_level",
+        "location",
+        "orders",
+        "value",
+        "value_per_customer",
+        "value_rank"
+      ],
+      "actual": [
+        "customers",
+        "gender",
+        "grouping_level",
+        "location",
+        "orders",
+        "value",
+        "value_per_customer",
+        "value_rank"
+      ],
+      "passed": true
+    },
+    "r3/geography (declared)": {
+      "expected": [
+        "customers",
+        "gender",
+        "grouping_level",
+        "location",
+        "orders",
+        "value",
+        "value_per_customer",
+        "value_rank"
+      ],
+      "actual": [
+        "customers",
+        "gender",
+        "grouping_level",
+        "location",
+        "orders",
+        "value",
+        "value_per_customer",
+        "value_rank"
+      ],
+      "passed": true
+    },
+    "r4/busiest_days": {
+      "expected": [
+        "active_riders",
+        "date",
+        "day_name",
+        "demand_rank",
+        "is_payday",
+        "is_weekend",
+        "orders",
+        "orders_per_active_rider",
+        "units",
+        "vs_average_pct"
+      ],
+      "actual": [
+        "active_riders",
+        "date",
+        "day_name",
+        "demand_rank",
+        "is_payday",
+        "is_weekend",
+        "orders",
+        "orders_per_active_rider",
+        "units",
+        "vs_average_pct"
+      ],
+      "passed": true
+    },
+    "r4/busiest_days (declared)": {
+      "expected": [
+        "active_riders",
+        "date",
+        "day_name",
+        "demand_rank",
+        "is_payday",
+        "is_weekend",
+        "orders",
+        "orders_per_active_rider",
+        "units",
+        "vs_average_pct"
+      ],
+      "actual": [
+        "active_riders",
+        "date",
+        "day_name",
+        "demand_rank",
+        "is_payday",
+        "is_weekend",
+        "orders",
+        "orders_per_active_rider",
+        "units",
+        "vs_average_pct"
+      ],
+      "passed": true
+    },
+    "r4/rollup": {
+      "expected": [
+        "days",
+        "hierarchy_level",
+        "month",
+        "month_name",
+        "orders",
+        "orders_per_day",
+        "quarter",
+        "units",
+        "year"
+      ],
+      "actual": [
+        "days",
+        "hierarchy_level",
+        "month",
+        "month_name",
+        "orders",
+        "orders_per_day",
+        "quarter",
+        "units",
+        "year"
+      ],
+      "passed": true
+    },
+    "r4/rollup (declared)": {
+      "expected": [
+        "days",
+        "hierarchy_level",
+        "month",
+        "month_name",
+        "orders",
+        "orders_per_day",
+        "quarter",
+        "units",
+        "year"
+      ],
+      "actual": [
+        "days",
+        "hierarchy_level",
+        "month",
+        "month_name",
+        "orders",
+        "orders_per_day",
+        "quarter",
+        "units",
+        "year"
+      ],
+      "passed": true
+    },
+    "r4/trend": {
+      "expected": [
+        "change_vs_previous_pct",
+        "days",
+        "moving_avg_orders_per_day",
+        "orders",
+        "orders_per_day",
+        "period_label",
+        "period_start",
+        "units"
+      ],
+      "actual": [
+        "change_vs_previous_pct",
+        "days",
+        "moving_avg_orders_per_day",
+        "orders",
+        "orders_per_day",
+        "period_label",
+        "period_start",
+        "units"
+      ],
+      "passed": true
+    },
+    "r4/trend (declared)": {
+      "expected": [
+        "change_vs_previous_pct",
+        "days",
+        "moving_avg_orders_per_day",
+        "orders",
+        "orders_per_day",
+        "period_label",
+        "period_start",
+        "units"
+      ],
+      "actual": [
+        "change_vs_previous_pct",
+        "days",
+        "moving_avg_orders_per_day",
+        "orders",
+        "orders_per_day",
+        "period_label",
+        "period_start",
+        "units"
+      ],
+      "passed": true
+    },
+    "r4/weekday_pivot": {
+      "expected": [
+        "all_days",
+        "fri",
+        "is_total",
+        "mon",
+        "month_label",
+        "sat",
+        "sun",
+        "thu",
+        "tue",
+        "wed"
+      ],
+      "actual": [
+        "all_days",
+        "fri",
+        "is_total",
+        "mon",
+        "month_label",
+        "sat",
+        "sun",
+        "thu",
+        "tue",
+        "wed"
+      ],
+      "passed": true
+    },
+    "r4/weekday_pivot (declared)": {
+      "expected": [
+        "all_days",
+        "fri",
+        "is_total",
+        "mon",
+        "month_label",
+        "sat",
+        "sun",
+        "thu",
+        "tue",
+        "wed"
+      ],
+      "actual": [
+        "all_days",
+        "fri",
+        "is_total",
+        "mon",
+        "month_label",
+        "sat",
+        "sun",
+        "thu",
+        "tue",
+        "wed"
+      ],
+      "passed": true
+    },
+    "every mocked level is in the contract": {
+      "expected": [
+        "r1/category",
+        "r1/product",
+        "r2/cube",
+        "r2/pivot",
+        "r2/rider",
+        "r3/deciles",
+        "r3/geography",
+        "r3/customer",
+        "r4/rollup",
+        "r4/trend",
+        "r4/weekday_pivot",
+        "r4/busiest_days"
+      ],
+      "actual": [
+        "r1/category",
+        "r1/product",
+        "r2/cube",
+        "r2/pivot",
+        "r2/rider",
+        "r3/deciles",
+        "r3/geography",
+        "r3/customer",
+        "r4/rollup",
+        "r4/trend",
+        "r4/weekday_pivot",
+        "r4/busiest_days"
+      ],
+      "passed": true
+    }
+  },
+  "failedChecks": [],
+  "durationMs": 43104,
+  "passed": true
+}
