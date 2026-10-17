@@ -166,15 +166,21 @@ Question 16 (drill-across) uses `FACT_ORDERDELIVERY` and `FACT_RIDERDAILY` toget
 
 ## Reports
 
-| Report                                 | Questions      | Fact tables                     | Decision it supports                             |
-| -------------------------------------- | -------------- | ------------------------------- | ------------------------------------------------ |
-| **R1 Fleet Fit**                       | 1, 2, 3, 4     | ORDERDELIVERY, ORDERITEM        | Vehicle-assignment rules by order size           |
-| **R2 Courier Mix**                     | 5, 6, 7, 8     | ORDERDELIVERY, RIDERDAILY       | Courier dependency and contract terms            |
-| **R3 Rider Workload and Utilization**  | 9, 10, 11, 12  | ORDERDELIVERY, RIDERDAILY       | Dispatch balancing and idle capacity             |
-| **R4 Demand and Capacity Calendar**    | 13, 14, 15, 16 | All three (drill-across for 16) | Capacity planning and peak staffing              |
-| **R5 Product and Order Composition**   | 17, 18, 19     | ORDERITEM                       | What fills heavy orders, category planning       |
-| **R6 Geographic and Customer View**    | 20, 21, 22     | ORDERDELIVERY                   | Positioning heavier vehicles, customer targeting |
-| **R0 Data Quality and Reconciliation** | none           | All                             | Row counts, Unknown-member counts, rejected rows |
+The four dashboard reports in [`olap/queries/`](../../olap/queries/README.md)
+regroup the business questions above. Each level is one parameterized SQL file;
+the API and dashboard are documented in
+[`docs/technical-documentation/application-architecture.md`](../technical-documentation/application-architecture.md).
+
+| Report | Levels | Business questions | Fact tables | OLAP operations |
+| --- | --- | --- | --- | --- |
+| **R1 Product & Category Value** | category → product | 4, 17, 18, 19 | ORDERITEM | roll-up, drill-down, slice, dice |
+| **R2 Fleet, Courier & Rider Workload** | courier × vehicle (cube), courier × vehicle (pivot) → rider | 1, 2, 3, 5–12 | ORDERDELIVERY, RIDERDAILY (drill-across) | pivot, roll-up, drill-down, drill-across, slice, dice |
+| **R3 Customer Value Distribution** | deciles → geography (country → city) → customer | 20, 22 | ORDERITEM | roll-up, drill-down, slice, dice |
+| **R4 Demand Calendar** | rollup, trend, weekday pivot, busiest days | 13–16 | ORDERDELIVERY, RIDERDAILY (drill-across) | roll-up, drill-down, slice, dice, pivot |
+
+Q1 (vehicle × order-size cross-tab) and Q21 (heavy orders by zone × vehicle) are
+only partially covered: the implemented cross-tabs are courier × vehicle, with
+vehicle and order size applied as filters (slice/dice) rather than axes.
 
 ## Notes and Limitations
 

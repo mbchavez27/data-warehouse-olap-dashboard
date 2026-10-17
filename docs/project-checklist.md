@@ -1,6 +1,6 @@
 # Project Checklist — Data Warehouse OLAP Dashboard
 
-> Status as of 2026-10-11. Checked items have repository evidence; unchecked items are scaffold-only (`.gitkeep`) or empty.
+> Status as of 2026-10-18. Checked items have repository evidence; unchecked items are scaffold-only (`.gitkeep`) or empty.
 
 ## 1. Source Database Setup
 
@@ -42,25 +42,28 @@
 
 ## 4. OLAP Application Development
 
-- [ ] Formulate complex queries utilizing OLAP operations (roll-up, drill-down, slice, dice, pivot).
-  - State: 22 questions with OLAP ops specified in `docs/database/data-warehouse-schema.md`; no executable SQL yet.
-- [ ] Develop a web-based dashboard application.
-  - State: `olap-backend/` and `olap-frontend/` contain only `.gitkeep`; `README.md` plans Go API (`:8080`) + React (`:3000`).
-- [ ] Implement UI features allowing users to specify query parameters and filters (for slice and dice).
-- [ ] Implement UI features allowing users to view reports at varying levels of granularity (for drill-down and roll-up).
+- [x] Formulate complex queries utilizing OLAP operations (roll-up, drill-down, slice, dice, pivot).
+  - Evidence: `olap/queries/` holds the four reports (12 parameterized level files) documented in `olap/queries/README.md`; all five OLAP operations are covered (`ROLLUP`, `CUBE`, `GROUPING SETS`, pivot via `FILTER`, window functions). They realize the 22 business questions in `docs/database/data-warehouse-schema.md` and are benchmarked in `evidence/benchmark/`. Every filter is a bound parameter (`:'name'`), never concatenated SQL.
+- [x] Develop a web-based dashboard application.
+  - Evidence: Go API in `olap-backend/` (`net/http` + `pgx/v5`, read-only pool, `force_custom_plan`; 11 tests via `go test ./...`) and React dashboard in `olap-frontend/` (Vite, no UI libraries). Dashboard R1 (Products & Categories) and R2 (Fleet & Rider Workload) are implemented; R3 (Customer Value) and R4 (Demand Calendar) are wired to `ComingSoon`.
+- [x] Implement UI features allowing users to specify query parameters and filters (for slice and dice).
+  - Evidence: `olap-frontend/src/components/FilterBar.jsx` with `src/lib/dimensions.js` drives year/quarter/month/vehicle/size/courier/age/gender filters for R1–R2; the same contract is exposed by the API (see `olap-frontend/README.md`). R3–R4 filters are pending their report components.
+- [x] Implement UI features allowing users to view reports at varying levels of granularity (for drill-down and roll-up).
+  - Evidence: `olap-frontend/src/components/RoutePath.jsx` renders the drill path and rolls back up; R1 drills Category → Product, R2 drills Couriers → Vehicles → Riders. R3–R4 drill levels are pending.
 
 ## 5. Functional Testing
 
 - [ ] Prepare functional test scripts designed for efficient testing.
-  - State: `tests/` contains only `.gitkeep`; planned `tests/functional_test.py` not present.
+  - State: current coverage is the unit/contract suites (`go test ./...` in `olap-backend`, `uv run --project etl pytest etl/tests`, `uv run --project db pytest db/source/importer`) plus the dashboard's mock/live modes; a standalone functional-test script for the reports is still pending.
 - [ ] Execute each query multiple times using different parameter values.
+  - State: `olap/benchmark/run_benchmark.py` already runs all 18 report cases with varied filters; a dedicated correctness pass over parameter combinations is still pending.
 - [ ] Verify that the resulting reports and analytical data are correct.
   - ETL input baseline: `evidence/etl-reconciliation.json` fixes the official warehouse totals that future report tests must reconcile against (1,000,000 deliveries; 1,999,824 order items; 36,500 rider-days; 10,999,917 units).
 
 ## 6. Performance Testing & Optimization
 
-- [ ] Run each query multiple times (varying parameters, structure, or setup) and record baseline execution times.
-  - State: planned `tests/perf_test.py` not present.
+- [x] Run each query multiple times (varying parameters, structure, or setup) and record baseline execution times.
+  - Evidence: `olap/benchmark/run_benchmark.py` ran the 18 cases (1 warm-up + 5 measured runs each) into `evidence/benchmark/baseline/`; a second folder `evidence/benchmark/baseline-generic-plan/` records the same cases under `force_generic_plan`.
 
   | Baseline input | Current value | Evidence |
   |---|---:|---|
@@ -68,11 +71,12 @@
   | Loaded order-item facts | 1,999,824 rows | `evidence/etl-reconciliation.json` |
   | Loaded rider-day facts | 36,500 rows | `evidence/etl-reconciliation.json` |
   | Full ETL rebuild | ~40 seconds | `docs/database/data-warehouse-implementation.md` |
-  | OLAP query timings before optimization | Pending | To be captured by Step 6 performance tests |
+  | OLAP query timings before optimization | 18 cases, medians 66–8,224 ms | `evidence/benchmark/baseline/results.csv` |
   | OLAP query timings after optimization | Pending | To be captured after applying optimizations |
-- [ ] Evaluate performance and identify bottlenecks using the `EXPLAIN` feature.
+- [x] Evaluate performance and identify bottlenecks using the `EXPLAIN` feature.
+  - Evidence: `EXPLAIN (ANALYZE, BUFFERS)` per case in `evidence/benchmark/baseline/plans/`; bottlenecks (disk sorts, full fact scans, missing planner statistics) summarized in `evidence/benchmark/README.md`.
 - [ ] Apply database optimization strategies (e.g., secondary indexes, query reformulation, denormalization).
-  - State: planned `db/03_indexes.sql` not present.
+  - State: not yet applied; the baseline's "no secondary indexes" floor and candidates are documented in `evidence/benchmark/README.md`.
 - [ ] Compare execution times between the original implementation and the optimized implementation.
 - [ ] Analyze and explain the causes for performance improvement (or lack thereof) to include in the final report.
 
@@ -80,6 +84,6 @@
 
 - [ ] Download the prescribed Technical Report template.
 - [ ] Gather all data, execution times, and analyses collected from Steps 1 through 6.
-  - Evidence trail established in `docs/technical-documentation/index.md`; ETL executions are captured in `evidence/etl-runs.jsonl`. OLAP, functional-test, and performance evidence remains pending with Sections 4–6.
+  - Evidence trail established in `docs/technical-documentation/index.md`; ETL executions are in `evidence/etl-runs.jsonl`, OLAP queries in `olap/queries/`, and the performance baseline in `evidence/benchmark/`. Functional-test and post-optimization evidence remain pending.
 - [ ] Complete and finalize the Technical Report.
   - State: evidence index and consolidated profiling record exist; the prescribed report template and Sections 4–6 results remain pending.
