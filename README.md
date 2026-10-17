@@ -11,13 +11,18 @@ Query Processing in a Data Warehouse. Covers ETL data wrangling, dimensional mod
 
 ## Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
 - [Go](https://golang.org/doc/install) 1.25+
 - [Node.js](https://nodejs.org/) 18+
 - [Python](https://www.python.org/downloads/) 3.10+
 - [uv](https://github.com/astral-sh/uv) (Extremely fast Python package installer and resolver)
 
-## Setup Instructions
+There are two lifecycles. **Once per machine** you import the dataset and load
+the warehouse (Setup below); the data lives in Docker volumes and is reused from
+then on. **Every session** you start the backend and frontend (Run the app) — the
+warehouse is already loaded, so that is one command.
+
+## Setup (one time per machine)
 
 ### 1. Database Initialization
 
@@ -35,7 +40,7 @@ _Native Windows CMD/PowerShell (no bash): run the equivalent commands directly �
 
 _Confirm: open `evidence/source-import-report.json` — top-level `passed` must be `true`. Full procedure and acceptance checklist: `docs/database/source-database-setup.md`._
 
-### 2. Running the ETL Pipeline
+### 2. Load the Data Warehouse (ETL Pipeline)
 
 The Python pipeline extracts all six source tables, applies the documented
 cleaning and aggregations, loads the dimensional warehouse, reconciles the
@@ -87,13 +92,35 @@ uv run --project etl python etl/main.py --reconcile --output evidence/etl-reconc
 Implementation is organized by responsibility under `etl/core/`,
 `etl/extract/`, `etl/transform/`, `etl/load/`, and `etl/validate/`.
 
-### 3. Starting the Backend (Go OLAP API)
+## Run the app (every session)
 
-The Go service runs the parameterized OLAP report queries (roll-up, drill-down,
-slice, dice, pivot) from `olap/queries` against the warehouse and serves them as
-JSON. It treats those SQL files as the single source of the queries and opens
-the warehouse read-only, with `plan_cache_mode = force_custom_plan` so a reused
-prepared statement cannot fall back to a bad generic plan.
+### Docker (one command)
+
+The fastest way to run the API and dashboard together. This starts the Go API,
+the React dev server, and the warehouse they read from:
+
+```bash
+docker compose --profile app up -d        # dashboard on :3000, API on :8080
+docker compose --profile app logs -f api web
+docker compose --profile app down
+```
+
+- Plain `docker compose up -d` starts only the databases. To start just the app
+  stack, use `docker compose --profile app up -d api web`.
+- The warehouse data persists in the `pg_source_data` / `pg_dw_data` volumes.
+  `down` keeps them; `down -v` deletes them, after which you redo Setup.
+- The first run is slower (Go module download, `npm install`); the
+  `go_mod_cache` and `web_node_modules` volumes keep later runs fast.
+- The dashboard runs in live mode against the API, so no CORS setup is needed.
+- Stop any local `go run .` or `npm run dev` first — they hold the same ports.
+
+### Local dev servers (no Docker)
+
+To iterate with your own toolchain, run the two servers directly. The Go service
+runs the parameterized OLAP report queries from `olap/queries` against the
+warehouse and serves them as JSON; it opens the warehouse read-only with
+`plan_cache_mode = force_custom_plan` so a reused prepared statement cannot fall
+back to a bad generic plan.
 
 ```bash
 cd olap-backend
@@ -105,28 +132,21 @@ Configuration is read from the repository-root `.env` (or `olap-backend/.env`):
 `QUERY_TIMEOUT`, `DW_MAX_CONNS`, `CORS_ORIGINS`, `OLAP_QUERIES_DIR`. Defaults
 target the Compose warehouse at `localhost:5434/dw_db`.
 
-_The API is available at `http://localhost:8080`. `GET /api/health` reports
-warehouse reachability and `GET /api/reports` lists every report and level. Run
-the tests with `go test ./...`._
-
-### 4. Starting the Frontend (React Dashboard)
-
-The interactive dashboard lets users filter (slice and dice) and drill into the
-analytical reports.
-
 ```bash
 cd olap-frontend
 npm install
 npm run dev
 ```
 
-_The dashboard is available at `http://localhost:3000`._
+The API is available at `http://localhost:8080` (`GET /api/health` reports
+warehouse reachability; `GET /api/reports` lists every report and level; run its
+tests with `go test ./...`). The dashboard is at `http://localhost:3000`.
 
-By default it renders built-in sample data (`src/api/mock.js`), so it runs
-before the API is up. To load real warehouse results, create
-`olap-frontend/.env.local` with `VITE_API_MODE=live` and restart; Vite proxies
-every `/api/...` call to `http://localhost:8080` (`API_TARGET` overrides that),
-so no CORS setup is needed in development.
+The dashboard renders built-in sample data (`src/api/mock.js`) until it is
+pointed at the API, so it runs before the API is up. To load real warehouse
+results, create `olap-frontend/.env.local` with `VITE_API_MODE=live` and restart;
+Vite proxies every `/api/...` call to `http://localhost:8080` (`API_TARGET`
+overrides that), so no CORS setup is needed in development.
 
 R1 (Products & Categories) and R2 (Fleet & Rider Workload) are implemented;
 R3 (Customer Value) and R4 (Demand Calendar) are wired to a placeholder while
