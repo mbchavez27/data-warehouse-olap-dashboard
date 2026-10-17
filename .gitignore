@@ -10,13 +10,13 @@ __pycache__/
 *.pyc
 
 # Go
-backend/bin/
-backend/*.exe
+olap-backend/bin/
+olap-backend/*.exe
 
 # Node/React
-frontend/node_modules/
-frontend/dist/
-frontend/build/
+olap-frontend/node_modules/
+olap-frontend/dist/
+olap-frontend/build/
 
 # Env vars
 .env
