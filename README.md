@@ -4,15 +4,15 @@ Query Processing in a Data Warehouse. Covers ETL data wrangling, dimensional mod
 
 ## Tech Stack
 
-- **Database:** PostgreSQL (Source Database & Data Warehouse) deployed via Docker.
+- **Database:** PostgreSQL 16 (source database and data warehouse) deployed via Docker Compose.
 - **ETL Pipeline:** Python with `uv` for fast dependency management.
-- **Backend API:** Go (Gorilla Mux/Chi or standard `net/http`).
-- **Frontend:** React.
+- **Backend API:** Go 1.25 with the standard-library `net/http` router and `pgx/v5` (no web framework).
+- **Frontend:** React 18 with Vite, no UI, chart or icon libraries.
 
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Go](https://golang.org/doc/install) 1.20+
+- [Go](https://golang.org/doc/install) 1.25+
 - [Node.js](https://nodejs.org/) 18+
 - [Python](https://www.python.org/downloads/) 3.10+
 - [uv](https://github.com/astral-sh/uv) (Extremely fast Python package installer and resolver)
@@ -89,32 +89,79 @@ Implementation is organized by responsibility under `etl/core/`,
 
 ### 3. Starting the Backend (Go OLAP API)
 
-The Go service handles the complex OLAP queries (roll-up, drill-down, slice, dice) against the Data Warehouse.
+The Go service runs the parameterized OLAP report queries (roll-up, drill-down,
+slice, dice, pivot) from `olap/queries` against the warehouse and serves them as
+JSON. It treats those SQL files as the single source of the queries and opens
+the warehouse read-only, with `plan_cache_mode = force_custom_plan` so a reused
+prepared statement cannot fall back to a bad generic plan.
 
 ```bash
-cd backend
-go mod tidy
-go run main.go
+cd olap-backend
+go run .
 ```
 
-_The API will be available at `http://localhost:8080`_
+Configuration is read from the repository-root `.env` (or `olap-backend/.env`):
+`DW_HOST`, `DW_PORT`, `DW_DB`, `DW_USER`, `DW_PASSWORD`, `API_PORT`,
+`QUERY_TIMEOUT`, `DW_MAX_CONNS`, `CORS_ORIGINS`, `OLAP_QUERIES_DIR`. Defaults
+target the Compose warehouse at `localhost:5434/dw_db`.
+
+_The API is available at `http://localhost:8080`. `GET /api/health` reports
+warehouse reachability and `GET /api/reports` lists every report and level. Run
+the tests with `go test ./...`._
 
 ### 4. Starting the Frontend (React Dashboard)
 
-The interactive dashboard allows users to dynamically filter and view analytical reports.
+The interactive dashboard lets users filter (slice and dice) and drill into the
+analytical reports.
 
 ```bash
-cd frontend
+cd olap-frontend
 npm install
 npm run dev
 ```
 
-_The dashboard will be available at `http://localhost:3000`_
+_The dashboard is available at `http://localhost:3000`._
+
+By default it renders built-in sample data (`src/api/mock.js`), so it runs
+before the API is up. To load real warehouse results, create
+`olap-frontend/.env.local` with `VITE_API_MODE=live` and restart; Vite proxies
+every `/api/...` call to `http://localhost:8080` (`API_TARGET` overrides that),
+so no CORS setup is needed in development.
+
+R1 (Products & Categories) and R2 (Fleet & Rider Workload) are implemented;
+R3 (Customer Value) and R4 (Demand Calendar) are wired to a placeholder while
+their SQL and API levels are already available.
+
+## Documentation
+
+| Document | Covers |
+|---|---|
+| `docs/database/source-database-setup.md` | Source import procedure and acceptance checks |
+| `docs/database/source-schema.md` | Source schema and wrangling issues |
+| `docs/database/data-warehouse-schema.md` | Star schema, hierarchies, business questions, reports |
+| `docs/database/data-warehouse-implementation.md` | Implemented warehouse types, constraints and load order |
+| `olap/queries/README.md` | The four OLAP reports, their parameters and measures |
+| `olap-frontend/README.md` | Dashboard layout and the API contract it expects |
+| `evidence/benchmark/README.md` | Query baseline, plan bottlenecks and the generic-plan hazard |
+| `docs/technical-documentation/index.md` | Evidence index for the final report |
 
 ## Testing and Optimization (Steps 5 & 6)
 
-All testing scripts are located in the `tests/` directory.
+Test suites: `uv run --project etl pytest etl/tests` (ETL),
+`uv run --project db pytest db/source/importer` (source importer), and
+`go test ./...` in `olap-backend` (API). End-to-end report checks against the
+dashboard are still to be added.
 
-- **Functional Testing:** Run `uv run tests/functional_test.py` to verify query correctness against expected parameters.
-- **Performance Testing:** Run `uv run tests/perf_test.py` to execute queries multiple times and record latency.
-- **Optimization:** Apply secondary indexes by running `db/03_indexes.sql` on the Data Warehouse, then re-run the performance tests to measure the execution time improvements.
+Performance baseline: `olap/benchmark/run_benchmark.py` runs the 18 report cases
+(1 warm-up plus 5 measured runs each) and writes timings and
+`EXPLAIN (ANALYZE, BUFFERS)` plans under `evidence/benchmark/`:
+
+```bash
+uv run --project etl python olap/benchmark/run_benchmark.py --label baseline
+```
+
+`evidence/benchmark/README.md` records the baseline medians, the bottlenecks
+found in the plans, and the measured generic-plan hazard. Optimization
+(secondary indexes, query reformulation, pre-aggregation) has not been applied
+yet, so the "before" side of the comparison exists and the "after" side is
+pending.
