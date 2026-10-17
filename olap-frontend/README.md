@@ -73,9 +73,10 @@ more), the `–` glyph for no data, and the bold row for totals. The prose that
 defines the measures themselves (list-price value, "busier than", orders per
 rider) sits in the panel footer.
 
-**Hovering a bar or a heat cell** shows a tooltip with the exact reading: the
-full value, its share, and how to act on it (e.g. "JNT · Motorcycle: 412,000
-orders — click to see these riders"). These are custom bubbles rendered in a
+**Hovering a mark** — a bar, a heat cell, or a count such as units, riders or
+days active — shows a tooltip with the exact reading: the full value, its
+share, and how to act on it (e.g. "JNT · Motorcycle: 412,000 orders — click to
+see these riders"). These are custom bubbles rendered in a
 portal so they are not clipped by the table's scroll box; they also appear on
 keyboard focus, and on a clickable row the remaining cells keep the native
 "click to drill" hint. A column marks itself as `tip: true` in

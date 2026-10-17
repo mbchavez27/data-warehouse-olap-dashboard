@@ -45,6 +45,9 @@ export default function ProductCategoryReport() {
   const empty = !loading && !error && detail.length === 0
   const maxValue = Math.max(0, ...detail.map((r) => Number(r.value) || 0))
   const leader = detail[0]
+  const totalUnits = Number(total?.units) || 0
+  const unitsScope = level === 'category' ? 'all units' : `${category} units`
+  const unitShare = (r) => (totalUnits ? (100 * Number(r.units)) / totalUnits : null)
 
   const stops = [{ label: 'All categories' }]
   if (category) stops.push({ label: category })
@@ -77,7 +80,23 @@ export default function ProductCategoryReport() {
       ? [
           { key: 'value_rank', label: 'Rank', align: 'right', render: (r) => (r.is_total ? '' : r.value_rank) },
           { key: 'category', label: 'Category', render: (r) => <span className="cell-strong">{r.category}</span> },
-          { key: 'units', label: 'Units delivered', align: 'right', render: (r) => num(r.units) },
+          {
+            key: 'units',
+            label: 'Units delivered',
+            align: 'right',
+            tip: true,
+            render: (r) => (
+              <Tooltip
+                text={
+                  r.is_total || r.is_subtotal
+                    ? null
+                    : `${num(r.units)} units — ${pct(unitShare(r))} of ${unitsScope}`
+                }
+              >
+                {num(r.units)}
+              </Tooltip>
+            ),
+          },
           {
             key: 'value',
             label: 'List-price value',
@@ -102,7 +121,23 @@ export default function ProductCategoryReport() {
             render: (r) => <span className="cell-strong">{r.is_subtotal ? `All ${r.category} products` : r.product}</span>,
             csv: (r) => (r.is_subtotal ? `All ${r.category} products` : r.product),
           },
-          { key: 'units', label: 'Units delivered', align: 'right', render: (r) => num(r.units) },
+          {
+            key: 'units',
+            label: 'Units delivered',
+            align: 'right',
+            tip: true,
+            render: (r) => (
+              <Tooltip
+                text={
+                  r.is_total || r.is_subtotal
+                    ? null
+                    : `${num(r.units)} units — ${pct(unitShare(r))} of ${unitsScope}`
+                }
+              >
+                {num(r.units)}
+              </Tooltip>
+            ),
+          },
           {
             key: 'value',
             label: 'List-price value',

@@ -154,7 +154,23 @@ export default function FleetWorkloadReport() {
         align: 'right',
         render: (r) => <span className="cell-strong">{num(r.total)}</span>,
       },
-      { key: 'riders', label: 'Riders', align: 'right', render: (r) => num(r.riders) },
+      {
+        key: 'riders',
+        label: 'Riders',
+        align: 'right',
+        tip: true,
+        render: (r) => (
+          <Tooltip
+            text={
+              r.is_total
+                ? `${num(r.riders)} riders active across all couriers`
+                : `${num(r.courier)} has ${num(r.riders)} riders`
+            }
+          >
+            {num(r.riders)}
+          </Tooltip>
+        ),
+      },
     ]
     table = { caption: 'Orders by courier and vehicle', rowKey: (r) => r.courier, isTotal: (r) => r.is_total }
     actions = <Segmented label="Cells show" options={MEASURES} value={measure} onChange={setMeasure} />
@@ -199,7 +215,23 @@ export default function FleetWorkloadReport() {
         ),
       },
       { key: 'units', label: 'Units', align: 'right', render: (r) => num(r.units) },
-      { key: 'riders', label: 'Riders', align: 'right', render: (r) => num(r.riders) },
+      {
+        key: 'riders',
+        label: 'Riders',
+        align: 'right',
+        tip: true,
+        render: (r) => (
+          <Tooltip
+            text={
+              r.grouping_level === 1
+                ? `${num(r.riders)} ${drill.courier} riders in total`
+                : `${num(r.riders)} riders on ${r.vehicle}`
+            }
+          >
+            {num(r.riders)}
+          </Tooltip>
+        ),
+      },
       { key: 'orders_per_rider', label: 'Orders per rider', align: 'right', render: (r) => num(r.orders_per_rider) },
       { key: 'order_share_pct', label: `Share of ${drill.courier} orders`, align: 'right', render: (r) => pct(r.order_share_pct) },
     ]
@@ -253,7 +285,12 @@ export default function FleetWorkloadReport() {
         key: 'active_days',
         label: 'Days active',
         align: 'right',
-        render: (r) => `${num(r.active_days)} of ${num(r.calendar_days)}`,
+        tip: true,
+        render: (r) => (
+          <Tooltip text={`${num(r.active_days)} days with deliveries out of ${num(r.calendar_days)} in the period`}>
+            {`${num(r.active_days)} of ${num(r.calendar_days)}`}
+          </Tooltip>
+        ),
         csv: (r) => `${r.active_days} of ${r.calendar_days}`,
       },
       { key: 'avg_orders_per_active_day', label: 'Orders per active day', align: 'right', render: (r) => dec1(r.avg_orders_per_active_day) },
