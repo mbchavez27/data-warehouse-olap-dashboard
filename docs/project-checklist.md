@@ -45,11 +45,11 @@
 - [x] Formulate complex queries utilizing OLAP operations (roll-up, drill-down, slice, dice, pivot).
   - Evidence: `olap/queries/` holds the four reports (12 parameterized level files) documented in `olap/queries/README.md`; all five OLAP operations are covered (`ROLLUP`, `CUBE`, `GROUPING SETS`, pivot via `FILTER`, window functions). They realize the 22 business questions in `docs/database/data-warehouse-schema.md` and are benchmarked in `evidence/benchmark/`. Every filter is a bound parameter (`:'name'`), never concatenated SQL.
 - [x] Develop a web-based dashboard application.
-  - Evidence: Go API in `olap-backend/` (`net/http` + `pgx/v5`, read-only pool, `force_custom_plan`; 11 tests via `go test ./...`) and React dashboard in `olap-frontend/` (Vite, no UI libraries). Dashboard R1 (Products & Categories) and R2 (Fleet & Rider Workload) are implemented; R3 (Customer Value) and R4 (Demand Calendar) are wired to `ComingSoon`.
+  - Evidence: Go API in `olap-backend/` (`net/http` + `pgx/v5`, read-only pool, `force_custom_plan`; 11 tests via `go test ./...`) and React dashboard in `olap-frontend/` (Vite, no UI libraries). Dashboard R1 (Products & Categories), R2 (Fleet & Rider Workload) and R3 (Customer Value) are implemented; R4 (Demand Calendar) is wired to `ComingSoon`.
 - [x] Implement UI features allowing users to specify query parameters and filters (for slice and dice).
-  - Evidence: `olap-frontend/src/components/FilterBar.jsx` with `src/lib/dimensions.js` drives year/quarter/month/vehicle/size/courier/age/gender filters for R1–R2; the same contract is exposed by the API (see `olap-frontend/README.md`). R3–R4 filters are pending their report components.
+  - Evidence: `olap-frontend/src/components/FilterBar.jsx` with `src/lib/dimensions.js` drives the per-report filter sets — year/quarter/month/vehicle/order size for R1, those plus courier and rider age for R2, and year/quarter/customer gender for R3 — all exposed by the API (see `olap-frontend/README.md`). R4 filters are pending its report component.
 - [x] Implement UI features allowing users to view reports at varying levels of granularity (for drill-down and roll-up).
-  - Evidence: `olap-frontend/src/components/RoutePath.jsx` renders the drill path and rolls back up; R1 drills Category → Product, R2 drills Couriers → Vehicles → Riders. R3–R4 drill levels are pending.
+  - Evidence: `olap-frontend/src/components/RoutePath.jsx` renders the drill path and rolls back up; R1 drills Category → Product, R2 drills Couriers → Vehicles → Riders, and R3 offers peer views (Deciles / Geography / Customers) whose drill state — decile, country, city — the route line rolls back. R4 drill levels are pending.
 
 ## 5. Functional Testing
 

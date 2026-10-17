@@ -10,6 +10,8 @@ import { useState } from 'react'
 //   format      (v) => string
 //   barName / lineName    legend and hover names
 //   title       accessible name
+//   max         top of the scale; pass it to pin the axis (a Pareto of shares
+//               wants 100 so the cumulative line lands on the top gridline)
 export default function ParetoChart({
   labels,
   values,
@@ -18,6 +20,7 @@ export default function ParetoChart({
   barName = 'Share',
   lineName = 'Cumulative',
   title = 'Concentration',
+  max,
 }) {
   const [hover, setHover] = useState(null)
 
@@ -27,8 +30,10 @@ export default function ParetoChart({
   const H = 260
   const pad = { l: 56, r: 16, t: 16, b: 34 }
   const n = labels.length
-  const peak = Math.max(0, ...[...values, ...cumulative].map(Number).filter(Number.isFinite))
-  const yMax = peak > 0 ? peak * 1.08 : 1
+  const numbers = [...values, ...cumulative].map(Number).filter(Number.isFinite)
+  const pinned = Number.isFinite(Number(max)) ? Number(max) : null
+  const peak = numbers.length ? Math.max(...numbers) : 0
+  const yMax = pinned ?? (peak > 0 ? peak * 1.08 : 1)
   const step = (W - pad.l - pad.r) / n
   const x = (i) => pad.l + step * (i + 0.5)
   const y = (v) => H - pad.b - ((Number(v) || 0) / yMax) * (H - pad.t - pad.b)

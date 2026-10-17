@@ -739,6 +739,17 @@ select {
   background: color-mix(in srgb, var(--route) 34%, var(--surface));
 }
 
+/* A chart sitting above a panel's table: the table is full-bleed, so the chart
+   brings its own padding and a rule to separate the two. */
+.panel-chart {
+  padding: 12px 18px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.panel-chart .chart {
+  padding-top: 0;
+}
+
 /* ---------- demand calendar ---------- */
 
 .cal {

@@ -320,6 +320,202 @@ function r2Rider(p) {
   return ranked.slice(0, Number(p.top_n) || 20)
 }
 
+// ---------- R3 Customer Value Distribution ----------
+
+// Warehouse totals for the whole slice, used to size the sample (1M orders,
+// ~11M units, ~100k customers, ₱54.8B list-price value).
+const TOTAL_ORDERS = 1000000
+const TOTAL_VALUE = 54847773793
+const TOTAL_CUSTOMERS = 99996
+// Decile 1 (the top 10% of customers by value) holds this share of the slice.
+const DECILE_SHARES = [17.5, 14.1, 12.5, 11.2, 10.2, 9.2, 8.2, 7.2, 6.0, 3.9]
+const FEMALE_SHARE = 0.503
+
+const COUNTRIES = ['Philippines', 'Indonesia', 'Malaysia', 'Thailand', 'Vietnam', 'Singapore', 'Japan',
+  'South Korea', 'India', 'Australia', 'New Zealand', 'United States', 'Canada', 'Mexico', 'Brazil',
+  'Argentina', 'Chile', 'Colombia', 'Peru', 'United Kingdom', 'Germany', 'France', 'Spain', 'Italy',
+  'Netherlands', 'Poland', 'Sweden', 'Turkey', 'Egypt', 'Nigeria', 'Kenya', 'South Africa',
+  'Saudi Arabia', 'United Arab Emirates', 'Pakistan', 'Bangladesh', 'Sudan', 'Dominican Republic',
+  'North Macedonia', 'Scotland']
+
+// The mock keeps 40 countries but sizes them as though the warehouse's 240 were
+// all present, so one country holds a warehouse-like share of the total (~0.4%).
+const COUNTRY_SCALE = 6
+function countryWeight(name) {
+  const r = seeded(`r3country|${name}`)
+  return 1 + r() * 0.8
+}
+const COUNTRY_WEIGHT_SUM = COUNTRIES.reduce((sum, c) => sum + countryWeight(c), 0)
+
+const CITY_PREFIX = ['Ortiz', 'Eleanor', 'Kuphal', 'Manila', 'Cebu', 'Davao', 'Jakarta', 'Bangkok', 'Hanoi',
+  'Singapore', 'Tokyo', 'Seoul', 'Sydney', 'Mumbai', 'Austin', 'Khartoum', 'Santo', 'Bello', 'North', 'Port']
+const CITY_SUFFIX = ['furt', 'astead', 'ton', 'ville', 'burg', 'stad', 'field', 'mouth', 'borough', 'city']
+
+function citiesFor(country) {
+  const r = seeded(`cities|${country}`)
+  return Array.from(
+    { length: 6 },
+    () => `${CITY_PREFIX[Math.floor(r() * CITY_PREFIX.length)]}${CITY_SUFFIX[Math.floor(r() * CITY_SUFFIX.length)]}`,
+  )
+}
+
+// DIM_CUSTOMER usernames are opaque 10-character mixed-case strings.
+const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+const username = (r) => Array.from({ length: 10 }, () => LETTERS[Math.floor(r() * LETTERS.length)]).join('')
+
+function r3Deciles(p) {
+  const r = seeded(`r3dec|${p.country}|${p.gender}|${p.year}|${p.quarter}`)
+  const frac = daysIn(p) / 365
+  const genderFrac = p.gender ? 0.5 : 1
+  const sliceValue = TOTAL_VALUE * frac * genderFrac
+  const sliceCustomers = Math.round(TOTAL_CUSTOMERS * frac * genderFrac)
+  const weights = DECILE_SHARES.map((w) => w * (0.97 + r() * 0.06))
+  const weightSum = weights.reduce((a, b) => a + b, 0)
+  const smallest = Math.floor(sliceCustomers / 10)
+
+  let running = 0
+  return weights.map((w, i) => {
+    const shape = w / weightSum
+    const customers = smallest + (i < sliceCustomers % 10 ? 1 : 0)
+    const value = sliceValue * shape
+    const avg = value / customers
+    running += 100 * shape
+    return {
+      decile: i + 1,
+      customers,
+      value: round2(value),
+      value_share_pct: round1(100 * shape),
+      cumulative_share_pct: round1(Math.min(100, running)),
+      avg_value_per_customer: round2(avg),
+      min_customer_value: round2(avg * (0.45 + i * 0.045)),
+      max_customer_value: round2(avg * (3.1 - i * 0.22)),
+    }
+  })
+}
+
+function r3Geography(p) {
+  const level = p.level === 'city' ? 'city' : 'country'
+  // city.sql always runs inside one country; outside one there is nothing to show.
+  if (level === 'city' && !p.country) return []
+
+  const topN = Number(p.top_n) || 20
+  const frac = daysIn(p) / 365
+  const genderFrac = p.gender ? 0.5 : 1
+  const r = seeded(`r3geo|${p.level}|${p.country}|${p.gender}|${p.year}|${p.quarter}`)
+
+  let customers = TOTAL_CUSTOMERS * frac * genderFrac
+  let orders = TOTAL_ORDERS * frac * genderFrac
+  let value = TOTAL_VALUE * frac * genderFrac
+  let names = COUNTRIES
+  // The 40 mock countries cover a sixth of the total; one country's cities cover all of it.
+  let weights
+  let pool
+  if (level === 'city') {
+    const share = countryWeight(p.country) / (COUNTRY_WEIGHT_SUM * COUNTRY_SCALE)
+    customers *= share
+    orders *= share
+    value *= share
+    names = citiesFor(p.country)
+    const citySeed = seeded(`r3cities|${p.country}`)
+    weights = names.map(() => 1 + citySeed() * 0.8)
+    pool = weights.reduce((a, b) => a + b, 0)
+  } else {
+    weights = names.map(countryWeight)
+    pool = COUNTRY_WEIGHT_SUM * COUNTRY_SCALE
+  }
+
+  const locations = names
+    .map((name, i) => ({
+      location: name,
+      customers: customers * (weights[i] / pool),
+      orders: orders * (weights[i] / pool),
+      value: value * (weights[i] / pool),
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, topN)
+
+  const ranks = rank(locations, (x) => x.value)
+  const perCustomer = (v, c) => (c ? round2(v / c) : null)
+  const rows = []
+  for (const loc of locations) {
+    const share = FEMALE_SHARE + (r() - 0.5) * 0.04
+    const c = Math.round(loc.customers)
+    const o = Math.round(loc.orders)
+    const v = round2(loc.value)
+    const femaleCustomers = Math.round(c * share)
+    const femaleOrders = Math.round(o * share)
+    const femaleValue = round2(v * share)
+    const valueRank = ranks.get(loc)
+    rows.push(
+      { location: loc.location, gender: 'All', customers: c, orders: o, value: v, value_per_customer: perCustomer(v, c), value_rank: valueRank, grouping_level: 1 },
+      { location: loc.location, gender: 'F', customers: femaleCustomers, orders: femaleOrders, value: femaleValue, value_per_customer: perCustomer(femaleValue, femaleCustomers), value_rank: valueRank, grouping_level: 0 },
+      { location: loc.location, gender: 'M', customers: c - femaleCustomers, orders: o - femaleOrders, value: round2(v - femaleValue), value_per_customer: perCustomer(v - femaleValue, c - femaleCustomers), value_rank: valueRank, grouping_level: 0 },
+    )
+  }
+
+  // The subtotals cover the whole selection, not just the rows top_n left on screen.
+  const totalCustomers = Math.round(customers)
+  const totalOrders = Math.round(orders)
+  const totalValue = round2(value)
+  rows.push({
+    location: 'All locations', gender: 'All', customers: totalCustomers, orders: totalOrders, value: totalValue,
+    value_per_customer: perCustomer(totalValue, totalCustomers), value_rank: null, grouping_level: 3,
+  })
+  for (const gender of ['F', 'M']) {
+    const part = gender === 'F' ? FEMALE_SHARE : 1 - FEMALE_SHARE
+    const c = Math.round(totalCustomers * part)
+    const v = round2(totalValue * part)
+    rows.push({
+      location: 'All locations', gender, customers: c, orders: Math.round(totalOrders * part), value: v,
+      value_per_customer: perCustomer(v, c), value_rank: null, grouping_level: 2,
+    })
+  }
+  return rows
+}
+
+function r3Customer(p) {
+  const topN = Number(p.top_n) || 20
+  const r = seeded(`r3cust|${p.country}|${p.city}|${p.gender}|${p.decile}|${p.year}|${p.quarter}`)
+  // Draw from the decile ranges, so the top table and the decile chart describe
+  // the same slice instead of two independent sets of numbers.
+  const bands = r3Deciles(p)
+  const pool = Array.from({ length: 300 }, () => {
+    const band = bands[Math.min(9, Math.floor(r() * 10))]
+    const country = p.country || COUNTRIES[Math.floor(r() * COUNTRIES.length)]
+    return {
+      customer: username(r),
+      gender: p.gender || (r() < 0.5 ? 'F' : 'M'),
+      country,
+      city: p.city || citiesFor(country)[Math.floor(r() * 6)],
+      value: band.min_customer_value + r() * Math.max(0, band.max_customer_value - band.min_customer_value),
+    }
+  }).sort((a, b) => b.value - a.value)
+
+  const ranks = rank(pool, (x) => x.value)
+  const rows = pool.map((x, i) => {
+    const orders = Math.max(1, Math.round(x.value / (58000 + r() * 26000)))
+    const value = round2(x.value)
+    return {
+      value_rank: ranks.get(x),
+      customer: x.customer,
+      country: x.country,
+      city: x.city,
+      gender: x.gender,
+      orders,
+      units: Math.round(orders * UNITS_PER_ORDER),
+      value,
+      avg_order_value: round2(value / orders),
+      // NTILE(10) over the pool, and PERCENT_RANK over value ascending, so 100
+      // means "worth at least as much as everyone else in the slice".
+      decile: Math.min(10, Math.floor((i / pool.length) * 10) + 1),
+      value_percentile: pool.length > 1 ? round1((100 * (pool.length - 1 - i)) / (pool.length - 1)) : 100,
+    }
+  })
+
+  const chosen = p.decile ? rows.filter((x) => x.decile === Number(p.decile)) : rows
+  return chosen.slice(0, topN)
+}
+
 // ---------- dispatch ----------
 
 const LEVELS = {
@@ -328,6 +524,9 @@ const LEVELS = {
   'r2/cube': r2Cube,
   'r2/pivot': r2Pivot,
   'r2/rider': r2Rider,
+  'r3/deciles': r3Deciles,
+  'r3/geography': r3Geography,
+  'r3/customer': r3Customer,
 }
 
 export function mockReport(report, level, params) {

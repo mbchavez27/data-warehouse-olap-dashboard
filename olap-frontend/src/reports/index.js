@@ -1,10 +1,11 @@
 import ProductCategoryReport from './ProductCategoryReport.jsx'
 import FleetWorkloadReport from './FleetWorkloadReport.jsx'
+import CustomerValueReport from './CustomerValueReport.jsx'
 import ComingSoon from './ComingSoon.jsx'
 import { BoxIcon, TruckIcon, UsersIcon, CalendarIcon } from '../components/Icons.jsx'
 
-// The four reports the group agreed on. R3 and R4 follow the same pattern as
-// R1 and R2: a component in this folder plus mock data in api/mock.js.
+// The four reports the group agreed on. R4 follows the same pattern as R1–R3:
+// a component in this folder plus mock data in api/mock.js.
 export const REPORTS = [
   {
     id: 'r1',
@@ -25,7 +26,7 @@ export const REPORTS = [
     name: 'Customer value',
     icon: UsersIcon,
     question: 'How concentrated is customer value, and where are the top customers?',
-    component: ComingSoon,
+    component: CustomerValueReport,
   },
   {
     id: 'r4',

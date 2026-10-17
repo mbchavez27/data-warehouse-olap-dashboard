@@ -40,9 +40,15 @@ the API should bind a missing parameter as `''` (the SQL already treats `''` as
 | `GET /api/reports/r2/pivot` | `r2_fleet_courier_workload/courier_vehicle_pivot.sql` | measure, year, quarter, month, courier, vehicle, age_band, size_group |
 | `GET /api/reports/r2/cube` | `r2_fleet_courier_workload/courier_vehicle_cube.sql` | courier, year, quarter, month, vehicle, age_band, size_group |
 | `GET /api/reports/r2/rider` | `r2_fleet_courier_workload/rider.sql` | courier, vehicle, year, quarter, month, age_band, sort, top_n |
+| `GET /api/reports/r3/deciles` | `r3_customer_value_distribution/deciles.sql` | country, gender, year, quarter |
+| `GET /api/reports/r3/geography` | `r3_customer_value_distribution/geography.sql` | level, country, gender, year, quarter, top_n |
+| `GET /api/reports/r3/customer` | `r3_customer_value_distribution/customer.sql` | country, city, gender, decile, year, quarter, top_n |
 
-R3 and R4 would follow the same shape, e.g. `/api/reports/r3/deciles`,
-`/api/reports/r4/trend`.
+R4 follows the same shape, e.g. `/api/reports/r4/trend`.
+
+R3's `country` and `city` are drill state, never dropdown filters: `DIM_GEOGRAPHY`
+holds ~240 countries and ~100,000 cities, so the dashboard only ever asks for the
+one country or city the user clicked into.
 
 **Response:** a JSON array of rows, or `{ "rows": [...] }`. Each row's keys are
 the SQL output column names exactly (`value_share_pct`, `is_total`,
@@ -58,6 +64,14 @@ message is shown to the user.
 |---|---|---|---|---|
 | R1 Products and categories | Click a category to drill to its products; click "All categories" in the route to roll back up | Year, quarter or month | Vehicle and order size together with the period | |
 | R2 Fleet and rider workload | All couriers > courier > vehicle > riders; any grid cell jumps straight to those riders | Year, quarter or month | Courier, vehicle, rider age, order size | Courier x vehicle grid, switchable between total orders and orders per rider |
+| R3 Customer value | Decile > its customers, and country > city > customers, as three peer views you can switch between | Year or quarter | Gender, together with whatever is drilled (a decile, a country, a city) | Decile value distribution: one bar per decile plus the running-total line |
+
+R3's deciles view draws the table's own numbers as a **Pareto chart**
+(`src/components/ParetoChart.jsx`): one bar per decile plus the cumulative line,
+on a single 0–100% scale so the line reaches the top gridline when the deciles
+account for everything. The switch above the table (`Deciles` / `Geography` /
+`Customers`) swaps peer views rather than drilling; the route line still shows
+the drill state and rolls it back.
 
 Every table can be downloaded with **Export CSV** (the rows on screen, raw
 numbers, column names as shown).
@@ -102,13 +116,15 @@ src/
   reports/index.js         list of the four reports
   reports/ProductCategoryReport.jsx   R1
   reports/FleetWorkloadReport.jsx     R2
-  reports/ComingSoon.jsx              placeholder for R3 and R4
+  reports/CustomerValueReport.jsx     R3
+  reports/ComingSoon.jsx              placeholder for R4
 ```
 
-## Adding R3 or R4
+## Adding R4
 
-1. Copy `ProductCategoryReport.jsx` as a starting point and point `useReport`
-   at the new report and level names (`useReport('r3', 'deciles', params)`).
+1. Copy `ProductCategoryReport.jsx` or `CustomerValueReport.jsx` as a starting
+   point and point `useReport` at the new report and level names
+   (`useReport('r4', 'trend', params)`).
 2. Add a sample-data function for each level to `src/api/mock.js` and register
    it in `LEVELS`, returning the same columns as the SQL file.
 3. Swap `ComingSoon` for the new component in `src/reports/index.js`.
