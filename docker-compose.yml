@@ -50,9 +50,63 @@ services:
     networks:
       - dw-net
 
+  # Application stack (opt-in): docker compose --profile app up -d
+  api:
+    image: golang:1.25-alpine
+    container_name: stadvdb-mco1-api
+    profiles: ["app"]
+    working_dir: /src/olap-backend
+    command: ["go", "run", "."]
+    environment:
+      # Inside the compose network dw_db listens on 5432, not the host's 5434.
+      DW_HOST: dw_db
+      DW_PORT: "5432"
+      DW_DB: ${DW_DB:-dw_db}
+      DW_USER: ${DW_USER:-postgres}
+      DW_PASSWORD: ${DW_PASSWORD:-postgres}
+      API_PORT: "8080"
+      CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - .:/src
+      - go_mod_cache:/go/pkg/mod
+    ports:
+      - "8080:8080"
+    depends_on:
+      dw_db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 60s
+    networks:
+      - dw-net
+
+  web:
+    image: node:20-alpine
+    container_name: stadvdb-mco1-web
+    profiles: ["app"]
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      API_TARGET: http://api:8080
+      VITE_API_MODE: live
+    volumes:
+      - ./olap-frontend:/app
+      - web_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - dw-net
+
 volumes:
   pg_source_data:
   pg_dw_data:
+  go_mod_cache:
+  web_node_modules:
 
 networks:
   dw-net:
