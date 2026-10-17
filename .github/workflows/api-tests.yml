@@ -1,0 +1,35 @@
+name: api-tests
+
+on:
+  push:
+    paths:
+      - "olap-backend/**"
+      - "olap/queries/**"
+      - ".github/workflows/api-tests.yml"
+  pull_request:
+    paths:
+      - "olap-backend/**"
+      - "olap/queries/**"
+      - ".github/workflows/api-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: olap-backend/go.mod
+          cache-dependency-path: olap-backend/go.sum
+
+      - name: API tests
+        working-directory: olap-backend
+        run: go test ./...

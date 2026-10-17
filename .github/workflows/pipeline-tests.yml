@@ -1,8 +1,23 @@
-name: tests
+name: pipeline-tests
 
 on:
   push:
+    paths:
+      - "db/**"
+      - "etl/**"
+      - ".github/workflows/pipeline-tests.yml"
   pull_request:
+    paths:
+      - "db/**"
+      - "etl/**"
+      - ".github/workflows/pipeline-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pipeline-tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
