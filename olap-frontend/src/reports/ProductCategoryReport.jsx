@@ -4,6 +4,7 @@ import FilterBar from '../components/FilterBar.jsx'
 import RoutePath from '../components/RoutePath.jsx'
 import DataTable from '../components/DataTable.jsx'
 import Bar from '../components/Bar.jsx'
+import Legend from '../components/Legend.jsx'
 import Figures from '../components/Figures.jsx'
 import Segmented from '../components/Segmented.jsx'
 import ReportStatus from '../components/ReportStatus.jsx'
@@ -105,6 +106,15 @@ export default function ProductCategoryReport() {
   const exportRows = () =>
     downloadCsv(category ? `r1-products-${slug(category)}.csv` : 'r1-categories.csv', columns, rows)
 
+  const legend = [
+    { swatch: 'bar', label: 'Bar length = list-price value, relative to the largest row shown' },
+    {
+      swatch: 'total',
+      label: level === 'category' ? 'Bold row = all categories' : `Bold row = all ${category} products`,
+    },
+    { swatch: 'glyph', glyph: '–', label: 'No data' },
+  ]
+
   return (
     <div className="report">
       <FilterBar
@@ -126,6 +136,7 @@ export default function ProductCategoryReport() {
           </>
         }
         subheader={<ScopeLine values={filters} keys={FILTER_KEYS} />}
+        legend={!error && !empty ? <Legend items={legend} /> : null}
         footer={
           !error && !empty && (
             <>

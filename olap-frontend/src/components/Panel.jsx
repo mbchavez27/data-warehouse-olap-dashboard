@@ -1,6 +1,7 @@
 // A titled card that holds one table. `title` is usually the drill path,
-// `actions` the view switches and export, `subheader` the scope sentence.
-export default function Panel({ title, actions, subheader, footer, loading, children }) {
+// `actions` the view switches and export, `subheader` the scope sentence,
+// `legend` the key for the table's visual encodings.
+export default function Panel({ title, actions, subheader, legend, footer, loading, children }) {
   return (
     <section className="panel" aria-busy={loading || undefined}>
       {loading && (
@@ -13,6 +14,7 @@ export default function Panel({ title, actions, subheader, footer, loading, chil
         {actions && <div className="panel-actions">{actions}</div>}
       </header>
       {subheader && <div className="panel-sub">{subheader}</div>}
+      {legend && <div className="panel-legend">{legend}</div>}
       <div className="panel-body">{children}</div>
       {footer && <footer className="panel-foot">{footer}</footer>}
     </section>

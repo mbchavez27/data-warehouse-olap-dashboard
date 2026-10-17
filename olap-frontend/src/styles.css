@@ -503,6 +503,83 @@ select {
   border-bottom: 1px solid var(--line-soft);
 }
 
+/* ---------- legend ---------- */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 20px;
+  padding: 9px 18px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+
+.legend-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.legend-bar {
+  width: 26px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--route) 0 60%, var(--line-soft) 60% 100%);
+}
+
+.legend-heat {
+  width: 34px;
+  height: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--route) 6%, var(--surface)),
+    color-mix(in srgb, var(--route) 56%, var(--surface))
+  );
+}
+
+.legend-total {
+  width: 26px;
+  height: 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--surface-2);
+}
+
+.legend-glyph {
+  min-width: 12px;
+  text-align: center;
+  color: var(--ink-3);
+}
+
 .panel-foot {
   padding: 12px 18px;
   border-top: 1px solid var(--line-soft);

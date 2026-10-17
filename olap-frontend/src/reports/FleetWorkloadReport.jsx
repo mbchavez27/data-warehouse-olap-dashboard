@@ -4,6 +4,7 @@ import FilterBar from '../components/FilterBar.jsx'
 import RoutePath from '../components/RoutePath.jsx'
 import DataTable from '../components/DataTable.jsx'
 import Bar from '../components/Bar.jsx'
+import Legend from '../components/Legend.jsx'
 import Figures from '../components/Figures.jsx'
 import Segmented from '../components/Segmented.jsx'
 import ReportStatus from '../components/ReportStatus.jsx'
@@ -84,6 +85,7 @@ export default function FleetWorkloadReport() {
   let tableRows = rows
   let table = {}
   let note = null
+  let legend = []
   let actions = null
   let empty = false
   let exportName = 'r2.csv'
@@ -146,6 +148,11 @@ export default function FleetWorkloadReport() {
     note = perRider
       ? 'Each cell is orders divided by the riders on that vehicle. Similar numbers across a row mean the work is spread evenly. Click a courier or a cell to see who carries it.'
       : 'Darker cells carry more orders. Click a courier to break it down by vehicle, or a cell to see those riders.'
+    legend = [
+      { swatch: 'heat', label: `Cell colour = ${perRider ? 'orders per rider' : 'orders'}; darker means more` },
+      { swatch: 'total', label: 'Bold row = all couriers' },
+      { swatch: 'glyph', glyph: '–', label: 'No riders on that vehicle' },
+    ]
     exportName = perRider ? 'r2-courier-vehicle-orders-per-rider.csv' : 'r2-courier-vehicle-orders.csv'
   }
 
@@ -181,6 +188,10 @@ export default function FleetWorkloadReport() {
       drillHint: 'Show these riders',
     }
     note = 'Click a vehicle to see its riders. Orders per rider shows whether a vehicle type is carrying more than its share of the load.'
+    legend = [
+      { swatch: 'bar', label: 'Bar length = orders, relative to the largest vehicle' },
+      { swatch: 'total', label: `Bold row = all ${drill.courier} vehicles` },
+    ]
     exportName = `r2-${slug(drill.courier)}-vehicles.csv`
   }
 
@@ -226,6 +237,7 @@ export default function FleetWorkloadReport() {
     note = `"Busier than" compares each rider's order count with every rider in this selection. ${
       filters.size_group ? 'The order-size filter does not apply at the rider level. ' : ''
     }Busiest day is the most orders that rider delivered in a single day.`
+    legend = [{ swatch: 'bar', label: 'Bar length = orders, relative to the busiest rider listed' }]
     exportName = `r2-riders-${slug([courier, vehicle].filter(Boolean).join(' ') || 'all')}.csv`
   }
 
@@ -251,6 +263,7 @@ export default function FleetWorkloadReport() {
           </>
         }
         subheader={<ScopeLine values={{ ...filters, courier, vehicle }} keys={activeFilters.map((f) => f.key)} />}
+        legend={!error && !empty ? <Legend items={legend} /> : null}
         footer={!error && !empty && note}
       >
         <ReportStatus loading={loading} error={error} empty={empty} />

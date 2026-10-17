@@ -67,6 +67,12 @@ current level; clicking an earlier stop rolls up. Filters pinned by the drill
 path (e.g. the courier you clicked into) are shown in amber and locked until
 you zoom back out.
 
+A **Legend** row under the scope sentence names what each mark means: bar
+length (relative to the largest row on screen), heat-cell colour (darker means
+more), the `–` glyph for no data, and the bold row for totals. The prose that
+defines the measures themselves (list-price value, "busier than", orders per
+rider) sits in the panel footer.
+
 ## Folder layout
 
 ```
@@ -75,8 +81,9 @@ src/
   api/client.js            the only code that calls the API (mock or live)
   api/useReport.js         React hook: loads one report level, keeps old rows while reloading
   api/mock.js              sample rows shaped exactly like each SQL file's output
-  components/              FilterBar, Panel, Figures (KPI cards), RoutePath (drill path), DataTable,
-                           Bar, Segmented, ScopeLine, ExportButton, ReportStatus, Icons
+  components/              FilterBar, Panel, Figures (KPI cards), RoutePath (drill path), ScopeLine
+                           (scope sentence), Legend (encoding key), DataTable, Bar, Segmented,
+                           ExportButton, ReportStatus, Icons
   lib/csv.js               Export CSV
   lib/dimensions.js        filter options shared by all reports (values match the SQL)
   lib/format.js            peso / percent / count formatting
