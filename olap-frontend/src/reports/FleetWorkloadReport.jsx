@@ -4,6 +4,7 @@ import FilterBar from '../components/FilterBar.jsx'
 import RoutePath from '../components/RoutePath.jsx'
 import DataTable from '../components/DataTable.jsx'
 import Bar from '../components/Bar.jsx'
+import HeatCell from '../components/HeatCell.jsx'
 import Legend from '../components/Legend.jsx'
 import Tooltip from '../components/Tooltip.jsx'
 import Figures from '../components/Figures.jsx'
@@ -100,30 +101,18 @@ export default function FleetWorkloadReport() {
 
     const heat = (row, key, vehicleName) => {
       const value = row[key]
+      const who = row.is_total ? 'All couriers' : row.courier
       const measureLabel = perRider ? 'orders per rider' : 'orders'
-      if (value === null || value === undefined) {
-        return (
-          <Tooltip text={`No ${row.courier} riders on ${vehicleName.toLowerCase()}`}>
-            <span className="cell-muted">–</span>
-          </Tooltip>
-        )
-      }
-      const strength = row.is_total || !maxCell ? 0 : (Number(value) || 0) / maxCell
       return (
-        <Tooltip
-          text={`${row.is_total ? 'All couriers' : row.courier} · ${vehicleName}: ${num(value)} ${measureLabel}${
+        <HeatCell
+          value={value}
+          max={row.is_total ? 0 : maxCell}
+          tip={`${who} · ${vehicleName}: ${num(value)} ${measureLabel}${
             row.is_total ? '' : ' — click to see these riders'
           }`}
-        >
-          <button
-            type="button"
-            className="heat-cell"
-            style={{ '--heat': `${Math.round(6 + strength * 50)}%` }}
-            onClick={() => setDrill({ courier: row.is_total ? null : row.courier, vehicle: vehicleName })}
-          >
-            {num(value)}
-          </button>
-        </Tooltip>
+          emptyTip={`No ${row.courier} riders on ${vehicleName.toLowerCase()}`}
+          onClick={() => setDrill({ courier: row.is_total ? null : row.courier, vehicle: vehicleName })}
+        />
       )
     }
 

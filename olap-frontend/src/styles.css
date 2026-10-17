@@ -606,6 +606,119 @@ select {
   transform: translate(-50%, 8px);
 }
 
+/* ---------- line chart ---------- */
+
+.chart {
+  position: relative;
+  padding: 8px 0 0;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-grid {
+  stroke: var(--line-soft);
+  stroke-width: 1;
+}
+
+.chart-axis {
+  fill: var(--ink-3);
+  font-size: 11px;
+}
+
+.chart-area {
+  fill: var(--route-tint);
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--route);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-line.is-dashed {
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.chart-crosshair {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.chart-dot {
+  fill: var(--route);
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+
+.chart-tip {
+  position: absolute;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 0.76rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.chart-tip i,
+.chart-legend i {
+  flex: none;
+  width: 10px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.chart-tip i {
+  background: currentColor;
+}
+
+.chart-tip i.is-dashed {
+  background: repeating-linear-gradient(to right, currentColor 0 3px, transparent 3px 6px);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 10px 0 0;
+  padding: 0 0 0 6px;
+  list-style: none;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+
+.chart-legend li,
+.chart-tip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-legend i {
+  background: var(--route);
+}
+
+.chart-legend i.is-dashed {
+  background: repeating-linear-gradient(to right, var(--ink-3) 0 3px, transparent 3px 6px);
+}
+
 .panel-foot {
   padding: 12px 18px;
   border-top: 1px solid var(--line-soft);
@@ -883,6 +996,14 @@ tr.is-total td {
 
 .heat-cell:hover {
   box-shadow: inset 0 0 0 2px var(--route);
+}
+
+.heat-cell.is-static {
+  cursor: default;
+}
+
+.heat-cell.is-static:hover {
+  box-shadow: none;
 }
 
 .bar-cell {

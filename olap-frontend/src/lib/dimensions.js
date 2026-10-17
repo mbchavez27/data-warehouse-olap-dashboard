@@ -53,6 +53,33 @@ export const AGE_BAND = {
   options: [ALL, ...['18-29', '30-39', '40-49', '50-60'].map((a) => ({ value: a, label: a }))],
 }
 
+// Customer slice used by R3 (matches DIM_CUSTOMER.gender).
+export const GENDER = {
+  key: 'gender',
+  label: 'Gender',
+  options: [ALL, { value: 'F', label: 'Female' }, { value: 'M', label: 'Male' }],
+}
+
+// 1 = the top 10% of customers by value (from R3's deciles level).
+export const DECILE = {
+  key: 'decile',
+  label: 'Value decile',
+  options: [ALL, ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ value: String(n), label: `Decile ${n}` }))],
+}
+
+// Calendar slices used by R4 (match DIM_DATE.isWeekend / isPayDay).
+export const DAY_TYPE = {
+  key: 'day_type',
+  label: 'Day type',
+  options: [ALL, { value: 'weekday', label: 'Weekdays' }, { value: 'weekend', label: 'Weekends' }],
+}
+
+export const PAYDAY = {
+  key: 'payday',
+  label: 'Payday',
+  options: [ALL, { value: 'yes', label: 'Paydays' }, { value: 'no', label: 'Non-paydays' }],
+}
+
 export const emptyFilters = (defs) => Object.fromEntries(defs.map((d) => [d.key, '']))
 
 // Applies one filter change and clears a month that falls outside a new quarter.
