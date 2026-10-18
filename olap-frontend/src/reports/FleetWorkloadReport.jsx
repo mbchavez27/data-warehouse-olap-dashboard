@@ -4,7 +4,7 @@ import FilterBar from '../components/FilterBar.jsx'
 import RoutePath from '../components/RoutePath.jsx'
 import DataTable from '../components/DataTable.jsx'
 import Bar from '../components/Bar.jsx'
-import HeatCell from '../components/HeatCell.jsx'
+import HeatCell, { FULL_DEVIATION_PCT, deviationStrength } from '../components/HeatCell.jsx'
 import Legend from '../components/Legend.jsx'
 import Tooltip from '../components/Tooltip.jsx'
 import Figures from '../components/Figures.jsx'
@@ -39,6 +39,13 @@ const MEASURES = [
   { value: 'orders', label: 'Total orders' },
   { value: 'per_rider', label: 'Orders per rider' },
 ]
+// Grid colouring: every cell against the busiest cell in the table (which
+// couriers and vehicles carry the most), or against its own courier's average
+// (whether that courier's vehicles share the work evenly).
+const COLOURS = [
+  { value: 'across', label: 'Across couriers' },
+  { value: 'within', label: 'Against its courier' },
+]
 const SORTS = [
   { value: 'most', label: 'Busiest first' },
   { value: 'least', label: 'Quietest first' },
@@ -53,6 +60,7 @@ export default function FleetWorkloadReport() {
   const [filters, setFilters] = useState(() => emptyFilters(FILTERS))
   const [drill, setDrill] = useState({ courier: null, vehicle: null })
   const [measure, setMeasure] = useState('orders')
+  const [colour, setColour] = useState('across')
   const [sort, setSort] = useState('most')
   const [topN, setTopN] = useState('20')
 
@@ -98,16 +106,36 @@ export default function FleetWorkloadReport() {
     empty = !loading && !error && couriers.length === 0
     const maxCell = Math.max(0, ...couriers.flatMap((r) => VEHICLES.map(([k]) => Number(r[k]) || 0)))
     const perRider = measure === 'per_rider'
+    const withinCourier = colour === 'within'
+    const baselineName = perRider ? 'orders per rider across all its vehicles' : 'average vehicle'
+    // A row's baseline: in orders per rider, the courier's own figure across all
+    // its vehicles; in total orders, its average vehicle.
+    const baselineOf = (row) => {
+      if (perRider) return Number(row.total) || null
+      const present = VEHICLES.filter(([k]) => row[k] !== null && row[k] !== undefined).length
+      return present ? Number(row.total) / present : null
+    }
+    const deviationOf = (row, key) => {
+      const base = baselineOf(row)
+      return row[key] === null || row[key] === undefined || !base ? null : (100 * (Number(row[key]) - base)) / base
+    }
 
     const heat = (row, key, vehicleName) => {
       const value = row[key]
       const who = row.is_total ? 'All couriers' : row.courier
       const measureLabel = perRider ? 'orders per rider' : 'orders'
+      const deviation = deviationOf(row, key)
+      const against =
+        withinCourier && deviation !== null
+          ? ` — ${deviation > 0 ? '+' : ''}${pct(deviation)} against ${row.is_total ? 'the' : `${who}'s`} ${baselineName}`
+          : ''
       return (
         <HeatCell
           value={value}
           max={row.is_total ? 0 : maxCell}
-          tip={`${who} · ${vehicleName}: ${num(value)} ${measureLabel}${
+          strength={withinCourier ? deviationStrength(deviation) : undefined}
+          below={withinCourier && deviation < 0}
+          tip={`${who} · ${vehicleName}: ${num(value)} ${measureLabel}${against}${
             row.is_total ? '' : ' — click to see these riders'
           }`}
           emptyTip={`No ${row.courier} riders on ${vehicleName.toLowerCase()}`}
@@ -153,7 +181,7 @@ export default function FleetWorkloadReport() {
             text={
               r.is_total
                 ? `${num(r.riders)} riders active across all couriers`
-                : `${num(r.courier)} has ${num(r.riders)} riders`
+                : `${r.courier} has ${num(r.riders)} riders`
             }
           >
             {num(r.riders)}
@@ -162,12 +190,29 @@ export default function FleetWorkloadReport() {
       },
     ]
     table = { caption: 'Orders by courier and vehicle', rowKey: (r) => r.courier, isTotal: (r) => r.is_total }
-    actions = <Segmented label="Cells show" options={MEASURES} value={measure} onChange={setMeasure} />
+    actions = (
+      <>
+        <Segmented label="Cells show" options={MEASURES} value={measure} onChange={setMeasure} />
+        <Segmented label="Colour" options={COLOURS} value={colour} onChange={setColour} />
+      </>
+    )
+    const reading = withinCourier
+      ? perRider
+        ? `Each cell is coloured against that courier's orders per rider across all its vehicles: blue riders carry more than the courier's average, orange less, and a row of pale cells means the work is spread evenly.`
+        : `Each cell is coloured against that courier's average vehicle: blue vehicles carry more of its orders, orange fewer.`
+      : perRider
+        ? 'Similar numbers across a row mean the work is spread evenly.'
+        : 'Darker cells carry more orders.'
     note = perRider
-      ? 'Each cell is orders divided by the riders on that vehicle. Similar numbers across a row mean the work is spread evenly. Click a courier or a cell to see who carries it.'
-      : 'Darker cells carry more orders. Click a courier to break it down by vehicle, or a cell to see those riders.'
+      ? `Each cell is orders divided by the riders on that vehicle. ${reading} Click a courier or a cell to see who carries it.`
+      : `${reading} Click a courier to break it down by vehicle, or a cell to see those riders.`
     legend = [
-      { swatch: 'heat', label: `Cell colour = ${perRider ? 'orders per rider' : 'orders'}; darker means more` },
+      withinCourier
+        ? {
+            swatch: 'diverge',
+            label: `Cell colour = against that courier's ${baselineName}; blue more, orange less, full colour at ${FULL_DEVIATION_PCT}% or more`,
+          }
+        : { swatch: 'heat', label: `Cell colour = ${perRider ? 'orders per rider' : 'orders'}; darker means more` },
       { swatch: 'total', label: 'Bold row = all couriers' },
       { swatch: 'glyph', glyph: '–', label: 'No riders on that vehicle' },
     ]
