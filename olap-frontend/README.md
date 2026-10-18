@@ -1,11 +1,28 @@
 # OLAP dashboard (React)
 
 The web dashboard for the four warehouse reports. Built with React 18 and Vite,
-no UI, chart or icon libraries: the tables, bars, pivot heat map, line chart,
-demand calendar and icons are plain components so every part is easy to explain
-in the demo.
+no UI, chart or icon libraries: the tables, bars, pivot heat maps, line chart,
+Pareto chart, dot strip, demand calendar and icons are plain components so every
+part is easy to explain in the demo.
 
 ## Run it
+
+The group runs the whole stack with Docker Compose from the repository root:
+
+```bash
+docker compose --profile app up -d
+```
+
+The `web` service serves the dashboard on http://localhost:3000 in live mode,
+against the Go API and the warehouse. It also sets `VITE_POLL=true`: Docker bind
+mounts on macOS and Windows pass no file-change events into the container, so
+Vite polls the mounted files instead and an edit shows in the browser within a
+few seconds. After pulling a change to `docker-compose.yml`, recreate the
+container once with `docker compose --profile app up -d web`. The API reads its
+SQL only at startup, so restart it (`docker compose --profile app restart api`)
+after a query changes.
+
+Without Docker:
 
 ```bash
 cd olap-frontend
@@ -77,7 +94,9 @@ message is shown to the user.
 R3's deciles view draws the table's own numbers as a **Pareto chart**
 (`src/components/ParetoChart.jsx`): one bar per decile plus the cumulative line,
 on a single 0–100% scale so the line reaches the top gridline when the deciles
-account for everything. The switch above the table (`Deciles` / `Geography` /
+account for everything. The chart's key says what the running total adds up, and
+a dashed line marks 80% of value, so where the running total crosses it shows
+how many deciles hold most of the value. The switch above the table (`Deciles` / `Geography` /
 `Customers`) swaps peer views rather than drilling; the route line still shows
 the drill state and rolls it back.
 
@@ -87,15 +106,34 @@ month, week or day, with a 7-period moving average), the **weekday** pivot, and
 **busiest days** (the day grain ranked, each day against the average day in the
 same slice). `src/components/LineChart.jsx` draws the trend, `HeatCell` the
 weekday pivot, and `CalendarGrid` one cell per day. At day grain the calendar
-replaces the table and the chart sits under it: 365 table rows say less than a
-calendar, and hovering a cell gives that day's exact figure.
+leads, the chart sits under it, and the daily table follows closed ("Show the
+daily numbers as a table"): 365 rows say less than a calendar, but the table is
+still there to read, sort, or reach from the keyboard. The trend's y-axis sits on
+round values (0, 1,000, 2,000, ...), and "Change vs previous" and "Versus the
+average day" carry a blue ▲ or orange ▼ so rises and dips scan at a glance.
+
+The **weekday pivot** has a Colour switch. "Against its month" (the default)
+colours each cell against that month's own average on a diverging scale, blue
+above and orange below, reaching full colour at 10% or more; it shows when
+inside a month the orders land. "Across months" colours every cell against the
+busiest one in the table instead, which shows which months carried the most.
+
+R2's **courier x vehicle grid** has the same switch: "Across couriers" (the
+default) or "Against its courier", which colours each vehicle against that
+courier's own average, i.e. whether its vehicles share the work evenly. At the
+**rider** level a dot strip above the table plots each listed rider's orders
+around the median, with a shaded band for within 5% of it. Its axis spans a
+fixed ±10% of the median, so a small spread reads small instead of being
+stretched to fill the chart, and the band, median and axis offsets are labelled
+on the chart itself. Days active also shows the query's `utilization_pct`.
 
 Two things worth knowing when reading R4:
 
 - **Demand is level.** The busiest weekday is 0.7% above the quietest and the
-  busiest month 0.9% above the quietest, so the heat map and the bars read flat.
-  That is the finding, not a broken colour scale: the network carries an even
-  load all year.
+  busiest month 0.9% above the quietest, so the weekday cells stay pale (well
+  under the 10% that reaches full colour) and the bars read flat. That is the
+  finding, not a broken colour scale: the network carries an even load all year.
+  The same goes for R2's riders, who sit within a few percent of each other.
 - **A week that crosses a quarter boundary appears twice**, once for each
   quarter, because `trend.sql` groups weeks by year *and* quarter. `2024 W40` is
   a 1-day row (30 Sep) plus a 6-day row (1–6 Oct), each normalized to orders per
@@ -111,9 +149,27 @@ you zoom back out.
 
 A **Legend** row under the scope sentence names what each mark means: bar
 length (relative to the largest row on screen), heat-cell colour (darker means
-more), the `–` glyph for no data, and the bold row for totals. The prose that
+more, or blue above and orange below on the "against its average" scales), the
+▲▼ arrows, the `–` glyph for no data, and the bold row for totals. The prose that
 defines the measures themselves (list-price value, "busier than", orders per
 rider) sits in the panel footer.
+
+Figures describe what the query returned. A level that returns only the top N
+rows says so ("Average of those listed", "across the 20 busiest riders") rather
+than presenting an average of the listed rows as the whole population's.
+
+**Column explanations.** The less obvious columns have a dotted-underlined
+header; hovering or focusing it explains the column, worded from how its query
+computes it (e.g. "Rank" and "Busier than" are worked out across the whole
+selection, not only the rows listed). A `DataTable` column opts in with `hint`.
+
+**Sorting.** Flat tables pass `sortable` to `DataTable`, which turns each header
+into a button: numbers sort largest first and text A to Z, a second click
+reverses, and a third restores the query's own order. Total rows stay pinned,
+and the sort resets when a drill changes the level. Tables whose row order is a
+hierarchy (the R4 roll-up, R3 geography) and the R4 weekday grid are not
+sortable. A column can sort by something other than its label with `sortValue`
+(R4 trend periods sort by start date).
 
 **Hovering a mark** — a bar, a heat cell, or a count such as units, riders or
 days active — shows a tooltip with the exact reading: the full value, its
@@ -125,13 +181,28 @@ keyboard focus, and on a clickable row the remaining cells keep the native
 `DataTable` when it draws its own tooltip, which is what keeps the two hints
 from showing at once.
 
+**Charts work from the keyboard and by touch** (`src/lib/chartKeys.js`). Tab to
+a chart and its first point's readout appears; the left and right arrow keys
+step through the points, Home and End jump to the ends, and Escape hides it.
+Each reading is also announced to screen readers. The charts use pointer events,
+so a tap reads the nearest point (on the dot strip, the nearest dot), a sideways
+drag scrubs while vertical swipes still scroll, and a touch reading stays until
+you tap elsewhere. Readout bubbles stay inside the chart near its edges.
+
+**Dark mode** follows the system setting. Every colour in `src/styles.css` reads
+from a token on `:root`, and a dark block redefines each one; `data-theme="light"`
+or `"dark"` on `<html>` pins a theme instead. Dark-theme text meets WCAG AA
+contrast (4.97:1 at the lowest, on the strongest orange heat cell). In the light
+theme the muted grey (`--ink-3`, axis labels and secondary text) is 3.1:1 on
+white, under AA's 4.5:1 for small text.
+
 ## Tests
 
-Two suites run without a database or a browser, and CI runs both on every
+Three suites run without a database or a browser, and CI runs them on every
 change (`.github/workflows/dashboard-tests.yml`):
 
 ```bash
-npm test                    # both suites, no warehouse needed
+npm test                    # all three suites, no warehouse needed
 npm run sync:contracts      # regenerate the column contract from the API
 npm run check:contracts     # diff columns and value types against the live API
 ```
@@ -152,11 +223,17 @@ for. The suite checks three things:
 development rather than rendering a blank column. In a production build it logs
 instead of throwing, so the demo still renders.
 
-**Rendered reports** (`tests/report-markup.test.mjs`). The four reports are
-rendered on the server in every view state — each R4 view and grain, pinned and
-unpinned, both busiest-day sorts — and the markup is checked: row counts,
-hierarchy indentation, columns, charts, the calendar, legends, notes,
-breadcrumbs and figures. A case picks its view by replacing the component's
+**Rendered reports** (`tests/report-markup.test.mjs` for R4,
+`tests/report-views.test.mjs` for R1, R2 and R3). The four reports are rendered
+on the server across their views and drill levels — each R4 view and grain,
+pinned and unpinned, both busiest-day sorts and both weekday colourings; R1
+categories and products; R2's grid in both colourings, one courier's vehicles
+and the riders; R3's deciles, geography and a decile's customers — and the
+markup is checked: row counts, hierarchy indentation, columns, charts, the
+calendar, legends, notes, breadcrumbs, figures, sortable and explained headers,
+and the keyboard-readable charts. The same files test the table sort order
+(numbers sent as strings, pinned totals, blanks last), the chart keyboard and
+pointer handling, and that the dark theme redefines every colour token. A case picks its view by replacing the component's
 `useState` defaults with a read from `tests/support/reportState.js`, and its
 data hook with `tests/support/useReport-mock.js`, which serves the sample rows
 synchronously (bundled with `esbuild`). Where a claim is about a value — a
@@ -191,13 +268,14 @@ src/
   api/mock.js              sample rows shaped exactly like each SQL file's output
   api/contracts.js         generated: the columns each level returns (see Tests above)
   scripts/                 sync-contracts (regenerate the contract), check-contracts (diff it against the API)
-  tests/                   column-contract and rendered-report suites (npm test)
+  tests/                   column-contract suite and the two rendered-report suites (npm test)
   tests/support/           the test seam: initial view state, the mock data hook, the render entry
   components/              FilterBar, Panel, Figures (KPI cards), RoutePath (drill path), ScopeLine
                            (scope sentence), Legend (encoding key), Tooltip (hover hint), DataTable,
                            Bar, HeatCell (heat matrix cell), LineChart (time series), ParetoChart
-                           (concentration), CalendarGrid (demand calendar), Segmented,
-                           ExportButton, ReportStatus, Icons
+                           (concentration), DotStrip (spread around the median), CalendarGrid
+                           (demand calendar), Segmented, ExportButton, ReportStatus, Icons
+  lib/chartKeys.js         keyboard and pointer reading shared by the charts
   lib/csv.js               Export CSV
   lib/dimensions.js        filter options shared by all reports (values match the SQL)
   lib/format.js            peso / percent / count formatting
