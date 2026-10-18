@@ -628,6 +628,12 @@ select {
   padding: 8px 0 0;
 }
 
+/* A focused chart (read with the arrow keys) gets a clear ring. */
+.chart-svg:focus-visible {
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
 .chart-svg {
   display: block;
   width: 100%;
@@ -823,6 +829,23 @@ select {
    brings its own padding and a rule to separate the two. */
 .panel-chart {
   padding: 12px 18px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* A table kept closed under a chart that already shows the same numbers. */
+.table-details > summary {
+  padding: 10px 18px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--route);
+  cursor: pointer;
+}
+
+.table-details > summary:hover {
+  color: var(--route-hover);
+}
+
+.table-details[open] > summary {
   border-bottom: 1px solid var(--line-soft);
 }
 
@@ -1150,6 +1173,35 @@ tr.is-total td {
 
 .cell-muted {
   color: var(--ink-3);
+}
+
+/* A sortable header: the whole label is a button; the arrow shows the order. */
+.th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.th-sort:hover,
+.th-sort.is-on {
+  color: var(--ink);
+}
+
+.th-arrow {
+  font-size: 0.8em;
+  color: var(--ink-3);
+  opacity: 0.55;
+}
+
+.th-sort.is-on .th-arrow {
+  color: var(--route);
+  opacity: 1;
 }
 
 /* A header with an explanation: dotted underline, tooltip on hover/focus. */

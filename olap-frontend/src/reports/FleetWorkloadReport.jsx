@@ -191,7 +191,7 @@ export default function FleetWorkloadReport() {
         ),
       },
     ]
-    table = { caption: 'Orders by courier and vehicle', rowKey: (r) => r.courier, isTotal: (r) => r.is_total }
+    table = { caption: 'Orders by courier and vehicle', rowKey: (r) => r.courier, isTotal: (r) => r.is_total, sortable: true }
     actions = (
       <>
         <Segmented label="Cells show" options={MEASURES} value={measure} onChange={setMeasure} />
@@ -278,6 +278,7 @@ export default function FleetWorkloadReport() {
       isTotal: (r) => r.grouping_level === 1,
       onRowClick: (r) => setDrill((d) => ({ ...d, vehicle: r.vehicle })),
       drillHint: 'Show these riders',
+      sortable: true,
     }
     note = 'Click a vehicle to see its riders. Orders per rider shows whether a vehicle type is carrying more than its share of the load.'
     legend = [
@@ -376,7 +377,7 @@ export default function FleetWorkloadReport() {
         render: (r) => `${pct(r.workload_percentile)} of riders`,
       },
     ]
-    table = { caption: 'Rider workload', rowKey: (r, i) => `${r.rider}-${i}` }
+    table = { caption: 'Rider workload', rowKey: (r, i) => `${r.rider}-${i}`, sortable: true }
     chart = (
       <DotStrip
         title={`Orders per rider, ${listed}`}

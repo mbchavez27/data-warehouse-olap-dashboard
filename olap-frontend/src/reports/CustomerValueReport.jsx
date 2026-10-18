@@ -123,12 +123,13 @@ export default function CustomerValueReport() {
       />
     )
     columns = [
-      { key: 'decile', label: 'Decile', render: (r) => <span className="cell-strong">{r.decile}</span> },
+      { key: 'decile', label: 'Decile', hint: 'Customers sorted by value and cut into ten equal groups; 1 is the top 10%', render: (r) => <span className="cell-strong">{r.decile}</span> },
       { key: 'customers', label: 'Customers', align: 'right', render: (r) => num(r.customers) },
       {
         key: 'value',
         label: 'List-price value',
         tip: true,
+        hint: "Units times each product's current list price. The source keeps no price history, so read it as basket value, not revenue",
         render: (r) => (
           <Tooltip text={`${pesoFull(r.value)} — ${pct(r.value_share_pct)} of list-price value`}>
             <Bar value={Number(r.value)} max={maxValue}>
@@ -137,11 +138,12 @@ export default function CustomerValueReport() {
           </Tooltip>
         ),
       },
-      { key: 'value_share_pct', label: 'Share of value', align: 'right', render: (r) => pct(r.value_share_pct) },
-      { key: 'cumulative_share_pct', label: 'Running total', align: 'right', render: (r) => pct(r.cumulative_share_pct) },
+      { key: 'value_share_pct', label: 'Share of value', align: 'right', hint: "This decile's share of all customers' list-price value", render: (r) => pct(r.value_share_pct) },
+      { key: 'cumulative_share_pct', label: 'Running total', align: 'right', hint: 'The share of value held by decile 1 through this one', render: (r) => pct(r.cumulative_share_pct) },
       {
         key: 'avg_value_per_customer',
         label: 'Average per customer',
+        hint: "The decile's value divided by its customers",
         align: 'right',
         tip: true,
         render: (r) => (
@@ -153,6 +155,7 @@ export default function CustomerValueReport() {
       {
         key: 'max_customer_value',
         label: 'Largest customer',
+        hint: "The highest-value customer in this decile; hover a cell for the decile's range",
         align: 'right',
         tip: true,
         render: (r) => (
@@ -172,6 +175,7 @@ export default function CustomerValueReport() {
         setView('customer')
       },
       drillHint: 'Show these customers',
+      sortable: true,
     }
     legend = [{ swatch: 'bar', label: 'Bar length = list-price value, relative to the top decile' }]
     note =
@@ -231,6 +235,7 @@ export default function CustomerValueReport() {
         key: 'value',
         label: 'List-price value',
         tip: true,
+        hint: "Units times each product's current list price. The source keeps no price history, so read it as basket value, not revenue",
         render: (r) => (
           <Tooltip text={`${pesoFull(r.value)} — ${peso(r.value_per_customer)} per customer`}>
             <Bar value={Number(r.value)} max={maxValue} track={r.grouping_level === 0}>
@@ -242,12 +247,14 @@ export default function CustomerValueReport() {
       {
         key: 'value_per_customer',
         label: 'Value per customer',
+        hint: "The row's list-price value divided by its customers",
         align: 'right',
         render: (r) => peso(r.value_per_customer),
       },
       {
         key: 'value_rank',
         label: 'Rank',
+        hint: 'Rank by value among rows of the same kind: locations among locations, gender splits among gender splits',
         align: 'right',
         render: (r) => (r.grouping_level >= 2 ? '' : r.value_rank),
       },
@@ -292,8 +299,8 @@ export default function CustomerValueReport() {
       },
     ]
     columns = [
-      { key: 'value_rank', label: 'Rank', align: 'right' },
-      { key: 'customer', label: 'Customer', render: (r) => <span className="cell-strong">{r.customer}</span> },
+      { key: 'value_rank', label: 'Rank', align: 'right', hint: '1 = the highest-value customer in this selection, not only those listed' },
+      { key: 'customer', label: 'Customer', hint: "The customer's username: the source's stable identifier, since the names are synthetic", render: (r) => <span className="cell-strong">{r.customer}</span> },
       ...(drill.country ? [] : [{ key: 'country', label: 'Country' }]),
       ...(drill.city ? [] : [{ key: 'city', label: 'City' }]),
       ...(filters.gender
@@ -305,6 +312,7 @@ export default function CustomerValueReport() {
         key: 'value',
         label: 'List-price value',
         tip: true,
+        hint: "Units times each product's current list price. The source keeps no price history, so read it as basket value, not revenue",
         render: (r) => (
           <Tooltip text={`${pesoFull(r.value)} — rank ${r.value_rank} by value in this selection`}>
             <Bar value={Number(r.value)} max={maxValue}>
@@ -316,13 +324,15 @@ export default function CustomerValueReport() {
       {
         key: 'avg_order_value',
         label: 'Average order',
+        hint: "The customer's list-price value divided by their orders",
         align: 'right',
         render: (r) => peso(r.avg_order_value),
       },
-      { key: 'decile', label: 'Decile', align: 'right', render: (r) => r.decile },
+      { key: 'decile', label: 'Decile', align: 'right', hint: 'Which tenth of this selection by value the customer falls in; 1 is the top 10%', render: (r) => r.decile },
       {
         key: 'value_percentile',
         label: 'Worth more than',
+        hint: 'The share of customers in this selection with less list-price value than this one',
         align: 'right',
         render: (r) => `${pct(r.value_percentile)} of customers`,
       },
@@ -330,6 +340,7 @@ export default function CustomerValueReport() {
     table = {
       caption: drill.decile ? `Top customers in value decile ${drill.decile}` : 'Top customers by value',
       rowKey: (r) => `${r.customer}-${r.value_rank}`,
+      sortable: true,
     }
     legend = [{ swatch: 'bar', label: 'Bar length = list-price value, relative to the top customer listed' }]
     note =

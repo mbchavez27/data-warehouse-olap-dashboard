@@ -78,13 +78,14 @@ export default function ProductCategoryReport() {
   const columns =
     level === 'category'
       ? [
-          { key: 'value_rank', label: 'Rank', align: 'right', render: (r) => (r.is_total ? '' : r.value_rank) },
+          { key: 'value_rank', label: 'Rank', align: 'right', hint: '1 = the category with the most list-price value', render: (r) => (r.is_total ? '' : r.value_rank) },
           { key: 'category', label: 'Category', render: (r) => <span className="cell-strong">{r.category}</span> },
           {
             key: 'units',
             label: 'Units delivered',
             align: 'right',
             tip: true,
+            hint: 'Items delivered: the quantities on every order line, added up',
             render: (r) => (
               <Tooltip
                 text={
@@ -101,6 +102,7 @@ export default function ProductCategoryReport() {
             key: 'value',
             label: 'List-price value',
             tip: true,
+            hint: "Units times each product's current list price. The source keeps no price history, so read it as basket value, not revenue",
             render: (r) => (
               <Tooltip
                 text={
@@ -111,10 +113,10 @@ export default function ProductCategoryReport() {
               </Tooltip>
             ),
           },
-          { key: 'value_share_pct', label: 'Share of value', align: 'right', render: (r) => pct(r.value_share_pct) },
+          { key: 'value_share_pct', label: 'Share of value', align: 'right', hint: "This category's share of the list-price value of all categories", render: (r) => pct(r.value_share_pct) },
         ]
       : [
-          { key: 'rank_in_category', label: 'Rank', align: 'right', render: (r) => (r.is_subtotal ? '' : r.rank_in_category) },
+          { key: 'rank_in_category', label: 'Rank', align: 'right', hint: '1 = the product with the most list-price value in its category', render: (r) => (r.is_subtotal ? '' : r.rank_in_category) },
           {
             key: 'product',
             label: 'Product',
@@ -126,6 +128,7 @@ export default function ProductCategoryReport() {
             label: 'Units delivered',
             align: 'right',
             tip: true,
+            hint: 'Items delivered: the quantities on every order line, added up',
             render: (r) => (
               <Tooltip
                 text={
@@ -142,6 +145,7 @@ export default function ProductCategoryReport() {
             key: 'value',
             label: 'List-price value',
             tip: true,
+            hint: "Units times each product's current list price. The source keeps no price history, so read it as basket value, not revenue",
             render: (r) => (
               <Tooltip
                 text={
@@ -152,7 +156,7 @@ export default function ProductCategoryReport() {
               </Tooltip>
             ),
           },
-          { key: 'share_of_category_pct', label: 'Share of category', align: 'right', render: (r) => pct(r.share_of_category_pct) },
+          { key: 'share_of_category_pct', label: 'Share of category', align: 'right', hint: "This product's share of its category's list-price value", render: (r) => pct(r.share_of_category_pct) },
         ]
 
   const exportRows = () =>
@@ -211,6 +215,7 @@ export default function ProductCategoryReport() {
             isTotal={isTotalRow}
             onRowClick={level === 'category' ? (r) => setCategory(r.category) : undefined}
             drillHint="Show this category's products"
+            sortable
           />
         )}
       </Panel>

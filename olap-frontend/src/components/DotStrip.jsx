@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { chartKeys, KEYS_HINT } from '../lib/chartKeys.js'
 
 // Spread of one measure across a set of items: one dot per item on a single
 // axis, a median marker, and a shaded "even share" band around the median.
@@ -57,11 +58,18 @@ export default function DotStrip({ points, format = String, band = 5, range = 10
     const d = Math.round(((t - median) / median) * 100)
     return d === 0 ? 'median' : `${d > 0 ? '+' : '−'}${Math.abs(d)}%`
   }
-  const on = hover === null ? null : placed.find((p) => p.key === hover)
+  const on = hover === null ? null : placed[hover] // hover is an index into placed, left to right
+  const vsMedian = (v) => `${v >= median ? '+' : ''}${(((Number(v) - median) / median) * 100).toFixed(1)}% against the median`
 
   return (
     <div className="chart">
-      <svg viewBox={`0 0 ${W} ${H}`} className="chart-svg" role="img" aria-label={title}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="chart-svg"
+        role="img"
+        aria-label={`${title}. ${KEYS_HINT}`}
+        {...chartKeys(placed.length, hover, setHover)}
+      >
         <rect x={bandLo} y={pad.t} width={bandHi - bandLo} height={H - pad.b - pad.t} className="strip-band" />
         <line x1={pad.l} x2={W - pad.r} y1={H - pad.b} y2={H - pad.b} className="chart-grid" />
         <line x1={x(median)} x2={x(median)} y1={pad.t} y2={H - pad.b} className="strip-median" />
@@ -85,26 +93,27 @@ export default function DotStrip({ points, format = String, band = 5, range = 10
           </g>
         ))}
 
-        {placed.map((p) => (
+        {placed.map((p, i) => (
           <circle
             key={p.key}
             cx={p.cx}
             cy={cy(p.row)}
             r={r}
-            className={`strip-dot${hover === p.key ? ' is-on' : ''}`}
-            onMouseEnter={() => setHover(p.key)}
+            className={`strip-dot${hover === i ? ' is-on' : ''}`}
+            onMouseEnter={() => setHover(i)}
             onMouseLeave={() => setHover(null)}
           />
         ))}
       </svg>
 
+      <p className="visually-hidden" aria-live="polite">
+        {on ? `${on.label}: ${format(on.value)}, ${vsMedian(on.value)}` : ''}
+      </p>
+
       {on && (
         <div className="chart-tip" style={{ left: `${(100 * on.cx) / W}%` }}>
           <strong>{on.label}</strong>
-          <span>
-            {format(on.value)} — {on.value >= median ? '+' : ''}
-            {(((Number(on.value) - median) / median) * 100).toFixed(1)}% against the median
-          </span>
+          <span>{`${format(on.value)} — ${vsMedian(on.value)}`}</span>
         </div>
       )}
 
