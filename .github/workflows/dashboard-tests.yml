@@ -33,9 +33,10 @@ jobs:
         working-directory: olap-frontend
         run: npm ci
 
-      # Both dashboard suites: the sample data and the reports against the
-      # generated column contract, and the four reports rendered server-side
-      # in every view state. Neither needs a database or a browser.
+      # All three dashboard suites: the sample data and the reports against
+      # the generated column contract, and the four reports rendered
+      # server-side across their views (R4 in report-markup, R1-R3 in
+      # report-views). None needs a database or a browser.
       # `npm run check:contracts` covers the SQL itself, which needs the
       # warehouse, and the source archive is not in the repository.
       - name: Contracts and rendered reports
