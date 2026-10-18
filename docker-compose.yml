@@ -55,8 +55,12 @@ services:
     image: golang:1.25-alpine
     container_name: stadvdb-mco1-api
     profiles: ["app"]
+    restart: unless-stopped
     working_dir: /src/olap-backend
-    command: ["go", "run", "."]
+    # exec replaces the shell so the server itself is PID 1 and receives the
+    # SIGTERM from `docker stop`; `go run` does not forward it, so the server
+    # never shut down cleanly and the container exited with code 2.
+    command: ["sh", "-c", "go build -o /tmp/olap-api . && exec /tmp/olap-api"]
     environment:
       # Inside the compose network dw_db listens on 5432, not the host's 5434.
       DW_HOST: dw_db
