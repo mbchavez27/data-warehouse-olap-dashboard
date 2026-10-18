@@ -5,14 +5,14 @@
 ## 1. Source Database Setup
 
 - [x] Download the source dataset.
-  - Evidence: official `MCO1_dataset_ecommerce.zip` present locally (gitignored) + extracted `db/raw-dumps/faker_{Couriers,Riders,Users,Products,Orders,OrderItems}.sql`; `evidence/source-import-report.json: archive.file = MCO1_dataset_ecommerce.zip`, `sha256 = a10f1186...`, `hashMatches: true`.
+  - Evidence: official `MCO1_dataset_ecommerce.zip` present locally in `db/raw-dumps/` (gitignored); the importer reads the six `faker_*.sql` dumps straight from the archive (`db/source/importer/archive_reader.py`), so no extracted copies are needed; `evidence/source-import-report.json: archive.file = MCO1_dataset_ecommerce.zip`, `sha256 = a10f1186...`, `hashMatches: true`.
 - [x] Import the dataset into a local MySQL or Postgres database.
   - Evidence: Postgres 16 `source_db` via `docker-compose.yml` (`source_db`, port 5433); canonical DDL `db/source/init/01_source_schema.sql`; all-Python importer `db/source/importer/` (`cli.py`, `source_import.py`, `archive_reader.py`, `stadvdb-mco1-db` uv env, 33 pytest); one-command setup `db/scripts/setup_source.sh --archive <zip> --reset`; `evidence/source-import-report.json: import.transaction = committed`, `database.passed: true`; `evidence/source-db-revalidation.json: passed: true`. Counts: Couriers 3, Riders 100, Users 100000, Products 10000, Orders 1000000, OrderItems 1999824 (3,109,927 rows total), 0 orphans.
   - Docs: `docs/database/source-database-setup.md`, `docs/database/source-schema.md`.
 - [x] *(If necessary)* Generate synthetic data to increase the size of the source database.
   - Evidence: N/A — `docs/database/source-database-setup.md` records 3,109,927 rows already sufficient; no synthetic rows added.
 - [x] Second team member reproduces fresh-clone procedure (`docs/database/source-database-setup.md` acceptance list).
-  - Evidence: second member ran the documented gates on this workstation (33 pytest, `verify`, `validate`, live `import --reset` + full `setup_source.sh` flow, both evidence `passed:true`). Same-machine run — separate-hardware fresh clone not performed.
+  - Evidence: second member ran the documented gates on this workstation (33 pytest, `verify`, `validate`, live `import --reset` + full `setup_source.sh` flow, both evidence `passed:true`). The full setup has since been reproduced on separate hardware too: the project runs on both a team member's laptop (macOS) and PC.
 
 ## 2. Data Warehouse Construction
 
@@ -36,7 +36,7 @@
 - [x] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
   - Evidence: `etl/transform/dates.py`, `etl/transform/values.py`, and the three `etl/load/` modules: two date formats parsed to `DATE`; gender M/F/Male/Female → M/F; vehicles 6 → 4; categories 14 → 9; prices `REAL` → `NUMERIC(12,2)` (920 rounded, catalog total +₱0.42); names merged; orders aggregated (total units, line items, size band); rider-day snapshot built with zero-order days. Every source issue and decision: `docs/database/source-schema.md` (issues 1–9), `docs/database/design-decisions.md`.
 - [x] Write code to **Load** the transformed data into the data warehouse.
-  - Evidence: `etl/load/date.py`, `etl/load/dimensions.py`, and `etl/load/facts.py` are invoked by the stable `etl/main.py --date` / `--dims` / `--facts` modes: 365 dates; 100 / 100,000 / 100,000 / 10,000 dimension rows; 1,000,000 / 1,999,824 / 36,500 fact rows; 0 rejects (`evidence/etl-rejects.json`); full rebuild ~40 s; reruns byte-identical. `etl/main.py --reconcile` produced `evidence/etl-reconciliation.json`: 15/15 source-to-warehouse checks passed, including 10,999,917 units in all three facts, exact Unknown seed rows, and 0 fact references to Unknown members.
+  - Evidence: `etl/load/date.py`, `etl/load/dimensions.py`, and `etl/load/facts.py` are invoked by the stable `etl/main.py --date` / `--dims` / `--facts` modes: 365 dates; 100 / 100,000 / 100,000 / 10,000 dimension rows; 1,000,000 / 1,999,824 / 36,500 fact rows; 0 rejects (`evidence/etl-rejects.json`); full rebuild ~40 s on an earlier run, ~19 s on 2026-10-18 (`etl/run_etl.sh --rebuild`, `evidence/etl-runs.jsonl`); reruns byte-identical. `etl/main.py --reconcile` produced `evidence/etl-reconciliation.json`: 15/15 source-to-warehouse checks passed, including 10,999,917 units in all three facts, exact Unknown seed rows, and 0 fact references to Unknown members.
 - [x] Provide a reproducible, fail-fast full-pipeline command.
   - Evidence: `etl/run_pipeline.py` orchestrates date → dimensions → facts → reconciliation → summary views (`--optimize`) → final readiness check; `etl/run_etl.sh` is a thin Bash wrapper. The default refuses a populated warehouse before any load, while explicit `--rebuild` recreates only `dw_db`; runner and wrapper safety is covered by `etl/tests/test_run_pipeline.py`.
 
@@ -71,7 +71,7 @@
   | Loaded delivery facts | 1,000,000 rows | `evidence/etl-reconciliation.json` |
   | Loaded order-item facts | 1,999,824 rows | `evidence/etl-reconciliation.json` |
   | Loaded rider-day facts | 36,500 rows | `evidence/etl-reconciliation.json` |
-  | Full ETL rebuild | ~40 seconds | `docs/database/data-warehouse-implementation.md` |
+  | Full ETL rebuild | ~40 s on an earlier run; ~19 s on 2026-10-18, including the summary views | `docs/database/data-warehouse-implementation.md`, `evidence/etl-runs.jsonl` |
   | OLAP query timings before optimization | 18 cases, medians 66–8,224 ms | `evidence/benchmark/baseline/results.csv` |
   | OLAP query timings after optimization | 18 cases, sum of medians 2,066 ms vs 20,625 ms (about 10x; 8–10x as the honest range) | `evidence/benchmark/optimized-v3/results.csv`, `evidence/optimization-log.md` |
 - [x] Evaluate performance and identify bottlenecks using the `EXPLAIN` feature.
