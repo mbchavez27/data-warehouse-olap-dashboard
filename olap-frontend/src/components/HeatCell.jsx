@@ -12,6 +12,13 @@ import { num } from '../lib/format.js'
 //   tip      tooltip text for a filled cell
 //   emptyTip tooltip text for a null cell (optional)
 //   onClick  drill action; without it the cell is a plain, non-interactive block
+// Fill strength for a cell on a diverging scale: its distance from the
+// average, reaching full colour at FULL_DEVIATION_PCT. A fixed point, not the
+// table's largest gap, so a table of ±1% gaps stays pale instead of
+// stretching noise to full colour.
+export const FULL_DEVIATION_PCT = 10
+export const deviationStrength = (deviation) => Math.min(1, Math.abs(deviation ?? 0) / FULL_DEVIATION_PCT)
+
 export default function HeatCell({ value, max, strength, below = false, tip, emptyTip, onClick }) {
   if (value === null || value === undefined) {
     const missing = <span className="cell-muted">–</span>

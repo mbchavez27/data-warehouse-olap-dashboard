@@ -4,7 +4,7 @@ import FilterBar from '../components/FilterBar.jsx'
 import RoutePath from '../components/RoutePath.jsx'
 import DataTable from '../components/DataTable.jsx'
 import Bar from '../components/Bar.jsx'
-import HeatCell from '../components/HeatCell.jsx'
+import HeatCell, { FULL_DEVIATION_PCT, deviationStrength } from '../components/HeatCell.jsx'
 import Legend from '../components/Legend.jsx'
 import Tooltip from '../components/Tooltip.jsx'
 import Figures from '../components/Figures.jsx'
@@ -344,7 +344,6 @@ export default function DemandCalendarReport() {
       const average = Number(row.all_days)
       return value === null || value === undefined || !average ? null : (100 * (Number(value) - average)) / average
     }
-    const maxDeviation = Math.max(0, ...rows.flatMap((r) => WEEKDAYS.map(([k]) => Math.abs(deviationOf(r, k) ?? 0))))
     const withinMonth = colour === 'within'
 
     const heat = (row, key, name) => {
@@ -355,7 +354,7 @@ export default function DemandCalendarReport() {
         <HeatCell
           value={value}
           max={maxCell}
-          strength={withinMonth ? (maxDeviation ? Math.abs(deviation ?? 0) / maxDeviation : 0) : undefined}
+          strength={withinMonth ? deviationStrength(deviation) : undefined}
           below={withinMonth && deviation < 0}
           tip={`${who} · ${name}: ${num(value)} orders per day${
             deviation === null ? '' : ` — ${signed(deviation)} against that month's average`
@@ -418,14 +417,14 @@ export default function DemandCalendarReport() {
     table = { caption: 'Average orders per day by month and weekday', rowKey: (r) => r.month_label, isTotal: (r) => r.is_total }
     legend = [
       withinMonth
-        ? { swatch: 'diverge', label: "Cell colour = against that month's average; blue busier, orange quieter" }
+        ? { swatch: 'diverge', label: `Cell colour = against that month's average; blue busier, orange quieter, full colour at ${FULL_DEVIATION_PCT}% or more` }
         : { swatch: 'heat', label: 'Cell colour = orders per day; darker means busier' },
       { swatch: 'total', label: 'Bold row = every month together' },
       { swatch: 'glyph', glyph: '–', label: 'No deliveries in that month and weekday' },
     ]
     note = `Each cell is the average orders per day a month carried on that weekday, so 4-day and 5-day weekdays compare. ${
       withinMonth
-        ? "Read the All days column for how full a month is and the cell colour for when inside it the orders landed: blue weekdays ran above that month's average, orange ones below."
+        ? "Read the All days column for how full a month is and the cell colour for when inside it the orders landed: blue weekdays ran above that month's average, orange ones below, and pale cells sat close to it."
         : 'The colour scales every cell against the busiest one in the table, so it shows which months and weekdays carried the most orders overall. Switch to Against its month to see each month\'s own weekday pattern.'
     }${notApplied(
       filters,
