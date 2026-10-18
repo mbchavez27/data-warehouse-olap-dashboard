@@ -1,4 +1,8 @@
-// Report table. Columns: { key, label, align?, render?(row), title?(row), tip? }.
+import Tooltip from './Tooltip.jsx'
+
+// Report table. Columns: { key, label, align?, render?(row), title?(row), tip?, hint? }.
+// A column with a hint gets a dotted-underlined header that explains the column
+// on hover or keyboard focus.
 // Rows with isTotal() get the total style; rows that canDrill() are clickable
 // and keyboard-focusable. A column with tip: true renders its own Tooltip, so
 // the row's drill hint moves to the other cells instead of the whole row.
@@ -11,7 +15,15 @@ export default function DataTable({ columns, rows, rowKey, onRowClick, canDrill,
           <tr>
             {columns.map((c) => (
               <th key={c.key} scope="col" className={c.align === 'right' ? 'num' : undefined}>
-                {c.label}
+                {c.hint ? (
+                  <Tooltip text={c.hint}>
+                    <span className="th-hint" tabIndex={0}>
+                      {c.label}
+                    </span>
+                  </Tooltip>
+                ) : (
+                  c.label
+                )}
               </th>
             ))}
           </tr>

@@ -662,6 +662,61 @@ select {
   stroke-dasharray: 5 4;
 }
 
+/* Dot strip: one dot per item, a median marker, an "even share" band. */
+.strip-band {
+  fill: var(--route-tint);
+}
+
+.strip-median {
+  stroke: var(--ink-2);
+  stroke-width: 1.5;
+}
+
+.strip-label {
+  fill: var(--route);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.strip-label.is-median {
+  fill: var(--ink-2);
+}
+
+.chart-axis.is-sub {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.strip-dot {
+  fill: color-mix(in srgb, var(--route) 70%, var(--surface));
+  stroke: var(--surface);
+  stroke-width: 1;
+}
+
+.strip-dot.is-on {
+  fill: var(--route);
+  stroke: var(--ink);
+}
+
+.chart-legend i.is-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.chart-legend i.is-median {
+  width: 2px;
+  height: 12px;
+  background: var(--ink-2);
+}
+
+.chart-legend i.is-band {
+  width: 14px;
+  height: 10px;
+  border: 1px solid var(--line);
+  background: var(--route-tint);
+}
+
 .chart-reference {
   stroke: var(--ink-3);
   stroke-width: 1;
@@ -1095,6 +1150,13 @@ tr.is-total td {
 
 .cell-muted {
   color: var(--ink-3);
+}
+
+/* A header with an explanation: dotted underline, tooltip on hover/focus. */
+.th-hint {
+  text-decoration: underline dotted var(--ink-3);
+  text-underline-offset: 3px;
+  cursor: help;
 }
 
 /* Signed % cells: blue up, orange down, the same pair as the diverging heat. */

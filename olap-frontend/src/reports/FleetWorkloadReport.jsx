@@ -13,6 +13,7 @@ import ReportStatus from '../components/ReportStatus.jsx'
 import ScopeLine from '../components/ScopeLine.jsx'
 import Panel from '../components/Panel.jsx'
 import ExportButton from '../components/ExportButton.jsx'
+import DotStrip from '../components/DotStrip.jsx'
 import {
   YEAR, QUARTER, MONTH, COURIER, VEHICLE, AGE_BAND, SIZE_GROUP,
   emptyFilters, changeFilter,
@@ -97,6 +98,7 @@ export default function FleetWorkloadReport() {
   let note = null
   let legend = []
   let actions = null
+  let chart = null
   let empty = false
   let exportName = 'r2.csv'
 
@@ -295,7 +297,10 @@ export default function FleetWorkloadReport() {
         : null
     // Only the top N riders come back in the chosen order, so both figures
     // describe the rows listed, not every rider in the slice.
-    const listed = `the ${num(rows.length)} ${sort === 'most' ? 'busiest' : 'quietest'} riders`
+    const listed =
+      topN === '100'
+        ? `the ${num(rows.length)} riders listed`
+        : `the ${num(rows.length)} ${sort === 'most' ? 'busiest' : 'quietest'} riders`
     figures = [
       { label: 'Riders listed', value: num(rows.length) },
       {
@@ -310,7 +315,12 @@ export default function FleetWorkloadReport() {
       },
     ]
     columns = [
-      { key: 'workload_rank', label: 'Rank', align: 'right' },
+      {
+        key: 'workload_rank',
+        label: 'Rank',
+        align: 'right',
+        hint: '1 = the most orders among every rider in this selection, not only those listed',
+      },
       { key: 'rider', label: 'Rider', render: (r) => <span className="cell-strong">{r.rider}</span> },
       ...(courier ? [] : [{ key: 'courier', label: 'Courier' }]),
       ...(vehicle ? [] : [{ key: 'vehicle', label: 'Vehicle' }]),
@@ -319,6 +329,7 @@ export default function FleetWorkloadReport() {
         key: 'orders',
         label: 'Orders',
         tip: true,
+        hint: 'Orders the rider delivered in the period. Bar length is relative to the busiest rider listed',
         render: (r) => (
           <Tooltip text={`${num(r.orders)} orders — busier than ${pct(r.workload_percentile)} of riders`}>
             <Bar value={Number(r.orders)} max={maxOrders}>{num(r.orders)}</Bar>
@@ -331,25 +342,60 @@ export default function FleetWorkloadReport() {
         label: 'Days active',
         align: 'right',
         tip: true,
+        hint: 'Days with at least one delivery, out of the calendar days in the period, and that as a share of the time',
         render: (r) => (
-          <Tooltip text={`${num(r.active_days)} days with deliveries out of ${num(r.calendar_days)} in the period`}>
-            {`${num(r.active_days)} of ${num(r.calendar_days)}`}
+          <Tooltip
+            text={`${num(r.active_days)} days with deliveries out of ${num(r.calendar_days)} in the period — active ${pct(
+              r.utilization_pct,
+            )} of the time`}
+          >
+            {`${num(r.active_days)} of ${num(r.calendar_days)} · ${pct(r.utilization_pct)}`}
           </Tooltip>
         ),
-        csv: (r) => `${r.active_days} of ${r.calendar_days}`,
+        csv: (r) => `${r.active_days} of ${r.calendar_days} (${r.utilization_pct}%)`,
       },
-      { key: 'avg_orders_per_active_day', label: 'Orders per active day', align: 'right', render: (r) => dec1(r.avg_orders_per_active_day) },
-      { key: 'peak_day_orders', label: 'Busiest day', align: 'right', render: (r) => num(r.peak_day_orders) },
-      { key: 'workload_percentile', label: 'Busier than', align: 'right', render: (r) => `${pct(r.workload_percentile)} of riders` },
+      {
+        key: 'avg_orders_per_active_day',
+        label: 'Orders per active day',
+        align: 'right',
+        hint: 'Orders divided by days active: how busy a working day is for this rider',
+        render: (r) => dec1(r.avg_orders_per_active_day),
+      },
+      {
+        key: 'peak_day_orders',
+        label: 'Busiest day',
+        align: 'right',
+        hint: 'The most orders this rider delivered in a single day',
+        render: (r) => num(r.peak_day_orders),
+      },
+      {
+        key: 'workload_percentile',
+        label: 'Busier than',
+        align: 'right',
+        hint: 'The share of every rider in this selection with fewer orders than this one',
+        render: (r) => `${pct(r.workload_percentile)} of riders`,
+      },
     ]
     table = { caption: 'Rider workload', rowKey: (r, i) => `${r.rider}-${i}` }
+    chart = (
+      <DotStrip
+        title={`Orders per rider, ${listed}`}
+        points={rows.map((r, i) => ({
+          key: `${r.rider}-${i}`,
+          value: Number(r.orders),
+          label: `#${r.workload_rank} ${r.rider}`,
+        }))}
+        format={num}
+        noun="rider listed"
+      />
+    )
     actions = (
       <>
         <Segmented label="Order" options={SORTS} value={sort} onChange={setSort} />
         <Segmented label="Show" options={TOP_N} value={topN} onChange={setTopN} />
       </>
     )
-    note = `"Busier than" compares each rider's order count with every rider in this selection. ${
+    note = `Each dot above the table is one rider listed; dots inside the shaded band carry within 5% of the median rider's orders, so a tight cluster in the band means the work is shared evenly. Show All for every rider. "Busier than" compares each rider's order count with every rider in this selection. ${
       filters.size_group ? 'The order-size filter does not apply at the rider level. ' : ''
     }Busiest day is the most orders that rider delivered in a single day.`
     legend = [{ swatch: 'bar', label: 'Bar length = orders, relative to the busiest rider listed' }]
@@ -382,6 +428,7 @@ export default function FleetWorkloadReport() {
         footer={!error && !empty && note}
       >
         <ReportStatus loading={loading} error={error} empty={empty} />
+        {!error && !empty && chart && <div className="panel-chart">{chart}</div>}
         {!error && !empty && <DataTable columns={columns} rows={tableRows} {...table} />}
       </Panel>
     </div>
