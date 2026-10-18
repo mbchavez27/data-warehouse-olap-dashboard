@@ -33,7 +33,7 @@ wrong, instead of 74 confusing connection errors.
 |---|---|---|
 | `test_api_contract.py` | 17 | Catalog lists 4 reports / 12 levels with the right columns; aliases; every declared enum value is accepted and a bad one is a 400; 404s; free-text filters with no match give 200 and 0 rows; `city` needs `country`; SQL-looking text is bound as a value. |
 | `test_warehouse_integrity.py` | 20 | `dw_db` against `source_db`: calendar attributes, unknown-member rows, dimension counts and attributes, no orphan keys, unique grain, row/unit/value totals, every order on the right day/rider/customer, line values, the rider-by-day grid, and each `AGG_*` view being an exact rollup of the base facts. |
-| `test_report_correctness.py` | 37 | Every report level against an independent reference (about 115 filter combinations), pinned hand-checked figures, and internal consistency (parts sum to totals, ranks, shares, subtotals). |
+| `test_report_correctness.py` | 37 | Every report level against an independent reference (131 distinct filter combinations, each a live API request), pinned hand-checked figures, and internal consistency (parts sum to totals, ranks, shares, subtotals). |
 | `dwsupport.py` | - | Shared helpers, the preflight, and the reference model. |
 
 Coverage per report level: r1 category, product; r2 cube, pivot, rider;
@@ -84,7 +84,8 @@ The suite must then fail. Evidence is in `evidence/functional-tests/`.
 * The React dashboard UI (rendering, filter widgets, charts). These tests stop at
   the API's JSON.
 * Performance. Timing and the optimization results are in `evidence/benchmark/`.
-* Concurrency, load and API restart behavior. The API container has no restart policy.
+* Concurrency and load. The API container restarts on failure (`restart: unless-stopped`)
+  and stops cleanly on `docker stop` (exit 0). Both were checked by hand, not by these tests.
 * Free-text filter values are not validated by the API (an unknown category,
   country or city returns 200 with 0 rows). The tests pin this as current behavior.
 * The ETL itself is checked through its output (the loaded warehouse), not by

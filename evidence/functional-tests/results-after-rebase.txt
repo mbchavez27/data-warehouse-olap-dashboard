@@ -1,0 +1,84 @@
+# Functional tests after rebase onto origin/main (baa37a3): unittest discover -s olap/tests -v
+date: 2026-10-18T09:39:03Z
+health: {"database":"ok","status":"ok"}
+container stadvdb-mco1-api: running restart-policy=unless-stopped
+
+test_declared_enum_values_match_the_validation (test_api_contract.TestErrorHandling.test_declared_enum_values_match_the_validation) ... ok
+test_every_documented_enum_value_is_accepted (test_api_contract.TestErrorHandling.test_every_documented_enum_value_is_accepted) ... ok
+test_free_text_filters_with_no_match_return_zero_rows (test_api_contract.TestErrorHandling.test_free_text_filters_with_no_match_return_zero_rows) ... ok
+test_invalid_filters_are_400_with_a_message_and_no_columns (test_api_contract.TestErrorHandling.test_invalid_filters_are_400_with_a_message_and_no_columns) ... ok
+test_not_found_for_unknown_route (test_api_contract.TestErrorHandling.test_not_found_for_unknown_route) ... ok
+test_post_is_not_a_report_route (test_api_contract.TestErrorHandling.test_post_is_not_a_report_route) ... ok
+test_sql_looking_text_is_bound_as_a_value (test_api_contract.TestErrorHandling.test_sql_looking_text_is_bound_as_a_value) ... ok
+test_unknown_report_and_level_are_404 (test_api_contract.TestErrorHandling.test_unknown_report_and_level_are_404) ... ok
+test_catalog_lists_four_reports_and_twelve_levels (test_api_contract.TestHealthAndCatalog.test_catalog_lists_four_reports_and_twelve_levels) ... ok
+test_every_level_returns_the_cataloged_columns_in_order (test_api_contract.TestHealthAndCatalog.test_every_level_returns_the_cataloged_columns_in_order) ... ok
+test_health (test_api_contract.TestHealthAndCatalog.test_health) ... ok
+test_level_aliases_return_the_same_rows (test_api_contract.TestHealthAndCatalog.test_level_aliases_return_the_same_rows) ... ok
+test_repeat_calls_are_deterministic (test_api_contract.TestHealthAndCatalog.test_repeat_calls_are_deterministic) ... ok
+test_response_echoes_the_filters_it_applied (test_api_contract.TestHealthAndCatalog.test_response_echoes_the_filters_it_applied) ... ok
+test_cities_for_a_country_match_the_warehouse (test_api_contract.TestMetadataEndpoints.test_cities_for_a_country_match_the_warehouse) ... ok
+test_cities_requires_a_country (test_api_contract.TestMetadataEndpoints.test_cities_requires_a_country) ... ok
+test_dimensions_lists_the_canonical_values (test_api_contract.TestMetadataEndpoints.test_dimensions_lists_the_canonical_values) ... ok
+test_r1_category_parts_sum_to_total (test_report_correctness.TestConsistency.test_r1_category_parts_sum_to_total) ... ok
+test_r1_product_subtotal_covers_all_products (test_report_correctness.TestConsistency.test_r1_product_subtotal_covers_all_products) ... ok
+test_r2_cube_levels_add_up (test_report_correctness.TestConsistency.test_r2_cube_levels_add_up) ... ok
+test_r2_pivot_totals (test_report_correctness.TestConsistency.test_r2_pivot_totals) ... ok
+test_r2_rider_statistics (test_report_correctness.TestConsistency.test_r2_rider_statistics) ... ok
+test_r3_customer_metrics_are_internally_consistent (test_report_correctness.TestConsistency.test_r3_customer_metrics_are_internally_consistent) ... ok
+test_r3_deciles_cover_every_buyer_once (test_report_correctness.TestConsistency.test_r3_deciles_cover_every_buyer_once) ... ok
+test_r3_geography_genders_add_up_to_each_location (test_report_correctness.TestConsistency.test_r3_geography_genders_add_up_to_each_location) ... ok
+test_r4_busiest_days_ranks_and_flags (test_report_correctness.TestConsistency.test_r4_busiest_days_ranks_and_flags) ... ok
+test_r4_rollup_levels_add_up (test_report_correctness.TestConsistency.test_r4_rollup_levels_add_up) ... ok
+test_r4_trend_day_level_matches_busiest_days (test_report_correctness.TestConsistency.test_r4_trend_day_level_matches_busiest_days) ... ok
+test_r4_trend_levels_agree_with_each_other (test_report_correctness.TestConsistency.test_r4_trend_levels_agree_with_each_other) ... ok
+test_r4_weekday_pivot_matches_trend (test_report_correctness.TestConsistency.test_r4_weekday_pivot_matches_trend) ... ok
+test_busiest_and_quietest_days (test_report_correctness.TestPinned.test_busiest_and_quietest_days) ... ok
+test_fedez_fleet (test_report_correctness.TestPinned.test_fedez_fleet) ... ok
+test_filters_narrow_the_totals_to_source_figures (test_report_correctness.TestPinned.test_filters_narrow_the_totals_to_source_figures) ... ok
+test_first_month_is_a_partial_september (test_report_correctness.TestPinned.test_first_month_is_a_partial_september) ... ok
+test_headline_totals_equal_the_source (test_report_correctness.TestPinned.test_headline_totals_equal_the_source) ... ok
+test_orders_by_year (test_report_correctness.TestPinned.test_orders_by_year) ... ok
+test_pinned_values_agree_with_source_db_directly (test_report_correctness.TestPinned.test_pinned_values_agree_with_source_db_directly) ... ok
+test_sudan_is_the_top_country (test_report_correctness.TestPinned.test_sudan_is_the_top_country) ... ok
+test_top_customers (test_report_correctness.TestPinned.test_top_customers) ... ok
+test_toys_is_the_top_category (test_report_correctness.TestPinned.test_toys_is_the_top_category) ... ok
+test_category (test_report_correctness.TestReferenceR1.test_category) ... ok
+test_product (test_report_correctness.TestReferenceR1.test_product) ... ok
+test_product_default_is_top_10_per_category (test_report_correctness.TestReferenceR1.test_product_default_is_top_10_per_category) ... ok
+test_cube (test_report_correctness.TestReferenceR2.test_cube) ... ok
+test_pivot (test_report_correctness.TestReferenceR2.test_pivot) ... ok
+test_rider (test_report_correctness.TestReferenceR2.test_rider) ... ok
+test_rider_least_keeps_the_busiest_first_rank_and_orders_ascending (test_report_correctness.TestReferenceR2.test_rider_least_keeps_the_busiest_first_rank_and_orders_ascending) ... ok
+test_customer (test_report_correctness.TestReferenceR3.test_customer) ... ok
+test_deciles (test_report_correctness.TestReferenceR3.test_deciles) ... ok
+test_geography (test_report_correctness.TestReferenceR3.test_geography) ... ok
+test_busiest_days (test_report_correctness.TestReferenceR4.test_busiest_days) ... ok
+test_rollup (test_report_correctness.TestReferenceR4.test_rollup) ... ok
+test_trend (test_report_correctness.TestReferenceR4.test_trend) ... ok
+test_weekday_pivot (test_report_correctness.TestReferenceR4.test_weekday_pivot) ... ok
+test_categories_vehicles_and_genders_are_canonical (test_warehouse_integrity.TestDimensions.test_categories_vehicles_and_genders_are_canonical) ... ok
+test_customers_and_geography_match_source (test_warehouse_integrity.TestDimensions.test_customers_and_geography_match_source) ... ok
+test_dim_date_is_the_365_day_calendar_with_correct_attributes (test_warehouse_integrity.TestDimensions.test_dim_date_is_the_365_day_calendar_with_correct_attributes) ... ok
+test_dimension_row_counts_match_source (test_warehouse_integrity.TestDimensions.test_dimension_row_counts_match_source) ... ok
+test_order_size_bands (test_warehouse_integrity.TestDimensions.test_order_size_bands) ... ok
+test_riders_match_source_attribute_by_attribute (test_warehouse_integrity.TestDimensions.test_riders_match_source_attribute_by_attribute) ... ok
+test_unknown_member_rows (test_warehouse_integrity.TestDimensions.test_unknown_member_rows) ... ok
+test_delivery_rows_agree_with_their_lines (test_warehouse_integrity.TestFacts.test_delivery_rows_agree_with_their_lines) ... ok
+test_every_source_order_is_in_the_warehouse_on_the_right_day_rider_and_customer (test_warehouse_integrity.TestFacts.test_every_source_order_is_in_the_warehouse_on_the_right_day_rider_and_customer) ... ok
+test_grain_is_unique (test_warehouse_integrity.TestFacts.test_grain_is_unique) ... ok
+test_line_values_are_quantity_times_rounded_list_price (test_warehouse_integrity.TestFacts.test_line_values_are_quantity_times_rounded_list_price) ... ok
+test_no_orphan_or_unknown_keys_in_the_facts (test_warehouse_integrity.TestFacts.test_no_orphan_or_unknown_keys_in_the_facts) ... ok
+test_rider_daily_is_a_complete_rider_by_day_grid (test_warehouse_integrity.TestFacts.test_rider_daily_is_a_complete_rider_by_day_grid) ... ok
+test_row_counts_and_totals_reconcile_with_source (test_warehouse_integrity.TestFacts.test_row_counts_and_totals_reconcile_with_source) ... ok
+test_calendar_range (test_warehouse_integrity.TestReadOnlyGuard.test_calendar_range) ... ok
+test_the_suite_cannot_write (test_warehouse_integrity.TestReadOnlyGuard.test_the_suite_cannot_write) ... ok
+test_category_and_product_views (test_warehouse_integrity.TestSummaryViews.test_category_and_product_views) ... ok
+test_customer_view (test_warehouse_integrity.TestSummaryViews.test_customer_view) ... ok
+test_rider_day_view (test_warehouse_integrity.TestSummaryViews.test_rider_day_view) ... ok
+test_views_are_populated (test_warehouse_integrity.TestSummaryViews.test_views_are_populated) ... ok
+
+----------------------------------------------------------------------
+Ran 74 tests in 89.736s
+
+OK
