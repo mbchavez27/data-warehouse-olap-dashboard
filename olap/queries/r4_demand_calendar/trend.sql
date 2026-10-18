@@ -23,6 +23,7 @@
 --   current and previous 6 periods (a 7-day average at level 'day').
 --   `days` counts calendar days in the period that pass the day filters,
 --   including days with no matching orders.
+-- OPTIMIZED (Strategy C): reads AGG_RIDER_DAY instead of FACT_ORDERDELIVERY; same columns and types.
 
 WITH days AS (
   SELECT d.*
@@ -37,12 +38,12 @@ daily AS (
   SELECT
     dy."dateKey", dy."fullDate", dy."year", dy."quarter", dy."monthNumber",
     dy."monthName", dy."weekOfYear",
-    count(f."orderDeliveryKey") AS orders,
-    coalesce(sum(f."totalQuantity"), 0) AS units
+    coalesce(sum(f.orders), 0)::bigint AS orders,
+    coalesce(sum(f.units), 0)::bigint AS units
   FROM days dy
   LEFT JOIN (
-    SELECT f.*
-    FROM "FACT_ORDERDELIVERY" f
+    SELECT f."deliveryDateKey", f.orders, f.units
+    FROM "AGG_RIDER_DAY" f
     JOIN "DIM_RIDER"     r USING ("riderKey")
     JOIN "DIM_ORDERSIZE" s USING ("orderSizeKey")
     WHERE (:'vehicle'    = '' OR r."vehicleType" = :'vehicle')

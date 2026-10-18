@@ -1,0 +1,49 @@
+      0 [main] sh (33736) child_copy: cygheap read copy failed, 0x0..0x800029AC0, done 0, windows pid 33736, Win32 error 299
+      0 [main] sh 956 dofork: child -1 - forked process 33736 died unexpectedly, retry 0, exit code 0xC0000142, errno 11
+/c/Program Files/Docker/Docker/resources/bin/docker: fork: retry: Resource temporarily unavailable
+== W1 key-0 (Unknown) references per fact FK column
+tbl|datekey0|riderkey0|geokey0|sizekey0|custkey0|rows
+FACT_ORDERDELIVERY|0|0|0|0|0|1000000
+FACT_ORDERITEM|0|0|0|0|0|1999824
+FACT_RIDERDAILY|0|0||||36500
+(3 rows)
+== W1b productKey 0 (DIM_PRODUCT has an Unknown row?)
+productkey0_rows
+0
+(1 row)
+== W2 grain uniqueness in the warehouse
+grain|rows|distinct_keys
+FACT_ORDERDELIVERY (orderNumber)|1000000|1000000
+(1 row)
+grain|rows|distinct_keys
+FACT_ORDERITEM (orderNumber, productKey)|1999824|1999824
+(1 row)
+grain|rows|distinct_keys
+FACT_RIDERDAILY (dateKey, riderKey)|36500|36500
+(1 row)
+== W3 constraints actually present on fact tables (PK/UNIQUE/FK/index)
+tbl|contype|def
+"FACT_ORDERDELIVERY"|c|CHECK (("orderCount" = 1))
+"FACT_ORDERDELIVERY"|f|FOREIGN KEY ("customerKey") REFERENCES "DIM_CUSTOMER"("customerKey")
+"FACT_ORDERDELIVERY"|f|FOREIGN KEY ("deliveryDateKey") REFERENCES "DIM_DATE"("dateKey")
+"FACT_ORDERDELIVERY"|f|FOREIGN KEY ("geoKey") REFERENCES "DIM_GEOGRAPHY"("geoKey")
+"FACT_ORDERDELIVERY"|f|FOREIGN KEY ("orderSizeKey") REFERENCES "DIM_ORDERSIZE"("orderSizeKey")
+"FACT_ORDERDELIVERY"|f|FOREIGN KEY ("riderKey") REFERENCES "DIM_RIDER"("riderKey")
+"FACT_ORDERDELIVERY"|p|PRIMARY KEY ("orderDeliveryKey")
+"FACT_ORDERITEM"|f|FOREIGN KEY ("customerKey") REFERENCES "DIM_CUSTOMER"("customerKey")
+"FACT_ORDERITEM"|f|FOREIGN KEY ("deliveryDateKey") REFERENCES "DIM_DATE"("dateKey")
+"FACT_ORDERITEM"|f|FOREIGN KEY ("geoKey") REFERENCES "DIM_GEOGRAPHY"("geoKey")
+"FACT_ORDERITEM"|f|FOREIGN KEY ("orderSizeKey") REFERENCES "DIM_ORDERSIZE"("orderSizeKey")
+"FACT_ORDERITEM"|f|FOREIGN KEY ("productKey") REFERENCES "DIM_PRODUCT"("productKey")
+"FACT_ORDERITEM"|f|FOREIGN KEY ("riderKey") REFERENCES "DIM_RIDER"("riderKey")
+"FACT_ORDERITEM"|p|PRIMARY KEY ("orderItemKey")
+"FACT_RIDERDAILY"|c|CHECK (("isActiveDay" = ANY (ARRAY[0, 1])))
+"FACT_RIDERDAILY"|f|FOREIGN KEY ("dateKey") REFERENCES "DIM_DATE"("dateKey")
+"FACT_RIDERDAILY"|f|FOREIGN KEY ("riderKey") REFERENCES "DIM_RIDER"("riderKey")
+"FACT_RIDERDAILY"|p|PRIMARY KEY ("riderDailyKey")
+(18 rows)
+tablename|indexname
+FACT_ORDERDELIVERY|FACT_ORDERDELIVERY_pkey
+FACT_ORDERITEM|FACT_ORDERITEM_pkey
+FACT_RIDERDAILY|FACT_RIDERDAILY_pkey
+(3 rows)

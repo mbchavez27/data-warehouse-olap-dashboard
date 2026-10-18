@@ -1,0 +1,62 @@
+-- R4-trend-month under force_generic_plan
+-- file: olap/queries/r4_demand_calendar/trend.sql
+-- params: {"level": "month"}
+
+WindowAgg  (cost=16912.83..16912.92 rows=1 width=204) (actual time=50986.333..50988.970 rows=13 loops=1)
+  Buffers: shared hit=3827398
+  ->  WindowAgg  (cost=16912.83..16912.86 rows=1 width=140) (actual time=50986.315..50988.906 rows=13 loops=1)
+        Buffers: shared hit=3827398
+        ->  Sort  (cost=16912.83..16912.83 rows=1 width=108) (actual time=50986.279..50988.835 rows=13 loops=1)
+              Sort Key: periods.period_start
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=3827398
+              ->  Subquery Scan on periods  (cost=16912.68..16912.82 rows=1 width=108) (actual time=50986.206..50988.815 rows=13 loops=1)
+                    Buffers: shared hit=3827398
+                    ->  GroupAggregate  (cost=16912.68..16912.81 rows=1 width=120) (actual time=50986.205..50988.810 rows=13 loops=1)
+                          Group Key: d.year, (CASE WHEN ($2 = ANY ('{quarter,month,week,day}'::text[])) THEN d.quarter ELSE NULL::smallint END), (CASE WHEN ($2 = ANY ('{"",month,day}'::text[])) THEN d."monthNumber" ELSE NULL::smallint END), (CASE WHEN ($2 = 'week'::text) THEN d."weekOfYear" ELSE NULL::smallint END), (CASE WHEN ($2 = 'day'::text) THEN d."fullDate" ELSE NULL::date END), (CASE $2 WHEN 'year'::text THEN (d.year)::text WHEN 'quarter'::text THEN (((d.year)::text || ' Q'::text) || (d.quarter)::text) WHEN 'week'::text THEN (((d.year)::text || ' W'::text) || lpad((d."weekOfYear")::text, 2, '0'::text)) WHEN 'day'::text THEN to_char((d."fullDate")::timestamp with time zone, 'YYYY-MM-DD'::text) ELSE (((d.year)::text || ' '::text) || TRIM(BOTH FROM d."monthName")) END)
+                          Buffers: shared hit=3827398
+                          ->  Sort  (cost=16912.68..16912.69 rows=1 width=64) (actual time=50986.191..50988.753 rows=365 loops=1)
+                                Sort Key: d.year, (CASE WHEN ($2 = ANY ('{quarter,month,week,day}'::text[])) THEN d.quarter ELSE NULL::smallint END), (CASE WHEN ($2 = ANY ('{"",month,day}'::text[])) THEN d."monthNumber" ELSE NULL::smallint END), (CASE WHEN ($2 = 'week'::text) THEN d."weekOfYear" ELSE NULL::smallint END), (CASE WHEN ($2 = 'day'::text) THEN d."fullDate" ELSE NULL::date END), (CASE $2 WHEN 'year'::text THEN (d.year)::text WHEN 'quarter'::text THEN (((d.year)::text || ' Q'::text) || (d.quarter)::text) WHEN 'week'::text THEN (((d.year)::text || ' W'::text) || lpad((d."weekOfYear")::text, 2, '0'::text)) WHEN 'day'::text THEN to_char((d."fullDate")::timestamp with time zone, 'YYYY-MM-DD'::text) ELSE (((d.year)::text || ' '::text) || TRIM(BOTH FROM d."monthName")) END)
+                                Sort Method: quicksort  Memory: 50kB
+                                Buffers: shared hit=3827398
+                                ->  Result  (cost=1022.71..16912.67 rows=1 width=64) (actual time=145.389..50987.956 rows=365 loops=1)
+                                      One-Time Filter: ($2 = ANY ('{"",year,quarter,month,week,day}'::text[]))
+                                      Buffers: shared hit=3827398
+                                      ->  GroupAggregate  (cost=1022.70..16912.58 rows=1 width=39) (actual time=145.377..50985.193 rows=365 loops=1)
+                                            Group Key: d."dateKey"
+                                            Buffers: shared hit=3827398
+                                            ->  Nested Loop Left Join  (cost=1022.70..16912.52 rows=6 width=35) (actual time=0.696..50867.372 rows=1000000 loops=1)
+                                                  Join Filter: (f."deliveryDateKey" = d."dateKey")
+                                                  Rows Removed by Join Filter: 364000000
+                                                  Buffers: shared hit=3827398
+                                                  ->  Index Scan using "DIM_DATE_pkey" on "DIM_DATE" d  (cost=0.15..39.79 rows=1 width=23) (actual time=0.009..2.787 rows=365 loops=1)
+                                                        Filter: ((($1 = ''::text) OR ("isWeekend" = ($1 = 'weekend'::text))) AND (($4 = ''::text) OR ("isPayDay" = ($4 = 'yes'::text))) AND (($8 = ''::text) OR (year = (NULLIF($8, ''::text))::integer)) AND (($5 = ''::text) OR (quarter = (NULLIF($5, ''::text))::integer)) AND (($3 = ''::text) OR ("monthNumber" = (NULLIF($3, ''::text))::integer)))
+                                                        Buffers: shared hit=5
+                                                  ->  Gather  (cost=1022.55..16845.85 rows=2151 width=16) (actual time=2.638..99.774 rows=1000000 loops=365)
+                                                        Workers Planned: 2
+                                                        Workers Launched: 2
+                                                        Buffers: shared hit=3827393
+                                                        ->  Hash Join  (cost=22.55..15630.75 rows=896 width=16) (actual time=0.260..81.562 rows=333333 loops=1095)
+                                                              Hash Cond: (f."riderKey" = r."riderKey")
+                                                              Buffers: shared hit=3827393
+                                                              ->  Hash Join  (cost=18.77..15615.18 rows=4310 width=20) (actual time=0.025..52.779 rows=333333 loops=1095)
+                                                                    Hash Cond: (f."orderSizeKey" = s."orderSizeKey")
+                                                                    Buffers: shared hit=3770451
+                                                                    ->  Parallel Seq Scan on "FACT_ORDERDELIVERY" f  (cost=0.00..14494.67 rows=416667 width=24) (actual time=0.006..15.040 rows=333333 loops=1095)
+                                                                          Buffers: shared hit=3769720
+                                                                    ->  Hash  (cost=18.70..18.70 rows=6 width=4) (actual time=0.010..0.011 rows=5 loops=731)
+                                                                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                          Buffers: shared hit=731
+                                                                          ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..18.70 rows=6 width=4) (actual time=0.005..0.006 rows=5 loops=731)
+                                                                                Filter: (($6 = ''::text) OR (("sizeGroup")::text = $6))
+                                                                                Buffers: shared hit=731
+                                                              ->  Hash  (cost=3.51..3.51 rows=21 width=4) (actual time=0.035..0.035 rows=101 loops=731)
+                                                                    Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                                                                    Buffers: shared hit=1462
+                                                                    ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.51 rows=21 width=4) (actual time=0.011..0.022 rows=101 loops=731)
+                                                                          Filter: (($7 = ''::text) OR (("vehicleType")::text = $7))
+                                                                          Buffers: shared hit=1462
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.738 ms
+Execution Time: 50989.203 ms

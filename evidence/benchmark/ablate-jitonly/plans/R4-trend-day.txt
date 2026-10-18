@@ -1,0 +1,57 @@
+-- R4-trend-day: Daily trend, full year
+-- file: olap/queries/r4_demand_calendar/trend.sql
+-- params: {"level": "day"}
+
+WindowAgg  (cost=5201.96..5219.46 rows=200 width=204) (actual time=57.865..58.473 rows=365 loops=1)
+  Buffers: shared hit=1095
+  ->  WindowAgg  (cost=5201.96..5207.46 rows=200 width=140) (actual time=57.853..57.989 rows=365 loops=1)
+        Buffers: shared hit=1095
+        ->  Sort  (cost=5201.96..5202.46 rows=200 width=108) (actual time=57.837..57.851 rows=365 loops=1)
+              Sort Key: periods.period_start
+              Sort Method: quicksort  Memory: 47kB
+              Buffers: shared hit=1095
+              ->  Subquery Scan on periods  (cost=5179.19..5194.32 rows=200 width=108) (actual time=57.614..57.778 rows=365 loops=1)
+                    Buffers: shared hit=1095
+                    ->  GroupAggregate  (cost=5179.19..5192.32 rows=200 width=120) (actual time=57.613..57.759 rows=365 loops=1)
+                          Group Key: daily.year, daily.quarter, daily."monthNumber", daily."fullDate", (to_char((daily."fullDate")::timestamp with time zone, 'YYYY-MM-DD'::text))
+                          Buffers: shared hit=1095
+                          ->  Sort  (cost=5179.19..5180.10 rows=365 width=58) (actual time=57.607..57.621 rows=365 loops=1)
+                                Sort Key: daily.year, daily.quarter, daily."monthNumber", daily."fullDate", (to_char((daily."fullDate")::timestamp with time zone, 'YYYY-MM-DD'::text))
+                                Sort Method: quicksort  Memory: 47kB
+                                Buffers: shared hit=1095
+                                ->  Subquery Scan on daily  (cost=5150.88..5163.66 rows=365 width=58) (actual time=57.193..57.368 rows=365 loops=1)
+                                      Buffers: shared hit=1095
+                                      ->  HashAggregate  (cost=5150.88..5158.18 rows=365 width=39) (actual time=57.185..57.263 rows=365 loops=1)
+                                            Group Key: d."dateKey"
+                                            Batches: 1  Memory Usage: 157kB
+                                            Buffers: shared hit=1095
+                                            ->  Hash Right Join  (cost=17.60..4057.19 rows=145825 width=39) (actual time=0.112..43.774 rows=145825 loops=1)
+                                                  Hash Cond: (f."deliveryDateKey" = d."dateKey")
+                                                  Buffers: shared hit=1095
+                                                  ->  Hash Join  (cost=5.38..3657.74 rows=145825 width=20) (actual time=0.038..30.490 rows=145825 loops=1)
+                                                        Hash Cond: (f."orderSizeKey" = s."orderSizeKey")
+                                                        Buffers: shared hit=1091
+                                                        ->  Hash Join  (cost=4.27..2949.38 rows=145825 width=24) (actual time=0.028..18.150 rows=145825 loops=1)
+                                                              Hash Cond: (f."riderKey" = r."riderKey")
+                                                              Buffers: shared hit=1090
+                                                              ->  Seq Scan on "AGG_RIDER_DAY" f  (cost=0.00..2546.25 rows=145825 width=28) (actual time=0.002..5.145 rows=145825 loops=1)
+                                                                    Buffers: shared hit=1088
+                                                              ->  Hash  (cost=3.01..3.01 rows=101 width=4) (actual time=0.019..0.020 rows=101 loops=1)
+                                                                    Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                                                                    Buffers: shared hit=2
+                                                                    ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.01 rows=101 width=4) (actual time=0.001..0.011 rows=101 loops=1)
+                                                                          Buffers: shared hit=2
+                                                        ->  Hash  (cost=1.05..1.05 rows=5 width=4) (actual time=0.004..0.005 rows=5 loops=1)
+                                                              Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                              Buffers: shared hit=1
+                                                              ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..1.05 rows=5 width=4) (actual time=0.001..0.001 rows=5 loops=1)
+                                                                    Buffers: shared hit=1
+                                                  ->  Hash  (cost=7.65..7.65 rows=365 width=23) (actual time=0.068..0.068 rows=365 loops=1)
+                                                        Buckets: 1024  Batches: 1  Memory Usage: 28kB
+                                                        Buffers: shared hit=4
+                                                        ->  Seq Scan on "DIM_DATE" d  (cost=0.00..7.65 rows=365 width=23) (actual time=0.004..0.028 rows=365 loops=1)
+                                                              Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=15
+Planning Time: 0.545 ms
+Execution Time: 58.650 ms

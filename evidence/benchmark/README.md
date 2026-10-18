@@ -12,6 +12,21 @@ uv run --project etl python olap/benchmark/run_benchmark.py --label baseline-gen
 |---|---|
 | `baseline/` | **The "before" for Step 6.** 18 cases, 1 warm-up + 5 measured runs each, custom plans. |
 | `baseline-generic-plan/` | Same cases under `force_generic_plan` (3 runs): shows the slowdown a reused prepared statement causes. |
+| `baseline-r2/`, `baseline-r2-check/` | Phase 2 repeats of the baseline (9 runs): same state, used to measure run-to-run noise (18/18 md5 equal). |
+| `baseline-r3/` | First run of the Phase 2 session; cold cache, inflated on R1 cases. Not used as the reference. |
+| `baseline-r4/` | **Phase 2 reference**: warm, no secondary indexes, default settings, original queries (9 runs). |
+| `preagg/`, `config/`, `indexes/` | Each Phase 2 strategy measured alone (see `evidence/optimization-log.md`). |
+| `optimized/` | All three strategies together; only R3 and R4-busiest-days rewritten. |
+| `optimized-v2/` | Same, with R2 and the remaining R4 queries also rewritten onto `AGG_RIDER_DAY`. 4.90x overall. |
+| `optimized-v3/` | **Final state**: all 18 cases rewritten (R1 on `AGG_CATEGORY_PERIOD` / `AGG_PRODUCT_PERIOD`), indexes, `jit=off`, `work_mem=64MB`. Sum of medians 2,066 ms vs 20,625 ms, about 10x. |
+| `optimized-v3-defaultcfg/` | Final queries and views with default settings (`jit` on, `work_mem` 4 MB): 4,308 ms. Shows what the config contributes. |
+| `ablate-jitonly/`, `ablate-workmemonly/`, `ablate-both-recheck/` | Final state with one or both config settings (4,092 / 2,493 / 2,578 ms). `work_mem` carries the effect. `-both-recheck` is a later re-run of the final config and shows 25% session drift. |
+| `iso-default/`, `iso-jit-off-only/`, `iso-workmem-only/`, `iso-both/` | R3-customer-top20 with the **original** query, five indexes present, one config setting at a time. Isolates the config regression. |
+| `original-queries/` | Snapshot of the unoptimized `olap/queries/` (git `HEAD` before the Phase 2 copy). The "before" SQL; `check_equivalence.py` compares it with the live `olap/queries/`. Re-run the baseline with `run_benchmark.py --queries-dir evidence/benchmark/original-queries`. |
+| `noidx-default/`, `noidx-jit-off-only/`, `noidx-workmem-only/`, `noidx-both/` | Same, with the indexes dropped: indexes do not change the regression. |
+
+Phase 2 comparison: `uv run --project etl python olap/benchmark/compare_runs.py baseline-r4 preagg config indexes optimized optimized-v2 optimized-v3`
+Rewrite equivalence check: `uv run --project etl python olap/benchmark/check_equivalence.py`
 
 Each folder holds `results.json` (environment + every run), `results.csv` (one row
 per case, for tables and charts) and `plans/<case>.txt` (`EXPLAIN (ANALYZE, BUFFERS)`).

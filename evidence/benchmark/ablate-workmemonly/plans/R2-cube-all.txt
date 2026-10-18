@@ -1,0 +1,53 @@
+-- R2-cube-all: Courier x vehicle CUBE, no filters
+-- file: olap/queries/r2_fleet_courier_workload/courier_vehicle_cube.sql
+-- params: {}
+
+Sort  (cost=33084.16..33084.21 rows=20 width=156) (actual time=148.889..148.894 rows=20 loops=1)
+  Sort Key: cubed.grouping_level, cubed.courier, cubed.vehicle
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=1095
+  ->  WindowAgg  (cost=16564.52..33083.73 rows=20 width=156) (actual time=148.865..148.881 rows=20 loops=1)
+        Buffers: shared hit=1095
+        ->  Subquery Scan on cubed  (cost=16564.52..33082.88 rows=20 width=92) (actual time=81.892..148.822 rows=20 loops=1)
+              Buffers: shared hit=1095
+              ->  GroupAggregate  (cost=16564.52..33082.68 rows=20 width=105) (actual time=81.890..148.807 rows=20 loops=1)
+                    Group Key: r."courierName", r."vehicleType"
+                    Group Key: r."courierName"
+                    Group Key: ()
+                    Sort Key: r."vehicleType"
+                      Group Key: r."vehicleType"
+                    Buffers: shared hit=1095
+                    ->  Sort  (cost=16564.52..16929.08 rows=145825 width=33) (actual time=78.141..87.251 rows=145825 loops=1)
+                          Sort Key: r."courierName", r."vehicleType"
+                          Sort Method: quicksort  Memory: 15361kB
+                          Buffers: shared hit=1095
+                          ->  Hash Join  (cost=17.60..4057.19 rows=145825 width=33) (actual time=0.105..45.526 rows=145825 loops=1)
+                                Hash Cond: (f."orderSizeKey" = s."orderSizeKey")
+                                Buffers: shared hit=1095
+                                ->  Hash Join  (cost=16.48..3348.83 rows=145825 width=37) (actual time=0.086..33.780 rows=145825 loops=1)
+                                      Hash Cond: (f."deliveryDateKey" = d."dateKey")
+                                      Buffers: shared hit=1094
+                                      ->  Hash Join  (cost=4.27..2949.38 rows=145825 width=41) (actual time=0.033..20.930 rows=145825 loops=1)
+                                            Hash Cond: (f."riderKey" = r."riderKey")
+                                            Buffers: shared hit=1090
+                                            ->  Seq Scan on "AGG_RIDER_DAY" f  (cost=0.00..2546.25 rows=145825 width=28) (actual time=0.002..5.136 rows=145825 loops=1)
+                                                  Buffers: shared hit=1088
+                                            ->  Hash  (cost=3.01..3.01 rows=101 width=17) (actual time=0.024..0.024 rows=101 loops=1)
+                                                  Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                                                  Buffers: shared hit=2
+                                                  ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.01 rows=101 width=17) (actual time=0.002..0.009 rows=101 loops=1)
+                                                        Buffers: shared hit=2
+                                      ->  Hash  (cost=7.65..7.65 rows=365 width=4) (actual time=0.046..0.047 rows=365 loops=1)
+                                            Buckets: 1024  Batches: 1  Memory Usage: 21kB
+                                            Buffers: shared hit=4
+                                            ->  Seq Scan on "DIM_DATE" d  (cost=0.00..7.65 rows=365 width=4) (actual time=0.002..0.019 rows=365 loops=1)
+                                                  Buffers: shared hit=4
+                                ->  Hash  (cost=1.05..1.05 rows=5 width=4) (actual time=0.009..0.009 rows=5 loops=1)
+                                      Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                      Buffers: shared hit=1
+                                      ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..1.05 rows=5 width=4) (actual time=0.004..0.004 rows=5 loops=1)
+                                            Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.372 ms
+Execution Time: 150.096 ms

@@ -19,10 +19,11 @@
 --   grouping_level: 0 = courier x vehicle cell, 1 = courier subtotal,
 --                   2 = vehicle subtotal, 3 = grand total
 --   Subtotal rows read 'All couriers' / 'All vehicles'.
+-- OPTIMIZED (Strategy C): reads AGG_RIDER_DAY instead of FACT_ORDERDELIVERY; same columns and types.
 
 WITH orders AS (
-  SELECT r."riderKey", r."courierName", r."vehicleType", f."totalQuantity"
-  FROM "FACT_ORDERDELIVERY" f
+  SELECT r."riderKey", r."courierName", r."vehicleType", f.orders AS n_orders, f.units AS n_units
+  FROM "AGG_RIDER_DAY" f
   JOIN "DIM_RIDER"     r USING ("riderKey")
   JOIN "DIM_DATE"      d ON d."dateKey" = f."deliveryDateKey"
   JOIN "DIM_ORDERSIZE" s USING ("orderSizeKey")
@@ -38,8 +39,8 @@ cubed AS (
   SELECT
     CASE WHEN GROUPING("courierName") = 1 THEN 'All couriers' ELSE "courierName" END AS courier,
     CASE WHEN GROUPING("vehicleType") = 1 THEN 'All vehicles' ELSE "vehicleType" END AS vehicle,
-    count(*) AS orders,
-    sum("totalQuantity") AS units,
+    coalesce(sum(n_orders), 0)::bigint AS orders,
+    sum(n_units)::bigint AS units,
     count(DISTINCT "riderKey") AS riders,
     GROUPING("courierName", "vehicleType") AS grouping_level
   FROM orders

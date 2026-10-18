@@ -1,0 +1,50 @@
+-- R3-customer-top20: Top 20 customers
+-- file: olap/queries/r3_customer_value_distribution/customer.sql
+-- params: {"top_n": "20"}
+
+Limit  (cost=224779.85..224779.90 rows=20 width=159) (actual time=855.458..855.466 rows=20 loops=1)
+  Buffers: shared hit=5258, temp read=14135 written=11463
+  ->  Sort  (cost=224779.85..225737.41 rows=383024 width=159) (actual time=855.457..855.464 rows=20 loops=1)
+        Sort Key: (rank() OVER (?))
+        Sort Method: top-N heapsort  Memory: 30kB
+        Buffers: shared hit=5258, temp read=14135 written=11463
+        ->  WindowAgg  (cost=201181.88..214587.72 rows=383024 width=159) (actual time=737.055..831.245 rows=99996 loops=1)
+              Buffers: shared hit=5258, temp read=14135 written=11463
+              ->  Sort  (cost=201181.88..202139.44 rows=383024 width=95) (actual time=713.938..727.354 rows=99996 loops=1)
+                    Sort Key: customer_value.value
+                    Sort Method: external merge  Disk: 8600kB
+                    Buffers: shared hit=5258, temp read=9621 written=10343
+                    ->  WindowAgg  (cost=138363.02..146023.50 rows=383024 width=95) (actual time=631.452..678.847 rows=99996 loops=1)
+                          Buffers: shared hit=5258, temp read=8546 written=9265
+                          ->  Sort  (cost=138363.02..139320.58 rows=383024 width=83) (actual time=600.781..620.664 rows=99996 loops=1)
+                                Sort Key: customer_value.value DESC
+                                Sort Method: external merge  Disk: 7416kB
+                                Buffers: shared hit=5258, temp read=4618 written=8292
+                                ->  Subquery Scan on customer_value  (cost=63836.33..84513.65 rows=383024 width=83) (actual time=374.336..555.950 rows=99996 loops=1)
+                                      Buffers: shared hit=5258, temp read=3691 written=7363
+                                      ->  HashAggregate  (cost=63836.33..80683.41 rows=383024 width=87) (actual time=374.335..549.548 rows=99996 loops=1)
+                                            Group Key: i."customerKey", c.username, c.gender, g.country, g.city
+                                            Planned Partitions: 32  Batches: 33  Memory Usage: 8337kB  Disk Usage: 30672kB
+                                            Buffers: shared hit=5258, temp read=3691 written=7363
+                                            ->  Hash Join  (cost=6174.05..15599.25 rows=383024 width=63) (actual time=35.489..203.866 rows=383024 loops=1)
+                                                  Hash Cond: (i."geoKey" = g."geoKey")
+                                                  Buffers: shared hit=5258
+                                                  ->  Hash Join  (cost=3085.02..11504.74 rows=383024 width=44) (actual time=16.401..109.682 rows=383024 loops=1)
+                                                        Hash Cond: (i."customerKey" = c."customerKey")
+                                                        Buffers: shared hit=4419
+                                                        ->  Seq Scan on "AGG_CUSTOMER_PERIOD" i  (cost=0.00..7414.24 rows=383024 width=32) (actual time=0.006..18.438 rows=383024 loops=1)
+                                                              Buffers: shared hit=3584
+                                                        ->  Hash  (cost=1835.01..1835.01 rows=100001 width=16) (actual time=16.044..16.045 rows=100001 loops=1)
+                                                              Buckets: 131072  Batches: 1  Memory Usage: 6103kB
+                                                              Buffers: shared hit=835
+                                                              ->  Seq Scan on "DIM_CUSTOMER" c  (cost=0.00..1835.01 rows=100001 width=16) (actual time=0.006..5.577 rows=100001 loops=1)
+                                                                    Buffers: shared hit=835
+                                                  ->  Hash  (cost=1839.01..1839.01 rows=100001 width=27) (actual time=18.797..18.797 rows=100001 loops=1)
+                                                        Buckets: 131072  Batches: 1  Memory Usage: 7050kB
+                                                        Buffers: shared hit=839
+                                                        ->  Seq Scan on "DIM_GEOGRAPHY" g  (cost=0.00..1839.01 rows=100001 width=27) (actual time=0.007..5.031 rows=100001 loops=1)
+                                                              Buffers: shared hit=839
+Planning:
+  Buffers: shared hit=18
+Planning Time: 0.351 ms
+Execution Time: 861.200 ms

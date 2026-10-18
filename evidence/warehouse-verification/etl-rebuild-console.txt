@@ -1,0 +1,86 @@
+ Container stadvdb-mco1-source-db  Recreate
+ Container stadvdb-mco1-dw-db  Recreate
+ Container stadvdb-mco1-dw-db  Recreated
+ Container stadvdb-mco1-source-db  Recreated
+ Container stadvdb-mco1-source-db  Starting
+ Container stadvdb-mco1-dw-db  Starting
+ Container stadvdb-mco1-dw-db  Started
+ Container stadvdb-mco1-source-db  Started
+ Container stadvdb-mco1-dw-db  Waiting
+ Container stadvdb-mco1-source-db  Waiting
+ Container stadvdb-mco1-source-db  Healthy
+ Container stadvdb-mco1-dw-db  Healthy
+rebuilding the warehouse schema: db/scripts/setup_dw.sh --schema-only
+warning: --schema-only replaces the warehouse schema (facts will be EMPTY).
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 5
+INSERT 0 1
+INSERT 0 1
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+warning: `VIRTUAL_ENV=etl\.venv` does not match the project environment path `db\.venv` and will be ignored; use `--active` to target the active environment instead
+Using CPython 3.13.5
+Creating virtual environment at: db\.venv
+Installed 6 packages in 221ms
+{
+  "tableCount": 9,
+  "columnCounts": {
+    "DIM_CUSTOMER": 6,
+    "DIM_DATE": 11,
+    "DIM_GEOGRAPHY": 4,
+    "DIM_ORDERSIZE": 5,
+    "DIM_PRODUCT": 6,
+    "DIM_RIDER": 9,
+    "FACT_ORDERDELIVERY": 10,
+    "FACT_ORDERITEM": 10,
+    "FACT_RIDERDAILY": 7
+  },
+  "primaryKeyCount": 9,
+  "foreignKeyCount": 13,
+  "unknownRows": 5,
+  "orderSizeBands": 5,
+  "factRows": 0,
+  "dimDateRows": 0,
+  "structurallyReady": true,
+  "passed": true
+}
+warehouse structurally ready; facts empty (pre-load)
+loaded DIM_DATE: 365 rows (2024-09-24 through 2025-09-23); DIM_ORDERSIZE seeds:5
+DIM_RIDER: 100 rows from source (inserted 100, updated 0, unchanged 0); table now 100 + Unknown; 0.017s
+DIM_GEOGRAPHY: 100,000 rows from source (inserted 100,000, updated 0, unchanged 0); table now 100,000 + Unknown; 3.518s
+DIM_CUSTOMER: 100,000 rows from source (inserted 100,000, updated 0, unchanged 0); table now 100,000 + Unknown; 2.384s
+DIM_PRODUCT: 10,000 rows from source (inserted 10,000, updated 0, unchanged 0); table now 10,000 + Unknown; 0.282s
+rejects: 0 (evidence/etl-rejects.json)
+FACT_ORDERDELIVERY: 1,000,000 rows; 5.278s
+FACT_ORDERITEM: 1,999,824 rows; 7.993s
+FACT_RIDERDAILY: 36,500 rows; 0.249s
+idle rider-days: 0; consistency checks passed: 5/5
+rejects: 0 (evidence/etl-rejects.json)
+reconciliation passed: 15/15 checks
+preflight passed: source holds 3,109,927 rows with exact counts; warehouse structurally ready; 3,036,324 fact rows loaded
+
+real	0m51.176s
+user	0m0.000s
+sys	0m0.015s

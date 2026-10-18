@@ -1,0 +1,9 @@
+      relname       |       indexrelname       | idx_scan 
+--------------------+--------------------------+----------
+ FACT_ORDERITEM     | ix_item_geo              |     4664
+ FACT_ORDERDELIVERY | ix_delivery_deliverydate |     4191
+ FACT_ORDERITEM     | ix_item_deliverydate     |      198
+ FACT_ORDERITEM     | ix_item_customer         |      110
+ FACT_ORDERITEM     | ix_item_product          |       88
+(5 rows)
+

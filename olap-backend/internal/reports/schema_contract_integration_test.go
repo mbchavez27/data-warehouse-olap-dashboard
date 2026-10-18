@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -64,6 +65,14 @@ func TestQueriesMatchCatalogAgainstSchema(t *testing.T) {
 	// query below resolves against it.
 	exec(`SET search_path TO ` + testSchema)
 	exec(string(ddl))
+	// The reports read the AGG_* views that 03_preagg.sql builds, so the schema
+	// needs them too. The views are empty here; planning only needs their names
+	// and columns.
+	preagg, err := os.ReadFile(repoFile(t, filepath.Join("db", "dw", "optimize", "03_preagg.sql")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	exec(stripPsqlMetaCommands(string(preagg)))
 
 	statements, err := LoadStatements(repoFile(t, filepath.Join("olap", "queries")))
 	if err != nil {
@@ -97,6 +106,18 @@ func TestQueriesMatchCatalogAgainstSchema(t *testing.T) {
 			})
 		}
 	}
+}
+
+// stripPsqlMetaCommands drops psql backslash commands (such as \timing on).
+// The server cannot run them, and the SQL files are written for psql.
+func stripPsqlMetaCommands(sql string) string {
+	var kept []string
+	for _, line := range strings.Split(sql, "\n") {
+		if !strings.HasPrefix(strings.TrimSpace(line), `\`) {
+			kept = append(kept, line)
+		}
+	}
+	return strings.Join(kept, "\n")
 }
 
 // repoFile walks up from the test's directory to the path inside the

@@ -20,15 +20,17 @@
 --   demand_rank: 1 = most orders. vs_average_pct compares the day with the
 --   average day in the selected slice.
 
+-- OPTIMIZED VARIANT: reads AGG_RIDER_DAY (db/dw/optimize/03_preagg.sql)
+-- instead of FACT_ORDERDELIVERY. Same columns, types and rows as the original.
 WITH daily AS (
   SELECT d."fullDate", trim(d."dayName") AS day_name, d."isWeekend", d."isPayDay",
-         count(f."orderDeliveryKey") AS orders,
-         coalesce(sum(f."totalQuantity"), 0) AS units,
+         coalesce(sum(f.orders), 0)::bigint AS orders,
+         coalesce(sum(f.units), 0)::bigint AS units,
          count(DISTINCT f."riderKey") AS active_riders
   FROM "DIM_DATE" d
   LEFT JOIN (
-    SELECT f.*
-    FROM "FACT_ORDERDELIVERY" f
+    SELECT f."deliveryDateKey", f."riderKey", f.orders, f.units
+    FROM "AGG_RIDER_DAY" f
     JOIN "DIM_RIDER"     r USING ("riderKey")
     JOIN "DIM_ORDERSIZE" s USING ("orderSizeKey")
     WHERE (:'vehicle'    = '' OR r."vehicleType" = :'vehicle')

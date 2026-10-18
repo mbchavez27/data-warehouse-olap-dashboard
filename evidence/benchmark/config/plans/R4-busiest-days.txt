@@ -1,0 +1,60 @@
+-- R4-busiest-days: Top 10 busiest days
+-- file: olap/queries/r4_demand_calendar/busiest_days.sql
+-- params: {"top_n": "10"}
+
+Limit  (cost=150354.18..150355.05 rows=10 width=150) (actual time=1363.576..1363.581 rows=10 loops=1)
+  Buffers: shared hit=1735 read=8600, temp read=5138 written=5139
+  ->  Incremental Sort  (cost=150354.18..150480.79 rows=1460 width=150) (actual time=1363.575..1363.579 rows=10 loops=1)
+        Sort Key: ranked.orders DESC, ranked.date
+        Presorted Key: ranked.orders
+        Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+        Buffers: shared hit=1735 read=8600, temp read=5138 written=5139
+        ->  Subquery Scan on ranked  (cost=150353.66..150437.61 rows=1460 width=150) (actual time=1363.558..1363.569 rows=11 loops=1)
+              Buffers: shared hit=1735 read=8600, temp read=5138 written=5139
+              ->  WindowAgg  (cost=150353.66..150437.61 rows=1460 width=134) (actual time=1363.557..1363.567 rows=11 loops=1)
+                    Buffers: shared hit=1735 read=8600, temp read=5138 written=5139
+                    ->  WindowAgg  (cost=150353.66..150379.21 rows=1460 width=70) (actual time=1363.412..1363.503 rows=365 loops=1)
+                          Buffers: shared hit=1735 read=8600, temp read=5138 written=5139
+                          ->  Sort  (cost=150353.66..150357.31 rows=1460 width=62) (actual time=1363.395..1363.410 rows=365 loops=1)
+                                Sort Key: daily.orders DESC
+                                Sort Method: quicksort  Memory: 47kB
+                                Buffers: shared hit=1735 read=8600, temp read=5138 written=5139
+                                ->  Subquery Scan on daily  (cost=130244.07..150276.92 rows=1460 width=62) (actual time=1146.383..1363.156 rows=365 loops=1)
+                                      Buffers: shared hit=1735 read=8600, temp read=5138 written=5139
+                                      ->  GroupAggregate  (cost=130244.07..150262.32 rows=1460 width=70) (actual time=1146.382..1363.090 rows=365 loops=1)
+                                            Group Key: d."fullDate", d."dayName", d."isWeekend", d."isPayDay"
+                                            Buffers: shared hit=1735 read=8600, temp read=5138 written=5139
+                                            ->  Sort  (cost=130244.07..132744.07 rows=1000000 width=30) (actual time=1145.606..1277.508 rows=1000000 loops=1)
+                                                  Sort Key: d."fullDate", d."dayName", d."isWeekend", d."isPayDay", f."riderKey"
+                                                  Sort Method: external merge  Disk: 41104kB
+                                                  Buffers: shared hit=1735 read=8600, temp read=5138 written=5139
+                                                  ->  Hash Right Join  (cost=17.60..30586.23 rows=1000000 width=30) (actual time=0.149..304.268 rows=1000000 loops=1)
+                                                        Hash Cond: (f."deliveryDateKey" = d."dateKey")
+                                                        Buffers: shared hit=1735 read=8600
+                                                        ->  Hash Join  (cost=5.38..27918.53 rows=1000000 width=20) (actual time=0.080..216.603 rows=1000000 loops=1)
+                                                              Hash Cond: (f."orderSizeKey" = s."orderSizeKey")
+                                                              Buffers: shared hit=1731 read=8600
+                                                              ->  Hash Join  (cost=4.27..23067.42 rows=1000000 width=24) (actual time=0.069..141.508 rows=1000000 loops=1)
+                                                                    Hash Cond: (f."riderKey" = r."riderKey")
+                                                                    Buffers: shared hit=1730 read=8600
+                                                                    ->  Seq Scan on "FACT_ORDERDELIVERY" f  (cost=0.00..20328.00 rows=1000000 width=24) (actual time=0.045..44.873 rows=1000000 loops=1)
+                                                                          Buffers: shared hit=1728 read=8600
+                                                                    ->  Hash  (cost=3.01..3.01 rows=101 width=4) (actual time=0.018..0.019 rows=101 loops=1)
+                                                                          Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                                                                          Buffers: shared hit=2
+                                                                          ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.01 rows=101 width=4) (actual time=0.002..0.009 rows=101 loops=1)
+                                                                                Buffers: shared hit=2
+                                                              ->  Hash  (cost=1.05..1.05 rows=5 width=4) (actual time=0.005..0.005 rows=5 loops=1)
+                                                                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                    Buffers: shared hit=1
+                                                                    ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..1.05 rows=5 width=4) (actual time=0.001..0.001 rows=5 loops=1)
+                                                                          Buffers: shared hit=1
+                                                        ->  Hash  (cost=7.65..7.65 rows=365 width=18) (actual time=0.062..0.063 rows=365 loops=1)
+                                                              Buckets: 1024  Batches: 1  Memory Usage: 27kB
+                                                              Buffers: shared hit=4
+                                                              ->  Seq Scan on "DIM_DATE" d  (cost=0.00..7.65 rows=365 width=18) (actual time=0.004..0.023 rows=365 loops=1)
+                                                                    Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=15
+Planning Time: 0.452 ms
+Execution Time: 1367.293 ms

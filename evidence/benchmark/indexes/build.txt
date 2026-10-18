@@ -1,0 +1,33 @@
+Timing is on.
+CREATE INDEX
+Time: 483.907 ms
+CREATE INDEX
+Time: 443.695 ms
+CREATE INDEX
+Time: 483.009 ms
+CREATE INDEX
+Time: 454.551 ms
+CREATE INDEX
+Time: 257.565 ms
+DROP INDEX
+Time: 0.212 ms
+DROP INDEX
+Time: 0.189 ms
+DROP INDEX
+Time: 0.164 ms
+DROP INDEX
+Time: 0.178 ms
+ANALYZE
+Time: 120.647 ms
+ANALYZE
+Time: 87.678 ms
+          index           |  size   
+--------------------------+---------
+ ix_item_customer         | 15 MB
+ ix_item_geo              | 15 MB
+ ix_item_deliverydate     | 13 MB
+ ix_item_product          | 13 MB
+ ix_delivery_deliverydate | 6952 kB
+(5 rows)
+
+Time: 6.173 ms

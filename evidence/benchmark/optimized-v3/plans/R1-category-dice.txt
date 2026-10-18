@@ -1,0 +1,25 @@
+-- R1-category-dice: Slice 2025, dice Motorcycle x Heavy
+-- file: olap/queries/r1_product_category_value/category.sql
+-- params: {"year": "2025", "vehicle": "Motorcycle", "size_group": "Heavy"}
+
+WindowAgg  (cost=33.93..34.36 rows=10 width=113) (actual time=0.088..0.099 rows=10 loops=1)
+  Buffers: shared hit=16
+  ->  WindowAgg  (cost=33.93..34.13 rows=10 width=81) (actual time=0.078..0.083 rows=10 loops=1)
+        Buffers: shared hit=16
+        ->  Sort  (cost=33.93..33.96 rows=10 width=73) (actual time=0.075..0.076 rows=10 loops=1)
+              Sort Key: rolled.is_total, rolled.value DESC
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=16
+              ->  Subquery Scan on rolled  (cost=0.00..33.77 rows=10 width=73) (actual time=0.063..0.066 rows=10 loops=1)
+                    Buffers: shared hit=16
+                    ->  MixedAggregate  (cost=0.00..33.67 rows=10 width=81) (actual time=0.062..0.065 rows=10 loops=1)
+                          Hash Key: a.category
+                          Group Key: ()
+                          Batches: 1  Memory Usage: 24kB
+                          Buffers: shared hit=16
+                          ->  Seq Scan on "AGG_CATEGORY_PERIOD" a  (cost=0.00..32.38 rows=81 width=25) (actual time=0.004..0.042 rows=81 loops=1)
+                                Filter: ((year = 2025) AND (("vehicleType")::text = 'Motorcycle'::text) AND (("sizeGroup")::text = 'Heavy'::text))
+                                Rows Removed by Filter: 855
+                                Buffers: shared hit=16
+Planning Time: 0.084 ms
+Execution Time: 0.134 ms

@@ -1,0 +1,30 @@
+-- R1-product-all: Top 10 products in every category
+-- file: olap/queries/r1_product_category_value/product.sql
+-- params: {"top_n": "10"}
+
+Subquery Scan on ranked  (cost=35331.71..35348.51 rows=187 width=120) (actual time=362.219..371.101 rows=99 loops=1)
+  Filter: (ranked.is_subtotal OR (ranked.rank_in_category <= 10))
+  Rows Removed by Filter: 9255
+  Buffers: shared hit=4395 read=5269
+  ->  WindowAgg  (cost=35331.71..35345.01 rows=280 width=120) (actual time=362.217..370.784 rows=9354 loops=1)
+        Buffers: shared hit=4395 read=5269
+        ->  WindowAgg  (cost=35331.71..35338.01 rows=280 width=88) (actual time=361.765..365.486 rows=9354 loops=1)
+              Buffers: shared hit=4395 read=5269
+              ->  Sort  (cost=35331.71..35332.41 rows=280 width=80) (actual time=361.750..362.326 rows=9354 loops=1)
+                    Sort Key: rolled.category, rolled.is_subtotal, rolled.value DESC
+                    Sort Method: quicksort  Memory: 1069kB
+                    Buffers: shared hit=4395 read=5269
+                    ->  Subquery Scan on rolled  (cost=0.00..35320.33 rows=280 width=80) (actual time=344.470..347.713 rows=9354 loops=1)
+                          Buffers: shared hit=4395 read=5269
+                          ->  MixedAggregate  (cost=0.00..35317.53 rows=280 width=101) (actual time=344.470..347.255 rows=9354 loops=1)
+                                Hash Key: a.category, a."productName"
+                                Hash Key: a.category
+                                Group Key: ()
+                                Filter: (GROUPING(a.category) = 0)
+                                Batches: 1  Memory Usage: 9753kB
+                                Rows Removed by Filter: 1
+                                Buffers: shared hit=4395 read=5269
+                                ->  Seq Scan on "AGG_PRODUCT_PERIOD" a  (cost=0.00..17214.42 rows=755042 width=44) (actual time=0.018..33.887 rows=755042 loops=1)
+                                      Buffers: shared hit=4395 read=5269
+Planning Time: 0.200 ms
+Execution Time: 372.102 ms

@@ -14,16 +14,17 @@
 --          avg_value_per_customer, min_customer_value, max_customer_value
 --   Decile 1 = the top 10% of customers by value.
 
+-- OPTIMIZED VARIANT: reads AGG_CUSTOMER_PERIOD (db/dw/optimize/03_preagg.sql)
+-- instead of FACT_ORDERITEM. Same columns, types and rows as the original.
 WITH customer_value AS (
-  SELECT i."customerKey", sum(i."lineValue") AS value
-  FROM "FACT_ORDERITEM" i
+  SELECT i."customerKey", sum(i.value) AS value
+  FROM "AGG_CUSTOMER_PERIOD" i
   JOIN "DIM_CUSTOMER"  c USING ("customerKey")
   JOIN "DIM_GEOGRAPHY" g USING ("geoKey")
-  JOIN "DIM_DATE"      d ON d."dateKey" = i."deliveryDateKey"
   WHERE (:'country' = '' OR g."country" = :'country')
     AND (:'gender'  = '' OR c."gender"  = :'gender')
-    AND (:'year'    = '' OR d."year"    = nullif(:'year', '')::int)
-    AND (:'quarter' = '' OR d."quarter" = nullif(:'quarter', '')::int)
+    AND (:'year'    = '' OR i."year"    = nullif(:'year', '')::int)
+    AND (:'quarter' = '' OR i."quarter" = nullif(:'quarter', '')::int)
   GROUP BY i."customerKey"
 ),
 ranked AS (

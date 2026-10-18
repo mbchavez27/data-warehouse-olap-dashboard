@@ -20,18 +20,19 @@
 --   City names repeat across countries, so level 'city' always works inside
 --   one country.
 
+-- OPTIMIZED VARIANT: reads AGG_CUSTOMER_PERIOD (db/dw/optimize/03_preagg.sql)
+-- instead of FACT_ORDERITEM. Same columns, types and rows as the original.
 WITH filtered AS (
   SELECT
     CASE WHEN :'level' = 'city' THEN g."city" ELSE g."country" END AS location,
-    c."gender", i."customerKey", i."orderNumber", i."lineValue"
-  FROM "FACT_ORDERITEM" i
+    c."gender", i."customerKey", i.orders, i.value
+  FROM "AGG_CUSTOMER_PERIOD" i
   JOIN "DIM_CUSTOMER"  c USING ("customerKey")
   JOIN "DIM_GEOGRAPHY" g USING ("geoKey")
-  JOIN "DIM_DATE"      d ON d."dateKey" = i."deliveryDateKey"
   WHERE (:'country' = '' OR g."country" = :'country')
     AND (:'gender'  = '' OR c."gender"  = :'gender')
-    AND (:'year'    = '' OR d."year"    = nullif(:'year', '')::int)
-    AND (:'quarter' = '' OR d."quarter" = nullif(:'quarter', '')::int)
+    AND (:'year'    = '' OR i."year"    = nullif(:'year', '')::int)
+    AND (:'quarter' = '' OR i."quarter" = nullif(:'quarter', '')::int)
     AND (:'level' <> 'city' OR :'country' <> '')
 ),
 grouped AS (
@@ -39,8 +40,8 @@ grouped AS (
     CASE WHEN GROUPING(location) = 1 THEN 'All locations' ELSE location END AS location,
     CASE WHEN GROUPING("gender") = 1 THEN 'All' ELSE "gender" END AS gender,
     count(DISTINCT "customerKey") AS customers,
-    count(DISTINCT "orderNumber") AS orders,
-    sum("lineValue") AS value,
+    sum(orders)::bigint AS orders,
+    sum(value) AS value,
     GROUPING(location, "gender") AS grouping_level
   FROM filtered
   GROUP BY GROUPING SETS ((location, "gender"), (location), ("gender"), ())

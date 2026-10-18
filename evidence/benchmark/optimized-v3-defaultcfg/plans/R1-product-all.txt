@@ -1,0 +1,39 @@
+-- R1-product-all: Top 10 products in every category
+-- file: olap/queries/r1_product_category_value/product.sql
+-- params: {"top_n": "10"}
+
+Subquery Scan on ranked  (cost=114212.20..124740.62 rows=185 width=120) (actual time=982.471..1197.530 rows=99 loops=1)
+  Filter: (ranked.is_subtotal OR (ranked.rank_in_category <= 10))
+  Rows Removed by Filter: 9255
+  Buffers: shared hit=2283 read=7381, temp read=11041 written=11060
+  ->  WindowAgg  (cost=114212.20..124737.15 rows=278 width=120) (actual time=982.465..1197.258 rows=9354 loops=1)
+        Buffers: shared hit=2283 read=7381, temp read=11041 written=11060
+        ->  WindowAgg  (cost=114212.20..124730.20 rows=278 width=88) (actual time=943.420..1192.328 rows=9354 loops=1)
+              Buffers: shared hit=2283 read=7381, temp read=11041 written=11060
+              ->  Incremental Sort  (cost=114212.20..124724.64 rows=278 width=80) (actual time=943.379..1188.795 rows=9354 loops=1)
+                    Sort Key: rolled.category, rolled.is_subtotal, rolled.value DESC
+                    Presorted Key: rolled.category
+                    Full-sort Groups: 9  Sort Method: quicksort  Average Memory: 30kB  Peak Memory: 30kB
+                    Pre-sorted Groups: 9  Sort Method: quicksort  Average Memory: 119kB  Peak Memory: 160kB
+                    Buffers: shared hit=2283 read=7381, temp read=11041 written=11060
+                    ->  Subquery Scan on rolled  (cost=114159.42..124714.86 rows=278 width=80) (actual time=925.014..1177.179 rows=9354 loops=1)
+                          Buffers: shared hit=2283 read=7381, temp read=11041 written=11060
+                          ->  GroupAggregate  (cost=114159.42..124712.08 rows=278 width=101) (actual time=925.011..1176.538 rows=9354 loops=1)
+                                Group Key: a.category, a."productName"
+                                Group Key: a.category
+                                Group Key: ()
+                                Filter: (GROUPING(a.category) = 0)
+                                Rows Removed by Filter: 1
+                                Buffers: shared hit=2283 read=7381, temp read=11041 written=11060
+                                ->  Sort  (cost=114159.42..116047.02 rows=755042 width=44) (actual time=924.935..1017.047 rows=755042 loops=1)
+                                      Sort Key: a.category, a."productName"
+                                      Sort Method: external merge  Disk: 44200kB
+                                      Buffers: shared hit=2283 read=7381, temp read=11041 written=11060
+                                      ->  Seq Scan on "AGG_PRODUCT_PERIOD" a  (cost=0.00..17214.42 rows=755042 width=44) (actual time=8.650..65.346 rows=755042 loops=1)
+                                            Buffers: shared hit=2283 read=7381
+Planning Time: 0.194 ms
+JIT:
+  Functions: 23
+  Options: Inlining false, Optimization false, Expressions true, Deforming true
+  Timing: Generation 0.903 ms, Inlining 0.000 ms, Optimization 0.407 ms, Emission 8.265 ms, Total 9.575 ms
+Execution Time: 1202.286 ms

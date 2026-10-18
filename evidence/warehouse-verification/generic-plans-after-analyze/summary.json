@@ -1,0 +1,34 @@
+[
+  {
+    "caseId": "R4-trend-month",
+    "planCacheMode": "force_custom_plan",
+    "executionMs": 424.463,
+    "planningMs": 2.133,
+    "nestedLoop": false,
+    "hashJoin": true
+  },
+  {
+    "caseId": "R4-trend-month",
+    "planCacheMode": "force_generic_plan",
+    "executionMs": 746.203,
+    "planningMs": 0.719,
+    "nestedLoop": false,
+    "hashJoin": true
+  },
+  {
+    "caseId": "R4-busiest-days",
+    "planCacheMode": "force_custom_plan",
+    "executionMs": 2190.286,
+    "planningMs": 0.539,
+    "nestedLoop": false,
+    "hashJoin": true
+  },
+  {
+    "caseId": "R4-busiest-days",
+    "planCacheMode": "force_generic_plan",
+    "executionMs": 1889.972,
+    "planningMs": 0.732,
+    "nestedLoop": false,
+    "hashJoin": true
+  }
+]

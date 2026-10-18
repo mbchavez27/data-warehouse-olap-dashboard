@@ -1,0 +1,63 @@
+-- R1-category-dice: Slice 2025, dice Motorcycle x Heavy
+-- file: olap/queries/r1_product_category_value/category.sql
+-- params: {"year": "2025", "vehicle": "Motorcycle", "size_group": "Heavy"}
+
+WindowAgg  (cost=56448.89..56449.36 rows=11 width=113) (actual time=417.654..417.676 rows=10 loops=1)
+  Buffers: shared hit=6171 read=15991
+  ->  WindowAgg  (cost=56448.89..56449.11 rows=11 width=81) (actual time=417.640..417.648 rows=10 loops=1)
+        Buffers: shared hit=6171 read=15991
+        ->  Sort  (cost=56448.89..56448.92 rows=11 width=73) (actual time=417.614..417.617 rows=10 loops=1)
+              Sort Key: rolled.is_total, rolled.value DESC
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=6171 read=15991
+              ->  Subquery Scan on rolled  (cost=348.78..56448.70 rows=11 width=73) (actual time=417.599..417.605 rows=10 loops=1)
+                    Buffers: shared hit=6171 read=15991
+                    ->  MixedAggregate  (cost=348.78..56448.59 rows=11 width=80) (actual time=417.598..417.603 rows=10 loops=1)
+                          Hash Key: p.category
+                          Group Key: ()
+                          Batches: 1  Memory Usage: 24kB
+                          Buffers: shared hit=6171 read=15991
+                          ->  Hash Join  (cost=348.78..53418.09 rows=242420 width=19) (actual time=1.673..347.858 rows=380204 loops=1)
+                                Hash Cond: (i."productKey" = p."productKey")
+                                Buffers: shared hit=6171 read=15991
+                                ->  Hash Join  (cost=16.76..52449.45 rows=242420 width=16) (actual time=0.105..310.002 rows=380204 loops=1)
+                                      Hash Cond: (i."deliveryDateKey" = d."dateKey")
+                                      Buffers: shared hit=6064 read=15991
+                                      ->  Hash Join  (cost=4.88..51554.24 rows=332644 width=20) (actual time=0.053..275.004 rows=522118 loops=1)
+                                            Hash Cond: (i."orderSizeKey" = s."orderSizeKey")
+                                            Buffers: shared hit=6060 read=15991
+                                            ->  Hash Join  (cost=3.79..47519.84 rows=831610 width=24) (actual time=0.036..221.034 rows=838013 loops=1)
+                                                  Hash Cond: (i."riderKey" = r."riderKey")
+                                                  Buffers: shared hit=6059 read=15991
+                                                  ->  Seq Scan on "FACT_ORDERITEM" i  (cost=0.00..42046.24 rows=1999824 width=28) (actual time=0.015..86.539 rows=1999824 loops=1)
+                                                        Buffers: shared hit=6057 read=15991
+                                                  ->  Hash  (cost=3.26..3.26 rows=42 width=4) (actual time=0.014..0.014 rows=42 loops=1)
+                                                        Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                                                        Buffers: shared hit=2
+                                                        ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.26 rows=42 width=4) (actual time=0.002..0.008 rows=42 loops=1)
+                                                              Filter: (("vehicleType")::text = 'Motorcycle'::text)
+                                                              Rows Removed by Filter: 59
+                                                              Buffers: shared hit=2
+                                            ->  Hash  (cost=1.06..1.06 rows=2 width=4) (actual time=0.009..0.010 rows=2 loops=1)
+                                                  Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                  Buffers: shared hit=1
+                                                  ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..1.06 rows=2 width=4) (actual time=0.004..0.004 rows=2 loops=1)
+                                                        Filter: (("sizeGroup")::text = 'Heavy'::text)
+                                                        Rows Removed by Filter: 3
+                                                        Buffers: shared hit=1
+                                      ->  Hash  (cost=8.56..8.56 rows=266 width=4) (actual time=0.047..0.047 rows=266 loops=1)
+                                            Buckets: 1024  Batches: 1  Memory Usage: 18kB
+                                            Buffers: shared hit=4
+                                            ->  Seq Scan on "DIM_DATE" d  (cost=0.00..8.56 rows=266 width=4) (actual time=0.005..0.024 rows=266 loops=1)
+                                                  Filter: (year = 2025)
+                                                  Rows Removed by Filter: 99
+                                                  Buffers: shared hit=4
+                                ->  Hash  (cost=207.01..207.01 rows=10001 width=11) (actual time=1.523..1.524 rows=10001 loops=1)
+                                      Buckets: 16384  Batches: 1  Memory Usage: 569kB
+                                      Buffers: shared hit=107
+                                      ->  Seq Scan on "DIM_PRODUCT" p  (cost=0.00..207.01 rows=10001 width=11) (actual time=0.003..0.569 rows=10001 loops=1)
+                                            Buffers: shared hit=107
+Planning:
+  Buffers: shared hit=18
+Planning Time: 0.546 ms
+Execution Time: 418.009 ms

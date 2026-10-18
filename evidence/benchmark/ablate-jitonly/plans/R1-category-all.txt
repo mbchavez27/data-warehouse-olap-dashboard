@@ -1,0 +1,23 @@
+-- R1-category-all: All categories, no filters
+-- file: olap/queries/r1_product_category_value/category.sql
+-- params: {}
+
+WindowAgg  (cost=37.60..38.03 rows=10 width=113) (actual time=0.234..0.246 rows=10 loops=1)
+  Buffers: shared hit=16
+  ->  WindowAgg  (cost=37.60..37.80 rows=10 width=81) (actual time=0.223..0.228 rows=10 loops=1)
+        Buffers: shared hit=16
+        ->  Sort  (cost=37.60..37.63 rows=10 width=73) (actual time=0.219..0.219 rows=10 loops=1)
+              Sort Key: rolled.is_total, rolled.value DESC
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=16
+              ->  Subquery Scan on rolled  (cost=0.00..37.44 rows=10 width=73) (actual time=0.207..0.210 rows=10 loops=1)
+                    Buffers: shared hit=16
+                    ->  MixedAggregate  (cost=0.00..37.34 rows=10 width=81) (actual time=0.207..0.209 rows=10 loops=1)
+                          Hash Key: a.category
+                          Group Key: ()
+                          Batches: 1  Memory Usage: 24kB
+                          Buffers: shared hit=16
+                          ->  Seq Scan on "AGG_CATEGORY_PERIOD" a  (cost=0.00..25.36 rows=936 width=25) (actual time=0.003..0.035 rows=936 loops=1)
+                                Buffers: shared hit=16
+Planning Time: 0.075 ms
+Execution Time: 0.291 ms
