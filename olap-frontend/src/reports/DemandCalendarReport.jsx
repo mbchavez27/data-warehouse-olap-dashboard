@@ -61,6 +61,13 @@ const MEASURES = [
   { value: 'per_day', label: 'Orders per day' },
   { value: 'orders', label: 'Total orders' },
 ]
+// Weekday pivot colouring: each cell against its own month's average (the
+// weekday pattern inside a month), or against the busiest cell in the table
+// (which months and weekdays carried the most overall).
+const COLOURS = [
+  { value: 'within', label: 'Against its month' },
+  { value: 'across', label: 'Across months' },
+]
 const SORTS = [
   { value: 'busiest', label: 'Busiest first' },
   { value: 'quietest', label: 'Quietest first' },
@@ -97,6 +104,7 @@ export default function DemandCalendarReport() {
   const [view, setView] = useState('rollup')
   const [grain, setGrain] = useState('month')
   const [measure, setMeasure] = useState('per_day')
+  const [colour, setColour] = useState('within')
   const [sort, setSort] = useState('busiest')
   const [topN, setTopN] = useState('10')
 
@@ -330,17 +338,25 @@ export default function DemandCalendarReport() {
     const total = rows.find((r) => r.is_total)
     empty = !loading && !error && !rows.length
     const maxCell = Math.max(0, ...months.flatMap((r) => WEEKDAYS.map(([k]) => Number(r[k]) || 0)))
+    // A cell's distance from its own row's average, in %.
+    const deviationOf = (row, key) => {
+      const value = row[key]
+      const average = Number(row.all_days)
+      return value === null || value === undefined || !average ? null : (100 * (Number(value) - average)) / average
+    }
+    const maxDeviation = Math.max(0, ...rows.flatMap((r) => WEEKDAYS.map(([k]) => Math.abs(deviationOf(r, k) ?? 0))))
+    const withinMonth = colour === 'within'
 
     const heat = (row, key, name) => {
       const value = row[key]
       const who = row.is_total ? 'All months together' : row.month_label
-      const average = Number(row.all_days)
-      const deviation =
-        value === null || value === undefined || !average ? null : (100 * (Number(value) - average)) / average
+      const deviation = deviationOf(row, key)
       return (
         <HeatCell
           value={value}
           max={maxCell}
+          strength={withinMonth ? (maxDeviation ? Math.abs(deviation ?? 0) / maxDeviation : 0) : undefined}
+          below={withinMonth && deviation < 0}
           tip={`${who} · ${name}: ${num(value)} orders per day${
             deviation === null ? '' : ` — ${signed(deviation)} against that month's average`
           }`}
@@ -401,11 +417,17 @@ export default function DemandCalendarReport() {
     ]
     table = { caption: 'Average orders per day by month and weekday', rowKey: (r) => r.month_label, isTotal: (r) => r.is_total }
     legend = [
-      { swatch: 'heat', label: 'Cell colour = orders per day; darker means busier' },
+      withinMonth
+        ? { swatch: 'diverge', label: "Cell colour = against that month's average; blue busier, orange quieter" }
+        : { swatch: 'heat', label: 'Cell colour = orders per day; darker means busier' },
       { swatch: 'total', label: 'Bold row = every month together' },
       { swatch: 'glyph', glyph: '–', label: 'No deliveries in that month and weekday' },
     ]
-    note = `Each cell is the average orders per day a month carried on that weekday, so 4-day and 5-day weekdays compare. Read the All days column for how full a month is and the cell colour for when inside it the orders landed.${notApplied(
+    note = `Each cell is the average orders per day a month carried on that weekday, so 4-day and 5-day weekdays compare. ${
+      withinMonth
+        ? "Read the All days column for how full a month is and the cell colour for when inside it the orders landed: blue weekdays ran above that month's average, orange ones below."
+        : 'The colour scales every cell against the busiest one in the table, so it shows which months and weekdays carried the most orders overall. Switch to Against its month to see each month\'s own weekday pattern.'
+    }${notApplied(
       filters,
       [['month', 'month'], ['day_type', 'day type']],
     )}`
@@ -479,6 +501,7 @@ export default function DemandCalendarReport() {
       <Segmented label="View" options={VIEWS} value={view} onChange={setView} />
       {view === 'trend' && <Segmented label="By" options={GRAINS} value={grain} onChange={setGrain} />}
       {view === 'trend' && <Segmented label="Show" options={MEASURES} value={measure} onChange={setMeasure} />}
+      {view === 'weekday' && <Segmented label="Colour" options={COLOURS} value={colour} onChange={setColour} />}
       {view === 'busiest' && <Segmented label="Order" options={SORTS} value={sort} onChange={setSort} />}
       {view === 'busiest' && <Segmented label="Show" options={TOP_N} value={topN} onChange={setTopN} />}
       <ExportButton onClick={() => downloadCsv(exportName, columns, rows)} disabled={loading || !!error || empty} />

@@ -6,27 +6,31 @@ import { num } from '../lib/format.js'
 // no-data glyph instead, and `emptyTip` explains why.
 //   value    the cell's number (or null)
 //   max      the largest cell in the table, used to scale the fill
+//   strength 0-1 fill strength, in place of value / max (optional); for a
+//            diverging scale, where the fill is a deviation, not the value
+//   below    fill with the "below" tone instead of the main one (optional)
 //   tip      tooltip text for a filled cell
 //   emptyTip tooltip text for a null cell (optional)
 //   onClick  drill action; without it the cell is a plain, non-interactive block
-export default function HeatCell({ value, max, tip, emptyTip, onClick }) {
+export default function HeatCell({ value, max, strength, below = false, tip, emptyTip, onClick }) {
   if (value === null || value === undefined) {
     const missing = <span className="cell-muted">–</span>
     return emptyTip ? <Tooltip text={emptyTip}>{missing}</Tooltip> : missing
   }
 
-  const strength = max ? (Number(value) || 0) / max : 0
-  const style = { '--heat': `${Math.round(6 + strength * 50)}%` }
+  const fill = strength ?? (max ? (Number(value) || 0) / max : 0)
+  const style = { '--heat': `${Math.round(6 + fill * 50)}%` }
   const label = num(value)
+  const classes = ['heat-cell', !onClick && 'is-static', below && 'is-below'].filter(Boolean).join(' ')
 
   return (
     <Tooltip text={tip}>
       {onClick ? (
-        <button type="button" className="heat-cell" style={style} onClick={onClick}>
+        <button type="button" className={classes} style={style} onClick={onClick}>
           {label}
         </button>
       ) : (
-        <span className="heat-cell is-static" style={style}>
+        <span className={classes} style={style}>
           {label}
         </span>
       )}

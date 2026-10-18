@@ -17,6 +17,7 @@
   --signal: #e99a00;
   --signal-tint: #fff4dc;
   --signal-line: #f2d593;
+  --dip: #c8641e;
   --error: #b9381a;
 
   --radius: 10px;
@@ -566,6 +567,20 @@ select {
   );
 }
 
+/* Diverging key: below average on the left, above on the right. */
+.legend-diverge {
+  width: 34px;
+  height: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--dip) 56%, var(--surface)),
+    var(--surface),
+    color-mix(in srgb, var(--route) 56%, var(--surface))
+  );
+}
+
 .legend-total {
   width: 26px;
   height: 12px;
@@ -1106,8 +1121,12 @@ tr.is-total td {
   border-radius: 4px;
   text-align: right;
   font-variant-numeric: tabular-nums;
-  background: color-mix(in srgb, var(--route) var(--heat, 0%), var(--surface));
+  background: color-mix(in srgb, var(--heat-tone, var(--route)) var(--heat, 0%), var(--surface));
   cursor: pointer;
+}
+
+.heat-cell.is-below {
+  --heat-tone: var(--dip);
 }
 
 .heat-cell:hover {

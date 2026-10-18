@@ -1,11 +1,12 @@
 // Key for the visual encodings a report uses: bar length, heat intensity,
 // glyphs and total rows. Explanations of the measures themselves live in the
 // panel footer; this only says what each mark means.
-// Item: { swatch: 'bar' | 'heat' | 'glyph' | 'total', glyph?, label }
+// Item: { swatch: 'bar' | 'heat' | 'diverge' | 'glyph' | 'total', glyph?, label }
 
 function Swatch({ swatch, glyph }) {
   if (swatch === 'bar') return <span className="legend-bar" />
   if (swatch === 'heat') return <span className="legend-heat" />
+  if (swatch === 'diverge') return <span className="legend-diverge" />
   if (swatch === 'total') return <span className="legend-total" />
   return <span className="legend-glyph">{glyph}</span>
 }

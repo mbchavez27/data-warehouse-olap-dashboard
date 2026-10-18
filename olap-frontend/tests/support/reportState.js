@@ -11,7 +11,7 @@
 let state = {}
 let request = null
 
-// The view a render starts in: { view, grain, measure, sort, topN, filters }.
+// The view a render starts in: { view, grain, measure, colour, sort, topN, filters }.
 export const initialState = () => state
 export const setInitialState = (next) => {
   state = next

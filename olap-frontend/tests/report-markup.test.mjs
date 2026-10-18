@@ -34,6 +34,7 @@ const PATCHES = [
   ["useState('rollup')", "useState(initialState().view ?? 'rollup')"],
   ["useState('month')", "useState(initialState().grain ?? 'month')"],
   ["useState('per_day')", "useState(initialState().measure ?? 'per_day')"],
+  ["useState('within')", "useState(initialState().colour ?? 'within')"],
   ["useState('busiest')", "useState(initialState().sort ?? 'busiest')"],
   ["useState('10')", "useState(initialState().topN ?? '10')"],
   [
@@ -336,6 +337,9 @@ const CASES = [
       const ranked = [...days.map((k) => ({ key: k, value: Number(total[k]) }))].sort((a, b) => b.value - a.value)
       const gap = (100 * (ranked[0].value - ranked[ranked.length - 1].value)) / ranked[ranked.length - 1].value
       const names = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday' }
+      const belowAverage = rows.flatMap((r) =>
+        days.filter((k) => r[k] !== null && r[k] !== undefined && Number(r[k]) < Number(r.all_days)),
+      )
       return [
         ['13 months plus a total row', rowsIn(html) === rows.length, `${months.length} months + 1 total`],
         [
@@ -354,9 +358,28 @@ const CASES = [
           figure(html, 'Busiest over the quietest') === `+${dec1(gap)}%`,
           figure(html, 'Busiest over the quietest'),
         ],
-        ['heat legend', html.includes('darker means busier')],
+        ['colours against its month by default', html.includes('aria-checked="true" class="is-on">Against its month')],
+        [
+          'every below-average cell takes the below tone',
+          (html.match(/is-below/g) ?? []).length === belowAverage.length,
+          `${belowAverage.length} cells below their month's average`,
+        ],
+        ['diverging legend', html.includes('legend-diverge') && html.includes('blue busier, orange quieter')],
         ['no-delivery glyph legend', html.includes('No deliveries in that month and weekday')],
         ['note explains the grain', html.includes('Each cell is the average orders per day')],
+        ['note reads the colour as within the month', html.includes("ran above that month&#x27;s average")],
+      ]
+    },
+  },
+  {
+    name: 'weekday-across',
+    state: { view: 'weekday', colour: 'across' },
+    checks({ html }) {
+      return [
+        ['across months is selected', html.includes('aria-checked="true" class="is-on">Across months')],
+        ['no cell takes the below tone', !html.includes('is-below')],
+        ['heat legend', html.includes('legend-heat') && html.includes('darker means busier')],
+        ['note reads the colour across the table', html.includes('against the busiest one in the table')],
       ]
     },
   },
