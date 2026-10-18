@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "label": "noidx-jit-off-only",
+  "startedAt": "2026-10-18T06:59:22+00:00",
+  "finishedAt": "2026-10-18T06:59:53+00:00",
+  "method": {
+    "warmupRuns": 1,
+    "measuredRuns": 9,
+    "timing": "client wall-clock around execute + fetchall, read-only session",
+    "plans": "one EXPLAIN (ANALYZE, BUFFERS) run after the timed runs",
+    "planCacheMode": "force_custom_plan",
+    "session": "fresh connection per case",
+    "queriesDir": "C:\\Users\\User\\Downloads\\STADVDB Companion\\data-warehouse-olap-dashboard\\olap\\queries"
+  },
+  "environment": {
+    "postgres": "PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "settings": {
+      "shared_buffers": "128MB",
+      "work_mem": "4MB",
+      "effective_cache_size": "4GB",
+      "max_parallel_workers_per_gather": "2",
+      "jit": "off"
+    },
+    "databaseSize": "467 MB",
+    "tableRowEstimates": {
+      "DIM_CUSTOMER": 0,
+      "DIM_DATE": 0,
+      "DIM_GEOGRAPHY": 0,
+      "DIM_ORDERSIZE": 0,
+      "DIM_PRODUCT": 0,
+      "DIM_RIDER": 0,
+      "FACT_ORDERDELIVERY": 1000000,
+      "FACT_ORDERITEM": 1999824,
+      "FACT_RIDERDAILY": 0
+    },
+    "indexes": [
+      "DIM_CUSTOMER.DIM_CUSTOMER_customerId_key",
+      "DIM_CUSTOMER.DIM_CUSTOMER_pkey",
+      "DIM_DATE.DIM_DATE_fullDate_key",
+      "DIM_DATE.DIM_DATE_pkey",
+      "DIM_GEOGRAPHY.DIM_GEOGRAPHY_country_city_zipCode_key",
+      "DIM_GEOGRAPHY.DIM_GEOGRAPHY_pkey",
+      "DIM_ORDERSIZE.DIM_ORDERSIZE_pkey",
+      "DIM_ORDERSIZE.DIM_ORDERSIZE_sizeName_key",
+      "DIM_PRODUCT.DIM_PRODUCT_pkey",
+      "DIM_PRODUCT.DIM_PRODUCT_productId_key",
+      "DIM_RIDER.DIM_RIDER_pkey",
+      "DIM_RIDER.DIM_RIDER_riderId_key",
+      "FACT_ORDERDELIVERY.FACT_ORDERDELIVERY_pkey",
+      "FACT_ORDERITEM.FACT_ORDERITEM_pkey",
+      "FACT_RIDERDAILY.FACT_RIDERDAILY_pkey"
+    ],
+    "client": {
+      "python": "3.13.5",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel"
+    }
+  },
+  "cases": [
+    {
+      "caseId": "R3-customer-top20",
+      "report": "R3",
+      "queryFile": "olap/queries/r3_customer_value_distribution/customer.sql",
+      "params": {
+        "top_n": "20"
+      },
+      "note": "Top 20 customers",
+      "resultRows": 20,
+      "resultColumns": 11,
+      "resultMd5": "cf6f2e37a4c92df18879d3c8f24abcbc",
+      "runsMs": [
+        2467.95,
+        3001.31,
+        3574.2,
+        2808.68,
+        2715.98,
+        2546.4,
+        2943.66,
+        2717.86,
+        2605.72
+      ],
+      "medianMs": 2717.86,
+      "meanMs": 2820.2,
+      "minMs": 2467.95,
+      "maxMs": 3574.2,
+      "stdevMs": 332.24,
+      "explainExecutionMs": 2876.404,
+      "explainPlanningMs": 0.579,
+      "planFile": "plans/R3-customer-top20.txt"
+    }
+  ]
+}

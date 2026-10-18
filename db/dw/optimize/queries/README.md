@@ -1,11 +1,13 @@
 # OLAP report queries
 
-> **Optimized copies.** These are the Phase 2 versions of `olap/queries/`. Files that read the
-> pre-aggregated views (`AGG_CUSTOMER_PERIOD`, `AGG_RIDER_DAY`, created by `../03_preagg.sql`) are:
-> R2 `courier_vehicle_cube`, `courier_vehicle_pivot`, `rider`; R3 `customer`, `deciles`, `geography`;
-> R4 `busiest_days`, `rollup`, `trend`, `weekday_pivot`. The R1 files are
-> unchanged copies. Same parameters, columns and types as the originals
-> (`olap/benchmark/check_equivalence.py`). See `evidence/optimization-log.md`.
+> **Optimized copies.** These are the Phase 2 versions of `olap/queries/`. Every report file reads a
+> pre-aggregated materialized view created by `../03_preagg.sql` instead of the two large fact
+> tables (`rider.sql` still joins the small `FACT_RIDERDAILY`, 36,500 rows, for active days):
+> `AGG_CATEGORY_PERIOD` and `AGG_PRODUCT_PERIOD` (R1), `AGG_RIDER_DAY` (R2, R4),
+> `AGG_CUSTOMER_PERIOD` (R3 and the R3 customer drill). Same parameters, columns and types as the
+> originals, checked on 1,600 randomized filter combinations
+> (`olap/benchmark/check_equivalence.py`). The views are snapshots: run
+> `db/scripts/apply_optimizations.sh` after every ETL load. See `evidence/optimization-log.md`.
 
 Four analytical reports over the warehouse (`dw_db`). Each report is a folder;
 each file in it is one drill level of that report and returns a fixed set of

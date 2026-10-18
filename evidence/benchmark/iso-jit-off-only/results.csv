@@ -1,0 +1,2 @@
+case_id,report,query_file,params,result_rows,result_columns,result_md5,median_ms,mean_ms,min_ms,max_ms,stdev_ms,explain_execution_ms
+R3-customer-top20,R3,olap/queries/r3_customer_value_distribution/customer.sql,"{""top_n"": ""20""}",20,11,cf6f2e37a4c92df18879d3c8f24abcbc,2449.72,2412.61,2184.31,2677.34,157.29,2370.701

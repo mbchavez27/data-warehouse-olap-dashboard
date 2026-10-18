@@ -15,6 +15,7 @@ orig, opt = Path("olap/queries"), Path("db/dw/optimize/queries")
 V = ["", "Bicycle", "Motorcycle", "Car", "Trike"]; SG = ["", "Light", "Heavy"]
 Y = ["", "2024", "2025"]; Q = ["", "1", "4"]; M = ["", "2", "12"]
 C = ["", "FEDEZ", "JNT", "LBCD"]; A = ["", "18-29", "50-60"]
+CAT = ["", "Toys", "Electronics", "Unknown"]
 DT = ["", "weekday", "weekend"]; PD = ["", "yes", "no"]
 def grid(**kw):
     ks = list(kw)
@@ -30,6 +31,8 @@ suites = {
  "r4_demand_calendar/rollup.sql": sample(grid(year=Y,day_type=DT,payday=PD,vehicle=V,size_group=SG), 80),
  "r4_demand_calendar/weekday_pivot.sql": sample(grid(year=Y,quarter=Q,payday=PD,vehicle=V,size_group=SG), 80),
  "r4_demand_calendar/busiest_days.sql": [dict(p, sort=s, top_n=n) for p in sample(grid(year=Y,quarter=Q,month=M,day_type=DT,payday=PD,vehicle=V,size_group=SG), 40) for s in ("busiest","quietest") for n in ("10","3")],
+ "r1_product_category_value/category.sql": sample(grid(year=Y,quarter=Q,month=M,vehicle=V,size_group=SG), 120),
+ "r1_product_category_value/product.sql": [dict(p, category=c, top_n=n) for p in sample(grid(year=Y,quarter=Q,month=M,vehicle=V,size_group=SG), 60) for c in CAT for n in ("10","3")],
 }
 bad = total = no_rows = 0
 def run(path, p):

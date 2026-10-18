@@ -1,0 +1,19 @@
+case_id,report,query_file,params,result_rows,result_columns,result_md5,median_ms,mean_ms,min_ms,max_ms,stdev_ms,explain_execution_ms
+R1-category-all,R1,olap/queries/r1_product_category_value/category.sql,{},10,6,e546f8184d5ec90416927627d7c7b2c3,0.89,1.0,0.79,1.44,0.23,0.265
+R1-category-dice,R1,olap/queries/r1_product_category_value/category.sql,"{""year"": ""2025"", ""vehicle"": ""Motorcycle"", ""size_group"": ""Heavy""}",10,6,1f5d9a63173945b5e6d569b0b445c8be,0.68,0.8,0.57,1.44,0.28,0.134
+R1-product-all,R1,olap/queries/r1_product_category_value/product.sql,"{""top_n"": ""10""}",99,7,45a8e1ab81a1924774033ab6f3d82aee,303.44,301.15,285.45,317.26,12.1,298.674
+R1-product-toys,R1,olap/queries/r1_product_category_value/product.sql,"{""category"": ""Toys"", ""top_n"": ""10""}",11,7,5d73e8ab37d01d44acf51894f96a6234,94.01,94.52,92.04,100.21,2.43,87.079
+R2-cube-all,R2,olap/queries/r2_fleet_courier_workload/courier_vehicle_cube.sql,{},20,8,2f2e46f430bdf31d3760980df0054375,99.63,99.75,97.65,101.75,1.3,120.441
+R2-pivot-orders,R2,olap/queries/r2_fleet_courier_workload/courier_vehicle_pivot.sql,"{""measure"": ""orders""}",4,8,8af06b17f64fb71e33f2e823ce73dd63,63.36,63.35,62.48,64.43,0.68,87.199
+R2-pivot-per-rider-q1,R2,olap/queries/r2_fleet_courier_workload/courier_vehicle_pivot.sql,"{""measure"": ""per_rider"", ""year"": ""2025"", ""quarter"": ""1""}",4,8,05e9d35cd932ad95698d7199d5d25812,25.24,25.44,24.62,26.51,0.62,31.132
+R2-rider-top20,R2,olap/queries/r2_fleet_courier_workload/rider.sql,"{""top_n"": ""20""}",20,13,0dc627c26368eb73a1d6e4e1a6cc0c2a,34.94,34.96,34.39,35.62,0.4,41.095
+R3-deciles-all,R3,olap/queries/r3_customer_value_distribution/deciles.sql,{},10,8,a79513679edd9c2e76d3970b9b2195fa,212.13,215.41,200.4,252.15,14.76,250.834
+R3-deciles-dice,R3,olap/queries/r3_customer_value_distribution/deciles.sql,"{""gender"": ""F"", ""year"": ""2025""}",10,8,67c6a63e3b1bfcc63fe6b12e2d063610,117.45,118.12,114.55,121.08,2.03,130.011
+R3-geo-country,R3,olap/queries/r3_customer_value_distribution/geography.sql,"{""level"": ""country"", ""top_n"": ""20""}",63,8,ae6ec3d0e277c685c4574f0db6c089d1,405.66,405.96,390.38,421.1,9.78,412.101
+R3-geo-city,R3,olap/queries/r3_customer_value_distribution/geography.sql,"{""level"": ""city"", ""country"": ""Philippines"", ""top_n"": ""20""}",44,8,4f9db3dd036bb490c1679150c7f36993,14.31,14.4,13.83,15.6,0.5,16.679
+R3-customer-top20,R3,olap/queries/r3_customer_value_distribution/customer.sql,"{""top_n"": ""20""}",20,11,cf6f2e37a4c92df18879d3c8f24abcbc,505.58,521.91,490.74,633.3,44.79,539.296
+R4-rollup-all,R4,olap/queries/r4_demand_calendar/rollup.sql,{},21,9,3a73fb1f8fa917a6aac0881048089e37,31.85,31.89,30.16,33.63,1.26,47.448
+R4-trend-month,R4,olap/queries/r4_demand_calendar/trend.sql,"{""level"": ""month""}",13,8,a089798bdae2d21455947f908fea722c,31.95,32.25,30.92,35.24,1.32,47.677
+R4-trend-day,R4,olap/queries/r4_demand_calendar/trend.sql,"{""level"": ""day""}",365,8,2798ab71851b741e6c1fd35ce7eb039c,33.5,33.52,32.87,34.27,0.45,48.848
+R4-weekday-pivot,R4,olap/queries/r4_demand_calendar/weekday_pivot.sql,{},14,10,6fcb9e74bc5663001ded9db9b143dda2,29.58,29.76,28.88,32.93,1.25,47.018
+R4-busiest-days,R4,olap/queries/r4_demand_calendar/busiest_days.sql,"{""top_n"": ""10""}",10,10,fc68a81d1072535a7f335a592f11f3db,62.11,62.24,59.84,66.06,2.25,92.665

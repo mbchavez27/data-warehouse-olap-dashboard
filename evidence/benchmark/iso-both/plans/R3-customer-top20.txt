@@ -1,0 +1,65 @@
+-- R3-customer-top20: Top 20 customers
+-- file: olap/queries/r3_customer_value_distribution/customer.sql
+-- params: {"top_n": "20"}
+
+Limit  (cost=1219176.41..1219176.46 rows=20 width=159) (actual time=5395.054..5395.064 rows=20 loops=1)
+  Buffers: shared hit=990347 read=324212
+  ->  Sort  (cost=1219176.41..1224175.97 rows=1999824 width=159) (actual time=5395.053..5395.061 rows=20 loops=1)
+        Sort Key: (rank() OVER (?))
+        Sort Method: top-N heapsort  Memory: 30kB
+        Buffers: shared hit=990347 read=324212
+        ->  WindowAgg  (cost=1095967.97..1165961.81 rows=1999824 width=159) (actual time=5282.088..5367.450 rows=99996 loops=1)
+              Buffers: shared hit=990347 read=324212
+              ->  Sort  (cost=1095967.97..1100967.53 rows=1999824 width=95) (actual time=5274.786..5277.644 rows=99996 loops=1)
+                    Sort Key: customer_value.value
+                    Sort Method: quicksort  Memory: 13395kB
+                    Buffers: shared hit=990347 read=324212
+                    ->  WindowAgg  (cost=744143.00..784139.48 rows=1999824 width=95) (actual time=5214.628..5243.987 rows=99996 loops=1)
+                          Buffers: shared hit=990347 read=324212
+                          ->  Sort  (cost=744143.00..749142.56 rows=1999824 width=83) (actual time=5197.419..5205.997 rows=99996 loops=1)
+                                Sort Key: customer_value.value DESC
+                                Sort Method: quicksort  Memory: 11832kB
+                                Buffers: shared hit=990347 read=324212
+                                ->  Subquery Scan on customer_value  (cost=4.92..439150.00 rows=1999824 width=83) (actual time=0.237..5150.979 rows=99996 loops=1)
+                                      Buffers: shared hit=990347 read=324212
+                                      ->  GroupAggregate  (cost=4.92..419151.76 rows=1999824 width=87) (actual time=0.236..5141.948 rows=99996 loops=1)
+                                            Group Key: i."customerKey", c.username, c.gender, g.country, g.city
+                                            Buffers: shared hit=990347 read=324212
+                                            ->  Incremental Sort  (cost=4.92..354157.48 rows=1999824 width=62) (actual time=0.219..4619.130 rows=1999824 loops=1)
+                                                  Sort Key: i."customerKey", c.username, c.gender, g.country, g.city, i."orderNumber"
+                                                  Presorted Key: i."customerKey"
+                                                  Full-sort Groups: 46680  Sort Method: quicksort  Average Memory: 28kB  Peak Memory: 28kB
+                                                  Pre-sorted Groups: 627  Sort Method: quicksort  Average Memory: 28kB  Peak Memory: 28kB
+                                                  Buffers: shared hit=990347 read=324212
+                                                  ->  Merge Join  (cost=1.25..282538.54 rows=1999824 width=62) (actual time=0.055..2655.753 rows=1999824 loops=1)
+                                                        Merge Cond: (i."customerKey" = c."customerKey")
+                                                        Buffers: shared hit=990347 read=324212
+                                                        ->  Nested Loop  (cost=0.89..253850.89 rows=1999824 width=50) (actual time=0.041..2460.749 rows=1999824 loops=1)
+                                                              Buffers: shared hit=990340 read=323104
+                                                              ->  Nested Loop  (cost=0.73..203876.65 rows=1999824 width=54) (actual time=0.028..2022.598 rows=1999824 loops=1)
+                                                                    Buffers: shared hit=989612 read=323102
+                                                                    ->  Index Scan using ix_item_customer on "FACT_ORDERITEM" i  (cost=0.43..125973.32 rows=1999824 width=35) (actual time=0.013..1269.504 rows=1999824 loops=1)
+                                                                          Buffers: shared hit=690268 read=322458
+                                                                    ->  Memoize  (cost=0.30..0.32 rows=1 width=27) (actual time=0.000..0.000 rows=1 loops=1999824)
+                                                                          Cache Key: i."geoKey"
+                                                                          Cache Mode: logical
+                                                                          Hits: 1899828  Misses: 99996  Evictions: 0  Overflows: 0  Memory Usage: 12666kB
+                                                                          Buffers: shared hit=299344 read=644
+                                                                          ->  Index Scan using "DIM_GEOGRAPHY_pkey" on "DIM_GEOGRAPHY" g  (cost=0.29..0.31 rows=1 width=27) (actual time=0.002..0.002 rows=1 loops=99996)
+                                                                                Index Cond: ("geoKey" = i."geoKey")
+                                                                                Buffers: shared hit=299344 read=644
+                                                              ->  Memoize  (cost=0.16..0.18 rows=1 width=4) (actual time=0.000..0.000 rows=1 loops=1999824)
+                                                                    Cache Key: i."deliveryDateKey"
+                                                                    Cache Mode: logical
+                                                                    Hits: 1999459  Misses: 365  Evictions: 0  Overflows: 0  Memory Usage: 38kB
+                                                                    Buffers: shared hit=728 read=2
+                                                                    ->  Index Only Scan using "DIM_DATE_pkey" on "DIM_DATE" d  (cost=0.15..0.17 rows=1 width=4) (actual time=0.000..0.000 rows=1 loops=365)
+                                                                          Index Cond: ("dateKey" = i."deliveryDateKey")
+                                                                          Heap Fetches: 365
+                                                                          Buffers: shared hit=728 read=2
+                                                        ->  Index Scan using "DIM_CUSTOMER_pkey" on "DIM_CUSTOMER" c  (cost=0.29..3442.31 rows=100001 width=16) (actual time=0.011..14.311 rows=100001 loops=1)
+                                                              Buffers: shared hit=7 read=1108
+Planning:
+  Buffers: shared hit=23 read=23
+Planning Time: 0.634 ms
+Execution Time: 5399.032 ms

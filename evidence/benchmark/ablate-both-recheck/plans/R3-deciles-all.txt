@@ -1,0 +1,50 @@
+-- R3-deciles-all: Deciles, all customers
+-- file: olap/queries/r3_customer_value_distribution/deciles.sql
+-- params: {}
+
+WindowAgg  (cost=31476.19..31486.69 rows=200 width=204) (actual time=295.504..295.522 rows=10 loops=1)
+  Buffers: shared hit=5258
+  ->  WindowAgg  (cost=31476.19..31479.69 rows=200 width=140) (actual time=295.489..295.499 rows=10 loops=1)
+        Buffers: shared hit=5258
+        ->  Sort  (cost=31476.19..31476.69 rows=200 width=108) (actual time=295.475..295.480 rows=10 loops=1)
+              Sort Key: (ntile(10) OVER (?))
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=5258
+              ->  HashAggregate  (cost=31466.05..31468.55 rows=200 width=108) (actual time=295.450..295.457 rows=10 loops=1)
+                    Group Key: ntile(10) OVER (?)
+                    Batches: 1  Memory Usage: 40kB
+                    Buffers: shared hit=5258
+                    ->  WindowAgg  (cost=27624.13..29304.97 rows=96048 width=36) (actual time=268.174..274.741 rows=99996 loops=1)
+                          Buffers: shared hit=5258
+                          ->  Sort  (cost=27624.13..27864.25 rows=96048 width=32) (actual time=257.527..260.096 rows=99996 loops=1)
+                                Sort Key: customer_value.value DESC
+                                Sort Method: quicksort  Memory: 5416kB
+                                Buffers: shared hit=5258
+                                ->  Subquery Scan on customer_value  (cost=17514.37..19675.45 rows=96048 width=32) (actual time=208.732..240.669 rows=99996 loops=1)
+                                      Buffers: shared hit=5258
+                                      ->  HashAggregate  (cost=17514.37..18714.97 rows=96048 width=36) (actual time=208.730..235.861 rows=99996 loops=1)
+                                            Group Key: i."customerKey"
+                                            Batches: 1  Memory Usage: 43025kB
+                                            Buffers: shared hit=5258
+                                            ->  Hash Join  (cost=6174.05..15599.25 rows=383024 width=12) (actual time=23.492..133.658 rows=383024 loops=1)
+                                                  Hash Cond: (i."geoKey" = g."geoKey")
+                                                  Buffers: shared hit=5258
+                                                  ->  Hash Join  (cost=3085.02..11504.74 rows=383024 width=16) (actual time=12.171..74.414 rows=383024 loops=1)
+                                                        Hash Cond: (i."customerKey" = c."customerKey")
+                                                        Buffers: shared hit=4419
+                                                        ->  Seq Scan on "AGG_CUSTOMER_PERIOD" i  (cost=0.00..7414.24 rows=383024 width=16) (actual time=0.005..13.853 rows=383024 loops=1)
+                                                              Buffers: shared hit=3584
+                                                        ->  Hash  (cost=1835.01..1835.01 rows=100001 width=4) (actual time=11.852..11.853 rows=100001 loops=1)
+                                                              Buckets: 131072  Batches: 1  Memory Usage: 4540kB
+                                                              Buffers: shared hit=835
+                                                              ->  Seq Scan on "DIM_CUSTOMER" c  (cost=0.00..1835.01 rows=100001 width=4) (actual time=0.004..4.309 rows=100001 loops=1)
+                                                                    Buffers: shared hit=835
+                                                  ->  Hash  (cost=1839.01..1839.01 rows=100001 width=4) (actual time=10.944..10.944 rows=100001 loops=1)
+                                                        Buckets: 131072  Batches: 1  Memory Usage: 4540kB
+                                                        Buffers: shared hit=839
+                                                        ->  Seq Scan on "DIM_GEOGRAPHY" g  (cost=0.00..1839.01 rows=100001 width=4) (actual time=0.008..4.145 rows=100001 loops=1)
+                                                              Buffers: shared hit=839
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.304 ms
+Execution Time: 298.941 ms

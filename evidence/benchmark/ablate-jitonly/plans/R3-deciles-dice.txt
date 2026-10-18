@@ -1,0 +1,65 @@
+-- R3-deciles-dice: Deciles, female customers in 2025
+-- file: olap/queries/r3_customer_value_distribution/deciles.sql
+-- params: {"gender": "F", "year": "2025"}
+
+WindowAgg  (cost=9790.11..9823.20 rows=200 width=204) (actual time=167.998..168.135 rows=10 loops=1)
+  Buffers: shared hit=281318
+  ->  WindowAgg  (cost=9790.11..9816.20 rows=200 width=140) (actual time=158.151..168.068 rows=10 loops=1)
+        Buffers: shared hit=281318
+        ->  GroupAggregate  (cost=9790.11..9813.20 rows=200 width=108) (actual time=156.937..168.022 rows=10 loops=1)
+              Group Key: ranked.decile
+              Buffers: shared hit=281318
+              ->  Sort  (cost=9790.11..9793.54 rows=1373 width=36) (actual time=155.797..157.352 rows=50264 loops=1)
+                    Sort Key: ranked.decile
+                    Sort Method: quicksort  Memory: 3500kB
+                    Buffers: shared hit=281318
+                    ->  Subquery Scan on ranked  (cost=9680.79..9718.55 rows=1373 width=36) (actual time=143.780..150.269 rows=50264 loops=1)
+                          Buffers: shared hit=281318
+                          ->  WindowAgg  (cost=9680.79..9704.82 rows=1373 width=36) (actual time=143.779..147.651 rows=50264 loops=1)
+                                Buffers: shared hit=281318
+                                ->  Sort  (cost=9680.79..9684.23 rows=1373 width=32) (actual time=137.310..139.088 rows=50264 loops=1)
+                                      Sort Key: customer_value.value DESC
+                                      Sort Method: quicksort  Memory: 2715kB
+                                      Buffers: shared hit=281318
+                                      ->  Subquery Scan on customer_value  (cost=9426.28..9609.24 rows=1373 width=32) (actual time=80.153..127.285 rows=50264 loops=1)
+                                            Buffers: shared hit=281318
+                                            ->  Finalize GroupAggregate  (cost=9426.28..9595.51 rows=1373 width=36) (actual time=80.152..124.482 rows=50264 loops=1)
+                                                  Group Key: i."customerKey"
+                                                  Buffers: shared hit=281318
+                                                  ->  Gather Merge  (cost=9426.28..9569.77 rows=1144 width=36) (actual time=80.142..99.182 rows=51077 loops=1)
+                                                        Workers Planned: 2
+                                                        Workers Launched: 2
+                                                        Buffers: shared hit=281318
+                                                        ->  Partial GroupAggregate  (cost=8426.26..8437.70 rows=572 width=36) (actual time=76.834..89.097 rows=17026 loops=3)
+                                                              Group Key: i."customerKey"
+                                                              Buffers: shared hit=281318
+                                                              ->  Sort  (cost=8426.26..8427.69 rows=572 width=12) (actual time=76.826..78.434 rows=45865 loops=3)
+                                                                    Sort Key: i."customerKey"
+                                                                    Sort Method: quicksort  Memory: 3481kB
+                                                                    Buffers: shared hit=281318
+                                                                    Worker 0:  Sort Method: quicksort  Memory: 3245kB
+                                                                    Worker 1:  Sort Method: quicksort  Memory: 3257kB
+                                                                    ->  Nested Loop  (cost=2341.56..8400.06 rows=572 width=12) (actual time=17.216..71.001 rows=45865 loops=3)
+                                                                          Buffers: shared hit=281304
+                                                                          ->  Hash Join  (cost=2341.26..8220.44 rows=572 width=16) (actual time=17.169..36.352 rows=45865 loops=3)
+                                                                                Hash Cond: (i."customerKey" = c."customerKey")
+                                                                                Buffers: shared hit=6111
+                                                                                ->  Parallel Seq Scan on "AGG_CUSTOMER_PERIOD" i  (cost=0.00..5578.92 rows=114380 width=16) (actual time=0.005..7.692 rows=91176 loops=3)
+                                                                                      Filter: (year = 2025)
+                                                                                      Rows Removed by Filter: 36499
+                                                                                      Buffers: shared hit=3584
+                                                                                ->  Hash  (cost=2335.01..2335.01 rows=500 width=4) (actual time=17.125..17.126 rows=50300 loops=3)
+                                                                                      Buckets: 65536 (originally 1024)  Batches: 1 (originally 1)  Memory Usage: 2281kB
+                                                                                      Buffers: shared hit=2505
+                                                                                      ->  Seq Scan on "DIM_CUSTOMER" c  (cost=0.00..2335.01 rows=500 width=4) (actual time=0.010..12.895 rows=50300 loops=3)
+                                                                                            Filter: ((gender)::text = 'F'::text)
+                                                                                            Rows Removed by Filter: 49701
+                                                                                            Buffers: shared hit=2505
+                                                                          ->  Index Only Scan using "DIM_GEOGRAPHY_pkey" on "DIM_GEOGRAPHY" g  (cost=0.29..0.31 rows=1 width=4) (actual time=0.001..0.001 rows=1 loops=137594)
+                                                                                Index Cond: ("geoKey" = i."geoKey")
+                                                                                Heap Fetches: 0
+                                                                                Buffers: shared hit=275193
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.369 ms
+Execution Time: 169.457 ms

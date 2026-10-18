@@ -1,0 +1,35 @@
+-- R1-product-toys: Drill into Toys
+-- file: olap/queries/r1_product_category_value/product.sql
+-- params: {"category": "Toys", "top_n": "10"}
+
+Subquery Scan on ranked  (cost=40752.64..40768.66 rows=178 width=120) (actual time=194.584..195.380 rows=11 loops=1)
+  Filter: (ranked.is_subtotal OR (ranked.rank_in_category <= 10))
+  Rows Removed by Filter: 1914
+  Buffers: shared hit=3339 read=6325, temp read=1099 written=1102
+  ->  WindowAgg  (cost=40752.64..40765.32 rows=267 width=120) (actual time=194.582..195.308 rows=1925 loops=1)
+        Buffers: shared hit=3339 read=6325, temp read=1099 written=1102
+        ->  WindowAgg  (cost=40752.64..40758.65 rows=267 width=88) (actual time=193.288..194.159 rows=1925 loops=1)
+              Buffers: shared hit=3339 read=6325, temp read=1099 written=1102
+              ->  Sort  (cost=40752.64..40753.31 rows=267 width=80) (actual time=193.270..193.332 rows=1925 loops=1)
+                    Sort Key: rolled.category, rolled.is_subtotal, rolled.value DESC
+                    Sort Method: quicksort  Memory: 184kB
+                    Buffers: shared hit=3339 read=6325, temp read=1099 written=1102
+                    ->  Subquery Scan on rolled  (cost=37686.81..40741.88 rows=267 width=80) (actual time=135.250..190.160 rows=1925 loops=1)
+                          Buffers: shared hit=3339 read=6325, temp read=1099 written=1102
+                          ->  GroupAggregate  (cost=37686.81..40739.21 rows=267 width=101) (actual time=135.249..190.031 rows=1925 loops=1)
+                                Group Key: a.category, a."productName"
+                                Group Key: a.category
+                                Group Key: ()
+                                Filter: (GROUPING(a.category) = 0)
+                                Rows Removed by Filter: 1
+                                Buffers: shared hit=3339 read=6325, temp read=1099 written=1102
+                                ->  Sort  (cost=37686.81..38083.39 rows=158634 width=44) (actual time=135.205..154.802 rows=156911 loops=1)
+                                      Sort Key: a."productName"
+                                      Sort Method: external merge  Disk: 8792kB
+                                      Buffers: shared hit=3339 read=6325, temp read=1099 written=1102
+                                      ->  Seq Scan on "AGG_PRODUCT_PERIOD" a  (cost=0.00..19102.03 rows=158634 width=44) (actual time=0.017..42.719 rows=156911 loops=1)
+                                            Filter: ((category)::text = 'Toys'::text)
+                                            Rows Removed by Filter: 598131
+                                            Buffers: shared hit=3339 read=6325
+Planning Time: 0.166 ms
+Execution Time: 196.520 ms

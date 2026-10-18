@@ -1,0 +1,32 @@
+-- R1-product-toys: Drill into Toys
+-- file: olap/queries/r1_product_category_value/product.sql
+-- params: {"category": "Toys", "top_n": "10"}
+
+Subquery Scan on ranked  (cost=23754.27..23770.35 rows=179 width=120) (actual time=98.004..98.731 rows=11 loops=1)
+  Filter: (ranked.is_subtotal OR (ranked.rank_in_category <= 10))
+  Rows Removed by Filter: 1914
+  Buffers: shared hit=4043 read=5621
+  ->  WindowAgg  (cost=23754.27..23767.00 rows=268 width=120) (actual time=98.003..98.666 rows=1925 loops=1)
+        Buffers: shared hit=4043 read=5621
+        ->  WindowAgg  (cost=23754.27..23760.30 rows=268 width=88) (actual time=96.927..97.632 rows=1925 loops=1)
+              Buffers: shared hit=4043 read=5621
+              ->  Sort  (cost=23754.27..23754.94 rows=268 width=80) (actual time=96.920..96.973 rows=1925 loops=1)
+                    Sort Key: rolled.category, rolled.is_subtotal, rolled.value DESC
+                    Sort Method: quicksort  Memory: 184kB
+                    Buffers: shared hit=4043 read=5621
+                    ->  Subquery Scan on rolled  (cost=0.00..23743.46 rows=268 width=80) (actual time=93.449..94.077 rows=1925 loops=1)
+                          Buffers: shared hit=4043 read=5621
+                          ->  MixedAggregate  (cost=0.00..23740.78 rows=268 width=101) (actual time=93.448..93.979 rows=1925 loops=1)
+                                Hash Key: a.category, a."productName"
+                                Hash Key: a.category
+                                Group Key: ()
+                                Filter: (GROUPING(a.category) = 0)
+                                Batches: 1  Memory Usage: 2585kB
+                                Rows Removed by Filter: 1
+                                Buffers: shared hit=4043 read=5621
+                                ->  Seq Scan on "AGG_PRODUCT_PERIOD" a  (cost=0.00..19102.03 rows=158634 width=44) (actual time=0.020..37.719 rows=156911 loops=1)
+                                      Filter: ((category)::text = 'Toys'::text)
+                                      Rows Removed by Filter: 598131
+                                      Buffers: shared hit=4043 read=5621
+Planning Time: 0.177 ms
+Execution Time: 99.354 ms
