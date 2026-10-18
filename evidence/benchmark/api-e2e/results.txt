@@ -1,0 +1,88 @@
+date: 2026-10-18T08:01:07Z
+health: {"database":"ok","status":"ok"}
+
+== report levels: API vs original SQL on stadvdb-mco1-dw-db
+[1] r1/category (no filters)
+  http=200 api=0.007476s
+  rows equal: api=10 orig=10, columns same
+[2] r1/category year=2025
+  http=200 api=0.003580s
+  rows equal: api=10 orig=10, columns same
+[3] r1/category year=2025&vehicle=Motorcycle&size_group=Heavy
+  http=200 api=0.003855s
+  rows equal: api=10 orig=10, columns same
+[4] r1/category year=2024&quarter=4&month=12&vehicle=Car
+  http=200 api=0.003245s
+  rows equal: api=10 orig=10, columns same
+[5] r1/product category=Toys&top_n=5
+  http=200 api=0.108755s
+  rows equal: api=6 orig=6, columns same
+[6] r1/product year=2025&quarter=1&vehicle=Trike&top_n=3
+  http=200 api=0.051081s
+  rows equal: api=36 orig=36, columns same
+[7] r2/courier_vehicle_cube (no filters)
+  http=200 api=0.136958s
+  rows equal: api=20 orig=20, columns same
+[8] r2/courier_vehicle_cube year=2024&courier=JNT&age_band=30-39
+  http=200 api=0.013119s
+  rows equal: api=10 orig=10, columns same
+[9] r2/courier_vehicle_pivot measure=per_rider&year=2025&size_group=Light
+  http=200 api=0.041785s
+  rows equal: api=4 orig=4, columns same
+[10] r2/courier_vehicle_pivot measure=orders&courier=LBCD
+  http=200 api=0.024397s
+  rows equal: api=2 orig=2, columns same
+[11] r2/rider sort=least&top_n=20&vehicle=Car
+  http=200 api=0.050070s
+  rows equal: api=15 orig=15, columns same
+[12] r2/rider year=2025&quarter=2&top_n=10
+  http=200 api=0.015962s
+  rows equal: api=10 orig=10, columns same
+[13] r3/deciles (no filters)
+  http=200 api=0.240371s
+  rows equal: api=10 orig=10, columns same
+[14] r3/deciles gender=F&year=2025
+  http=200 api=0.132754s
+  rows equal: api=10 orig=10, columns same
+[15] r3/geography level=country&gender=M
+  http=200 api=0.253025s
+  rows equal: api=42 orig=42, columns same
+[16] r3/geography level=city&country=Philippines
+  http=200 api=0.025340s
+  rows equal: api=44 orig=44, columns same
+[17] r3/customer top_n=20
+  http=200 api=0.540200s
+  rows equal: api=20 orig=20, columns same
+[18] r3/customer country=Philippines&decile=10&top_n=5
+  http=200 api=0.014657s
+  rows equal: api=5 orig=5, columns same
+[19] r4/rollup (no filters)
+  http=200 api=0.037487s
+  rows equal: api=21 orig=21, columns same
+[20] r4/rollup year=2024&day_type=weekend
+  http=200 api=0.021231s
+  rows equal: api=8 orig=8, columns same
+[21] r4/trend level=day&year=2025&payday=yes
+  http=200 api=0.022759s
+  rows equal: api=17 orig=17, columns same
+[22] r4/trend level=week&quarter=3&vehicle=Bicycle
+  http=200 api=0.014488s
+  rows equal: api=15 orig=15, columns same
+[23] r4/weekday_pivot year=2025&vehicle=Bicycle
+  http=200 api=0.016208s
+  rows equal: api=10 orig=10, columns same
+[24] r4/busiest_days sort=quietest&top_n=3&size_group=Heavy
+  http=200 api=0.085517s
+  rows equal: api=3 orig=3, columns same
+[25] r4/busiest_days (no filters)
+  http=200 api=0.150965s
+  rows equal: api=10 orig=10, columns same
+
+== error handling and literal filters
+  ok   unknown parameter -> 400
+  ok   year outside the allowed values -> 400
+  ok   unknown level -> 404
+  ok   unknown report -> 404
+  ok   SQL-looking country filter is bound as text (0 rows)
+
+== summary: report levels 25, equal 25, problems 0

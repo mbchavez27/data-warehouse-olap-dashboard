@@ -24,7 +24,7 @@ START_COMMAND = (
     "dw_db",
 )
 REBUILD_COMMAND = ("bash", "db/scripts/setup_dw.sh", "--schema-only")
-PHASES = ("--date", "--dims", "--facts", "--reconcile", "--check")
+PHASES = ("--date", "--dims", "--facts", "--reconcile", "--optimize", "--check")
 
 
 def bash_executable() -> str:

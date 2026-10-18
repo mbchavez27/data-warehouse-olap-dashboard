@@ -152,6 +152,7 @@ export default function DemandCalendarReport() {
   let chart = null
   let calendar = null
   let showTable = true
+  let collapseTable = false // the table sits closed under a chart that already shows it
   let note = null
   let empty = false
   let exportName = 'r4.csv'
@@ -217,13 +218,14 @@ export default function DemandCalendarReport() {
         ),
         csv: period,
       },
-      { key: 'days', label: 'Days', align: 'right', render: (r) => num(r.days) },
+      { key: 'days', label: 'Days', align: 'right', hint: 'Calendar days in the period that pass the day filters, including days with no orders', render: (r) => num(r.days) },
       { key: 'orders', label: 'Orders', align: 'right', render: (r) => num(r.orders) },
-      { key: 'orders_per_day', label: 'Orders per day', align: 'right', render: (r) => dec1(r.orders_per_day) },
+      { key: 'orders_per_day', label: 'Orders per day', align: 'right', hint: 'Orders divided by days, so short and long periods compare fairly', render: (r) => dec1(r.orders_per_day) },
       { key: 'units', label: 'Units', align: 'right', render: (r) => num(r.units) },
       {
         key: 'order_share',
         label: 'Share of orders',
+        hint: "This period's share of every order in the slice",
         align: 'right',
         render: (r) => pct(total ? (100 * Number(r.orders)) / total : null),
         csv: (r) => (total ? Math.round((1000 * Number(r.orders)) / total) / 10 : ''),
@@ -303,8 +305,14 @@ export default function DemandCalendarReport() {
       },
     ]
     columns = [
-      { key: 'period_label', label: 'Period', render: (r) => <span className="cell-strong">{label(r)}</span>, csv: label },
-      { key: 'days', label: 'Days', align: 'right', render: (r) => num(r.days) },
+      {
+        key: 'period_label',
+        label: 'Period',
+        render: (r) => <span className="cell-strong">{label(r)}</span>,
+        csv: label,
+        sortValue: (r) => r.period_start,
+      },
+      { key: 'days', label: 'Days', align: 'right', hint: 'Calendar days in the period that pass the day filters, including days with no orders', render: (r) => num(r.days) },
       {
         key: 'orders',
         label: 'Orders',
@@ -321,10 +329,11 @@ export default function DemandCalendarReport() {
           </Tooltip>
         ),
       },
-      { key: 'orders_per_day', label: 'Orders per day', align: 'right', render: (r) => dec1(r.orders_per_day) },
+      { key: 'orders_per_day', label: 'Orders per day', align: 'right', hint: 'Orders divided by days, so short and long periods compare fairly', render: (r) => dec1(r.orders_per_day) },
       {
         key: 'change_vs_previous_pct',
         label: 'Change vs previous',
+        hint: 'Orders per day against the period before',
         align: 'right',
         render: (r) => <Change value={r.change_vs_previous_pct} />,
         csv: (r) => (r.change_vs_previous_pct === null ? '' : r.change_vs_previous_pct),
@@ -332,14 +341,15 @@ export default function DemandCalendarReport() {
       {
         key: 'moving_avg_orders_per_day',
         label: '7-period average',
+        hint: 'Average orders per day over this period and the 6 before it, which smooths out one-off spikes',
         align: 'right',
         render: (r) => dec1(r.moving_avg_orders_per_day),
       },
       { key: 'units', label: 'Units', align: 'right', render: (r) => num(r.units) },
     ]
-    table = { caption: `Orders by ${grain}`, rowKey: (r) => `${r.period_label}-${r.period_start}` }
-    showTable = grain !== 'day'
-    legend = showTable
+    table = { caption: `Orders by ${grain}`, rowKey: (r) => `${r.period_label}-${r.period_start}`, sortable: true }
+    collapseTable = grain === 'day'
+    legend = !collapseTable
       ? [
           { swatch: 'bar', label: 'Bar length = orders, relative to the busiest period listed' },
           { swatch: 'glyph', glyph: '▲▼', label: 'Change vs previous: up or down on the period before' },
@@ -349,7 +359,7 @@ export default function DemandCalendarReport() {
       showingAverage ? ' The dashed line is a 7-period moving average.' : ''
     }${
       grain === 'week' ? ' A week that crosses a quarter boundary appears once for each quarter, so 2024 W40 is a one-day row plus a six-day row.' : ''
-    }${grain === 'day' ? ' At day grain the calendar above is the table: hover any cell for that day.' : ''}`
+    }${grain === 'day' ? ' At day grain the calendar above shows every day: hover a cell for that day, or open the daily table under it to read or sort the numbers.' : ''}`
     exportName = `r4-trend-${grain}.csv`
   }
 
@@ -430,6 +440,7 @@ export default function DemandCalendarReport() {
       {
         key: 'all_days',
         label: 'All days',
+        hint: 'Average orders per day across every day of the month; the cells compare against it',
         align: 'right',
         render: (r) => <span className="cell-strong">{dec1(r.all_days)}</span>,
       },
@@ -472,7 +483,7 @@ export default function DemandCalendarReport() {
       { label: 'Orders per active rider', value: dec1(top?.orders_per_active_rider) },
     ]
     columns = [
-      { key: 'demand_rank', label: 'Rank', align: 'right' },
+      { key: 'demand_rank', label: 'Rank', align: 'right', hint: '1 = the day with the most orders, ranked from every day in the slice, not only those listed' },
       { key: 'date', label: 'Date', render: (r) => <span className="cell-strong">{dayLabel(r.date)}</span>, csv: (r) => r.date },
       {
         key: 'day_name',
@@ -490,20 +501,22 @@ export default function DemandCalendarReport() {
       {
         key: 'vs_average_pct',
         label: 'Versus the average day',
+        hint: "This day's orders against the average day in the slice",
         align: 'right',
         render: (r) => <Change value={r.vs_average_pct} />,
         csv: (r) => (r.vs_average_pct === null ? '' : r.vs_average_pct),
       },
       { key: 'units', label: 'Units', align: 'right', render: (r) => num(r.units) },
-      { key: 'active_riders', label: 'Riders', align: 'right', render: (r) => num(r.active_riders) },
+      { key: 'active_riders', label: 'Riders', align: 'right', hint: 'Riders with at least one delivery that day', render: (r) => num(r.active_riders) },
       {
         key: 'orders_per_active_rider',
         label: 'Orders per rider',
+        hint: 'Orders divided by the riders active that day',
         align: 'right',
         render: (r) => dec1(r.orders_per_active_rider),
       },
     ]
-    table = { caption: sort === 'busiest' ? 'Busiest days' : 'Quietest days', rowKey: (r) => r.date }
+    table = { caption: sort === 'busiest' ? 'Busiest days' : 'Quietest days', rowKey: (r) => r.date, sortable: true }
     legend = [
       {
         swatch: 'glyph',
@@ -549,7 +562,13 @@ export default function DemandCalendarReport() {
         <ReportStatus loading={loading} error={error} empty={empty} />
         {!error && !empty && calendar && <div className="panel-chart">{calendar}</div>}
         {!error && !empty && chart && <div className="panel-chart">{chart}</div>}
-        {!error && !empty && showTable && <DataTable columns={columns} rows={rows} {...table} />}
+        {!error && !empty && showTable && !collapseTable && <DataTable columns={columns} rows={rows} {...table} />}
+        {!error && !empty && collapseTable && (
+          <details className="table-details">
+            <summary>{`Show the daily numbers as a table (${num(rows.length)} ${rows.length === 1 ? 'day' : 'days'})`}</summary>
+            <DataTable columns={columns} rows={rows} {...table} />
+          </details>
+        )}
       </Panel>
     </div>
   )

@@ -1,6 +1,6 @@
 # Project Checklist — Data Warehouse OLAP Dashboard
 
-> Status as of 2026-10-18. Checked items have repository evidence; unchecked items are scaffold-only (`.gitkeep`) or empty.
+> Status as of 2026-10-18, re-verified after PR #15 (query optimizations) and PR #16 (functional tests): every suite below was re-run and passed. Checked items have repository evidence. The final technical report is tracked separately and is not part of this checklist.
 
 ## 1. Source Database Setup
 
@@ -38,14 +38,14 @@
 - [x] Write code to **Load** the transformed data into the data warehouse.
   - Evidence: `etl/load/date.py`, `etl/load/dimensions.py`, and `etl/load/facts.py` are invoked by the stable `etl/main.py --date` / `--dims` / `--facts` modes: 365 dates; 100 / 100,000 / 100,000 / 10,000 dimension rows; 1,000,000 / 1,999,824 / 36,500 fact rows; 0 rejects (`evidence/etl-rejects.json`); full rebuild ~40 s; reruns byte-identical. `etl/main.py --reconcile` produced `evidence/etl-reconciliation.json`: 15/15 source-to-warehouse checks passed, including 10,999,917 units in all three facts, exact Unknown seed rows, and 0 fact references to Unknown members.
 - [x] Provide a reproducible, fail-fast full-pipeline command.
-  - Evidence: `etl/run_pipeline.py` orchestrates date → dimensions → facts → reconciliation → final readiness check; `etl/run_etl.sh` is a thin Bash wrapper. The default refuses a populated warehouse before any load, while explicit `--rebuild` recreates only `dw_db`; runner and wrapper safety is covered by `etl/tests/test_run_pipeline.py`.
+  - Evidence: `etl/run_pipeline.py` orchestrates date → dimensions → facts → reconciliation → summary views (`--optimize`) → final readiness check; `etl/run_etl.sh` is a thin Bash wrapper. The default refuses a populated warehouse before any load, while explicit `--rebuild` recreates only `dw_db`; runner and wrapper safety is covered by `etl/tests/test_run_pipeline.py`.
 
 ## 4. OLAP Application Development
 
 - [x] Formulate complex queries utilizing OLAP operations (roll-up, drill-down, slice, dice, pivot).
   - Evidence: `olap/queries/` holds the four reports (12 parameterized level files) documented in `olap/queries/README.md`; all five OLAP operations are covered (`ROLLUP`, `CUBE`, `GROUPING SETS`, pivot via `FILTER`, window functions). They realize the 22 business questions in `docs/database/data-warehouse-schema.md` and are benchmarked in `evidence/benchmark/`. Every filter is a bound parameter (`:'name'`), never concatenated SQL.
 - [x] Develop a web-based dashboard application.
-  - Evidence: Go API in `olap-backend/` (`net/http` + `pgx/v5`, read-only pool, `force_custom_plan`; 11 tests via `go test ./...`) and React dashboard in `olap-frontend/` (Vite, no UI libraries) covering all four reports: R1 (Products & Categories), R2 (Fleet & Rider Workload), R3 (Customer Value) and R4 (Demand Calendar).
+  - Evidence: Go API in `olap-backend/` (`net/http` + `pgx/v5`, read-only pool, `force_custom_plan`; 11 tests via `go test ./...`) and React dashboard in `olap-frontend/` (Vite, no UI libraries) covering all four reports: R1 (Products & Categories), R2 (Fleet & Rider Workload), R3 (Customer Value) and R4 (Demand Calendar). The dashboard reads the reports with charts sized to the data (Pareto with an 80% line, trend line, rider dot strip, demand calendar, heat grids with "against its average" colourings), sortable tables, column explanations, keyboard and touch reading of the charts, and a light/dark switch; `olap-frontend/README.md` describes each.
 - [x] Implement UI features allowing users to specify query parameters and filters (for slice and dice).
   - Evidence: `olap-frontend/src/components/FilterBar.jsx` with `src/lib/dimensions.js` drives the per-report filter sets — year/quarter/month/vehicle/order size for R1, those plus courier and rider age for R2, year/quarter/customer gender for R3, and period/day type (weekday or weekend)/payday/vehicle/order size for R4 — all exposed by the API (see `olap-frontend/README.md`). Each report sends an endpoint only the filters that level declares, since the API rejects an undeclared parameter.
 - [x] Implement UI features allowing users to view reports at varying levels of granularity (for drill-down and roll-up).
@@ -64,7 +64,7 @@
 ## 6. Performance Testing & Optimization
 
 - [x] Run each query multiple times (varying parameters, structure, or setup) and record baseline execution times.
-  - Evidence: `olap/benchmark/run_benchmark.py` ran the 18 cases (1 warm-up + 5 measured runs each) into `evidence/benchmark/baseline/`; a second folder `evidence/benchmark/baseline-generic-plan/` records the same cases under `force_generic_plan`.
+  - Evidence: `olap/benchmark/run_benchmark.py` ran the 18 cases into `evidence/benchmark/baseline/` (1 warm-up + 5 measured runs) and, for the final comparison, `evidence/benchmark/baseline-r4/` (1 warm-up + 9 timed runs, median); `evidence/benchmark/baseline-generic-plan/` records the same cases under `force_generic_plan`.
 
   | Baseline input | Current value | Evidence |
   |---|---:|---|

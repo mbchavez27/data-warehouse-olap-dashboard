@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { chartKeys, KEYS_HINT, pointerReadout, svgPoint, tipLeft } from '../lib/chartKeys.js'
 
 // Concentration chart: one bar per group plus a cumulative line over them (the
 // classic Pareto). Both series share a single 0-100 scale, so the line reaching
@@ -50,14 +51,19 @@ export default function ParetoChart({
   const labelEvery = Math.max(1, Math.ceil(n / 12))
 
   const track = (e) => {
-    const r = e.currentTarget.getBoundingClientRect()
-    const at = ((e.clientX - r.left) / r.width) * W
+    const at = svgPoint(e, W, H).x
     setHover(Math.max(0, Math.min(n - 1, Math.floor((at - pad.l) / step))))
   }
 
   return (
     <div className="chart">
-      <svg viewBox={`0 0 ${W} ${H}`} className="chart-svg" role="img" aria-label={title}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="chart-svg"
+        role="img"
+        aria-label={`${title}. ${KEYS_HINT}`}
+        {...chartKeys(n, hover, setHover)}
+      >
         {gridValues.map((gv) => (
           <g key={gv}>
             <line x1={pad.l} x2={W - pad.r} y1={y(gv)} y2={y(gv)} className="chart-grid" />
@@ -105,13 +111,19 @@ export default function ParetoChart({
           width={W - pad.l - pad.r}
           height={H - pad.t - pad.b}
           fill="transparent"
-          onMouseMove={track}
-          onMouseLeave={() => setHover(null)}
+          className="chart-hit"
+          {...pointerReadout(track, () => setHover(null))}
         />
       </svg>
 
+      <p className="visually-hidden" aria-live="polite">
+        {hover === null
+          ? ''
+          : `${labels[hover]}: ${barName} ${format(values[hover])}, ${lineName} ${format(cumulative[hover])}`}
+      </p>
+
       {hover !== null && (
-        <div className="chart-tip" style={{ left: `${(100 * x(hover)) / W}%` }}>
+        <div className="chart-tip" style={{ left: tipLeft(x(hover), W) }}>
           <strong>{labels[hover]}</strong>
           <span>
             <i className="is-bar" />

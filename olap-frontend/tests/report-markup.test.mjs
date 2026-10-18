@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 
 import { compact, dec1, pct } from '../src/lib/format.js'
+import { chartKeys, pointerReadout, svgPoint, tipLeft } from '../src/lib/chartKeys.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const support = path.join(here, 'support')
@@ -244,6 +245,20 @@ const CASES = [
         ['bar legend', html.includes('Bar length = orders')],
         ['arrow legend', html.includes('up or down on the period before')],
         [
+          'the chart reads from the keyboard',
+          /<svg[^>]*aria-label="[^"]*arrow keys[^"]*"[^>]*tabindex="0"/.test(html) && html.includes('aria-live="polite"'),
+        ],
+        [
+          'the less obvious headers explain themselves',
+          ['Days', 'Orders per day', 'Change vs previous', '7-period average'].every((h) =>
+            html.includes(`class="th-sort th-hint">${h}<`),
+          ),
+        ],
+        [
+          'every header sorts, in the query order until clicked',
+          (html.match(/class="th-sort/g) ?? []).length === 7 && !html.includes('aria-sort'),
+        ],
+        [
           'every change carries an arrow in its direction',
           (html.match(/change is-up/g) ?? []).length === rows.filter((r) => Number(r.change_vs_previous_pct) > 0).length &&
             (html.match(/change is-down/g) ?? []).length === rows.filter((r) => Number(r.change_vs_previous_pct) < 0).length,
@@ -274,12 +289,18 @@ const CASES = [
     checks({ html, rows }) {
       const busiest = busiestOf(rows, 'orders_per_day')
       return [
-        ['no table at day grain', !html.includes('<table')],
+        [
+          'the daily table sits closed under the calendar',
+          /<details class="table-details"><summary>Show the daily numbers as a table/.test(html) &&
+            !html.includes('<details class="table-details" open') &&
+            rowsIn(html) === rows.length,
+          `${rowsIn(html)} of ${rows.length}`,
+        ],
         ['the calendar is the day view', html.includes('class="cal"')],
         ['one cell per day in the slice', (html.match(/cal-cell/g) ?? []).length === rows.length, `${rows.length} days`],
         ['calendar has a colour scale', html.includes('cal-scale') && html.includes('Less') && html.includes('More')],
         ['chart above the calendar too', html.includes('class="chart"')],
-        ['note points at the calendar', html.includes('the calendar above is the table')],
+        ['note points at the calendar and the table', html.includes('open the daily table under it')],
         [
           'busiest period is a real date',
           figure(html, 'Busiest period') === dayLabel(busiest.period_start),
@@ -327,7 +348,11 @@ const CASES = [
     checks({ html, rows, request }) {
       const scope = scopeLine(html) ?? ''
       return [
-        ['one day in the slice', html.includes('</svg>') && !html.includes('<table')],
+        [
+          'one day in the slice, its table closed under the chart',
+          html.includes('</svg>') && html.includes(`as a table (${rows.length} ${rows.length === 1 ? 'day' : 'days'})`),
+          `${rows.length} rows`,
+        ],
         ['the pinned filters reached the request', request.params.day_type === 'weekend' && request.params.payday === 'yes'],
         [
           'scope names weekends and paydays',
@@ -500,6 +525,80 @@ for (const testCase of CASES) {
     }
   })
 }
+
+test('a chart steps through its points from the keyboard', () => {
+  let current = null
+  const set = (next) => {
+    current = typeof next === 'function' ? next(current) : next
+  }
+  const press = (key) => {
+    let prevented = false
+    chartKeys(5, current, set).onKeyDown({ key, preventDefault: () => (prevented = true) })
+    return prevented
+  }
+  chartKeys(5, current, set).onFocus()
+  assert.equal(current, 0, 'focus shows the first point')
+  press('ArrowRight')
+  press('ArrowRight')
+  assert.equal(current, 2)
+  press('ArrowLeft')
+  assert.equal(current, 1)
+  press('End')
+  press('ArrowRight')
+  assert.equal(current, 4, 'stops at the last point')
+  press('Home')
+  press('ArrowLeft')
+  assert.equal(current, 0, 'stops at the first point')
+  assert.equal(press('Tab'), false, 'other keys pass through, so Tab still leaves the chart')
+  press('Escape')
+  assert.equal(current, null, 'Escape hides the readout')
+  chartKeys(5, 3, set).onBlur()
+  assert.equal(current, null, 'leaving the chart clears it')
+})
+
+test('a chart reads mouse, pen and touch alike', () => {
+  // A 720 x 260 chart drawn 360 x 130 px at (100, 50): the pointer maps back to
+  // the chart's own units, measured on the whole svg, not the plot overlay.
+  const svg = { getBoundingClientRect: () => ({ left: 100, top: 50, width: 360, height: 130 }) }
+  const overlay = { currentTarget: { ownerSVGElement: svg }, clientX: 280, clientY: 115 }
+  assert.deepEqual(svgPoint(overlay, 720, 260), { x: 360, y: 130 })
+  assert.deepEqual(svgPoint({ currentTarget: svg, clientX: 100, clientY: 50 }, 720, 260), { x: 0, y: 0 })
+
+  let cleared = 0
+  const handlers = pointerReadout(() => {}, () => cleared++)
+  handlers.onPointerLeave({ pointerType: 'touch' })
+  assert.equal(cleared, 0, 'a lifted finger keeps its reading')
+  handlers.onPointerLeave({ pointerType: 'mouse' })
+  handlers.onPointerLeave({ pointerType: 'pen' })
+  assert.equal(cleared, 2, 'a mouse or pen leaving clears it')
+  assert.equal(handlers.onPointerDown, handlers.onPointerMove, 'a tap and a drag both track')
+
+  assert.equal(tipLeft(360, 720), '50%')
+  assert.equal(tipLeft(10, 720), '15%', 'the first point keeps its bubble on screen')
+  assert.equal(tipLeft(715, 720), '85%')
+})
+
+test('sorting a table keeps its totals pinned and its blanks last', () => {
+  const rows = [
+    { name: 'All', n: '60', is_total: true },
+    { name: 'b', n: '9' },
+    { name: 'a', n: null },
+    { name: 'c', n: '10' },
+    { name: 'Subtotal', n: '19', is_total: true },
+  ]
+  const isTotal = (r) => r.is_total
+  const names = (sorted) => sorted.map((r) => r.name).join(' ')
+  const n = { key: 'n' }
+  // NUMERIC arrives as strings, so "10" must sort above "9", not below it.
+  assert.equal(names(harness.sortRows(rows, n, 'desc', isTotal)), 'All c b a Subtotal')
+  assert.equal(names(harness.sortRows(rows, n, 'asc', isTotal)), 'All b c a Subtotal')
+  assert.equal(names(harness.sortRows(rows, { key: 'name' }, 'asc', isTotal)), 'All a b c Subtotal')
+  // sortValue sorts a label by something else, e.g. a period by its start date.
+  const byStart = { key: 'label', sortValue: (r) => r.start }
+  const periods = [{ label: 'April', start: '2025-04-01' }, { label: 'January', start: '2025-01-01' }]
+  assert.equal(harness.sortRows(periods, byStart, 'asc').map((r) => r.label).join(' '), 'January April')
+  assert.equal(names(rows), 'All b a c Subtotal', 'the input order is left alone')
+})
 
 test('a component that renames its state literal fails the harness instead of passing', async () => {
   // The guard the patch list depends on: an unmatched literal throws while

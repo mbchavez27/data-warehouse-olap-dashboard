@@ -15,6 +15,7 @@ REQUIRED_MODULES = (
     "load.date",
     "load.dimensions",
     "load.facts",
+    "load.summaries",
     "validate.preflight",
     "validate.reconcile",
 )
