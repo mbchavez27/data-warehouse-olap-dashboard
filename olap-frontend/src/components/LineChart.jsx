@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { chartKeys, KEYS_HINT } from '../lib/chartKeys.js'
+import { chartKeys, KEYS_HINT, pointerReadout, svgPoint, tipLeft } from '../lib/chartKeys.js'
 
 // A small SVG line chart. Points are evenly spaced left to right; the first
 // series also fills below its line. No chart library: the path is built from
@@ -47,8 +47,7 @@ export default function LineChart({ labels, series, format = String, axisFormat 
   // Nearest point to the cursor: the overlay rect covers the plot area, so the
   // pointer never has to land exactly on a 2px line.
   const track = (e) => {
-    const r = e.currentTarget.getBoundingClientRect()
-    const at = ((e.clientX - r.left) / r.width) * W
+    const at = svgPoint(e, W, H).x
     let best = 0
     for (let i = 1; i < n; i++) if (Math.abs(x(i) - at) < Math.abs(x(best) - at)) best = i
     setHover(best)
@@ -100,8 +99,8 @@ export default function LineChart({ labels, series, format = String, axisFormat 
           width={W - pad.l - pad.r}
           height={H - pad.t - pad.b}
           fill="transparent"
-          onMouseMove={track}
-          onMouseLeave={() => setHover(null)}
+          className="chart-hit"
+          {...pointerReadout(track, () => setHover(null))}
         />
       </svg>
 
@@ -112,7 +111,7 @@ export default function LineChart({ labels, series, format = String, axisFormat 
       </p>
 
       {hover !== null && (
-        <div className="chart-tip" style={{ left: `${(100 * x(hover)) / W}%` }}>
+        <div className="chart-tip" style={{ left: tipLeft(x(hover), W) }}>
           <strong>{labels[hover]}</strong>
           {series.map((s) => (
             <span key={s.name}>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { chartKeys, KEYS_HINT } from '../lib/chartKeys.js'
+import { chartKeys, KEYS_HINT, pointerReadout, svgPoint, tipLeft } from '../lib/chartKeys.js'
 
 // Spread of one measure across a set of items: one dot per item on a single
 // axis, a median marker, and a shaded "even share" band around the median.
@@ -59,6 +59,17 @@ export default function DotStrip({ points, format = String, band = 5, range = 10
     return d === 0 ? 'median' : `${d > 0 ? '+' : '−'}${Math.abs(d)}%`
   }
   const on = hover === null ? null : placed[hover] // hover is an index into placed, left to right
+  // The dot nearest the pointer, so a finger needn't land on a 9px circle.
+  const track = (e) => {
+    const at = svgPoint(e, W, H)
+    let best = 0
+    placed.forEach((p, i) => {
+      const d = (p.cx - at.x) ** 2 + (cy(p.row) - at.y) ** 2
+      const bestD = (placed[best].cx - at.x) ** 2 + (cy(placed[best].row) - at.y) ** 2
+      if (d < bestD) best = i
+    })
+    setHover(best)
+  }
   const vsMedian = (v) => `${v >= median ? '+' : ''}${(((Number(v) - median) / median) * 100).toFixed(1)}% against the median`
 
   return (
@@ -69,6 +80,7 @@ export default function DotStrip({ points, format = String, band = 5, range = 10
         role="img"
         aria-label={`${title}. ${KEYS_HINT}`}
         {...chartKeys(placed.length, hover, setHover)}
+        {...pointerReadout(track, () => setHover(null))}
       >
         <rect x={bandLo} y={pad.t} width={bandHi - bandLo} height={H - pad.b - pad.t} className="strip-band" />
         <line x1={pad.l} x2={W - pad.r} y1={H - pad.b} y2={H - pad.b} className="chart-grid" />
@@ -100,8 +112,6 @@ export default function DotStrip({ points, format = String, band = 5, range = 10
             cy={cy(p.row)}
             r={r}
             className={`strip-dot${hover === i ? ' is-on' : ''}`}
-            onMouseEnter={() => setHover(i)}
-            onMouseLeave={() => setHover(null)}
           />
         ))}
       </svg>
@@ -111,7 +121,7 @@ export default function DotStrip({ points, format = String, band = 5, range = 10
       </p>
 
       {on && (
-        <div className="chart-tip" style={{ left: `${(100 * on.cx) / W}%` }}>
+        <div className="chart-tip" style={{ left: tipLeft(on.cx, W) }}>
           <strong>{on.label}</strong>
           <span>{`${format(on.value)} — ${vsMedian(on.value)}`}</span>
         </div>

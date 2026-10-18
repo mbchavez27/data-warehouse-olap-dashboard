@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 
 import { compact, dec1, pct } from '../src/lib/format.js'
-import { chartKeys } from '../src/lib/chartKeys.js'
+import { chartKeys, pointerReadout, svgPoint, tipLeft } from '../src/lib/chartKeys.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const support = path.join(here, 'support')
@@ -554,6 +554,28 @@ test('a chart steps through its points from the keyboard', () => {
   assert.equal(current, null, 'Escape hides the readout')
   chartKeys(5, 3, set).onBlur()
   assert.equal(current, null, 'leaving the chart clears it')
+})
+
+test('a chart reads mouse, pen and touch alike', () => {
+  // A 720 x 260 chart drawn 360 x 130 px at (100, 50): the pointer maps back to
+  // the chart's own units, measured on the whole svg, not the plot overlay.
+  const svg = { getBoundingClientRect: () => ({ left: 100, top: 50, width: 360, height: 130 }) }
+  const overlay = { currentTarget: { ownerSVGElement: svg }, clientX: 280, clientY: 115 }
+  assert.deepEqual(svgPoint(overlay, 720, 260), { x: 360, y: 130 })
+  assert.deepEqual(svgPoint({ currentTarget: svg, clientX: 100, clientY: 50 }, 720, 260), { x: 0, y: 0 })
+
+  let cleared = 0
+  const handlers = pointerReadout(() => {}, () => cleared++)
+  handlers.onPointerLeave({ pointerType: 'touch' })
+  assert.equal(cleared, 0, 'a lifted finger keeps its reading')
+  handlers.onPointerLeave({ pointerType: 'mouse' })
+  handlers.onPointerLeave({ pointerType: 'pen' })
+  assert.equal(cleared, 2, 'a mouse or pen leaving clears it')
+  assert.equal(handlers.onPointerDown, handlers.onPointerMove, 'a tap and a drag both track')
+
+  assert.equal(tipLeft(360, 720), '50%')
+  assert.equal(tipLeft(10, 720), '15%', 'the first point keeps its bubble on screen')
+  assert.equal(tipLeft(715, 720), '85%')
 })
 
 test('sorting a table keeps its totals pinned and its blanks last', () => {

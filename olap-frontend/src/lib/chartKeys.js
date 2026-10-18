@@ -29,4 +29,28 @@ export function chartKeys(count, current, setCurrent) {
   }
 }
 
+// Pointer position in the chart's own viewBox units: measured against the whole
+// <svg>, since an overlay covering only the plot area would skew the mapping.
+export function svgPoint(e, W, H) {
+  const svg = e.currentTarget.ownerSVGElement ?? e.currentTarget
+  const r = svg.getBoundingClientRect()
+  return { x: ((e.clientX - r.left) / r.width) * W, y: ((e.clientY - r.top) / r.height) * H }
+}
+
+// Pointer handlers for a chart's hover readout, so mouse, pen and touch all
+// work: a tap or press shows the nearest point, a drag scrubs. A finger lifting
+// fires pointerleave at once, so touch keeps its reading until the chart loses
+// focus (a tap elsewhere) instead of flashing it away.
+export const pointerReadout = (track, clear) => ({
+  onPointerDown: track,
+  onPointerMove: track,
+  onPointerLeave: (e) => {
+    if (e.pointerType !== 'touch') clear()
+  },
+})
+
+// Where a readout bubble sits: over its point, but kept 15% in from either
+// edge so a bubble for the first or last point isn't cut off, on a phone most.
+export const tipLeft = (x, W) => `${Math.min(85, Math.max(15, (100 * x) / W))}%`
+
 export const KEYS_HINT = 'Focus the chart and use the arrow keys to read each point.'

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { chartKeys, KEYS_HINT } from '../lib/chartKeys.js'
+import { chartKeys, KEYS_HINT, pointerReadout, svgPoint, tipLeft } from '../lib/chartKeys.js'
 
 // Concentration chart: one bar per group plus a cumulative line over them (the
 // classic Pareto). Both series share a single 0-100 scale, so the line reaching
@@ -51,8 +51,7 @@ export default function ParetoChart({
   const labelEvery = Math.max(1, Math.ceil(n / 12))
 
   const track = (e) => {
-    const r = e.currentTarget.getBoundingClientRect()
-    const at = ((e.clientX - r.left) / r.width) * W
+    const at = svgPoint(e, W, H).x
     setHover(Math.max(0, Math.min(n - 1, Math.floor((at - pad.l) / step))))
   }
 
@@ -112,8 +111,8 @@ export default function ParetoChart({
           width={W - pad.l - pad.r}
           height={H - pad.t - pad.b}
           fill="transparent"
-          onMouseMove={track}
-          onMouseLeave={() => setHover(null)}
+          className="chart-hit"
+          {...pointerReadout(track, () => setHover(null))}
         />
       </svg>
 
@@ -124,7 +123,7 @@ export default function ParetoChart({
       </p>
 
       {hover !== null && (
-        <div className="chart-tip" style={{ left: `${(100 * x(hover)) / W}%` }}>
+        <div className="chart-tip" style={{ left: tipLeft(x(hover), W) }}>
           <strong>{labels[hover]}</strong>
           <span>
             <i className="is-bar" />

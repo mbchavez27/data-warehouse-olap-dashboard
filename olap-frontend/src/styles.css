@@ -19,6 +19,11 @@
   --signal-line: #f2d593;
   --dip: #c8641e;
   --error: #b9381a;
+  --error-tint: #fff8f5;
+  --line-strong: #c9ced6;
+  --route-line: #b9c8f2;
+  --signal-ink: #7a5200;
+  --topbar-bg: rgba(255, 255, 255, 0.92);
 
   --radius: 10px;
   --radius-sm: 6px;
@@ -33,6 +38,65 @@
   background: var(--paper);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'cv11', 'ss01';
+}
+
+/* Dark theme: the same tokens, redefined. It follows the system setting;
+   data-theme="light" or "dark" on <html> pins one instead. Every colour in
+   this file reads from a token, so nothing else needs a dark rule. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ink: #e6e9ef;
+    --ink-2: #b4bbc7;
+    --ink-3: #8b94a3;
+    --paper: #0f1218;
+    --surface: #171b23;
+    --surface-2: #1c212b;
+    --line: #2c3340;
+    --line-soft: #232934;
+    --route: #6f95ff;
+    --route-hover: #8fadff;
+    --route-tint: #1c2742;
+    --signal: #f0a81c;
+    --signal-tint: #33280f;
+    --signal-line: #5c4714;
+    --dip: #e0874a;
+    --error: #ff7a5c;
+    --error-tint: #2a1a16;
+    --line-strong: #3c4555;
+    --route-line: #34477a;
+    --signal-ink: #f3c46b;
+    --topbar-bg: rgba(23, 27, 35, 0.92);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ink: #e6e9ef;
+  --ink-2: #b4bbc7;
+  --ink-3: #8b94a3;
+  --paper: #0f1218;
+  --surface: #171b23;
+  --surface-2: #1c212b;
+  --line: #2c3340;
+  --line-soft: #232934;
+  --route: #6f95ff;
+  --route-hover: #8fadff;
+  --route-tint: #1c2742;
+  --signal: #f0a81c;
+  --signal-tint: #33280f;
+  --signal-line: #5c4714;
+  --dip: #e0874a;
+  --error: #ff7a5c;
+  --error-tint: #2a1a16;
+  --line-strong: #3c4555;
+  --route-line: #34477a;
+  --signal-ink: #f3c46b;
+  --topbar-bg: rgba(23, 27, 35, 0.92);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
 }
 
 *,
@@ -202,7 +266,7 @@ select {
   gap: 16px;
   height: var(--topbar-h);
   padding: 0 32px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--topbar-bg);
   backdrop-filter: saturate(1.4) blur(8px);
   border-bottom: 1px solid var(--line);
 }
@@ -245,7 +309,7 @@ select {
 }
 
 .badge-warn {
-  color: #7a5200;
+  color: var(--signal-ink);
   background: var(--signal-tint);
   border: 1px solid var(--signal-line);
 }
@@ -322,7 +386,7 @@ select {
 }
 
 .filter:hover {
-  border-color: #c9ced6;
+  border-color: var(--line-strong);
 }
 
 .filter-label {
@@ -358,7 +422,7 @@ select {
 
 .filter.is-active {
   background: var(--route-tint);
-  border-color: #b9c8f2;
+  border-color: var(--route-line);
 }
 
 .filter.is-active .filter-label,
@@ -373,7 +437,7 @@ select {
 }
 
 .filter.is-pinned select {
-  color: #7a5200;
+  color: var(--signal-ink);
   cursor: not-allowed;
   opacity: 1;
 }
@@ -632,6 +696,13 @@ select {
 .chart-svg:focus-visible {
   outline-offset: 4px;
   border-radius: 4px;
+}
+
+/* Touch: a sideways drag over a chart scrubs its readout; vertical swipes
+   still scroll the page. */
+.chart-hit,
+.chart-svg:has(.strip-dot) {
+  touch-action: pan-y;
 }
 
 .chart-svg {
@@ -952,7 +1023,7 @@ select {
 
 .button:hover:not(:disabled) {
   background: var(--surface-2);
-  border-color: #c9ced6;
+  border-color: var(--line-strong);
 }
 
 .button:disabled {
@@ -1088,7 +1159,7 @@ button.route-label:hover {
 
 .status.is-error {
   border-left-color: var(--error);
-  background: #fff8f5;
+  background: var(--error-tint);
 }
 
 .status.is-placeholder {
