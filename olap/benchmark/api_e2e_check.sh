@@ -108,12 +108,15 @@ for c in "${CASES[@]}"; do
     problems=$((problems+1)); echo "  API error body: $(cat "$out.api.json")"; continue
   fi
 
-  # Parameters exactly as the API bound them (empty string = all).
-  mapfile -t PAIRS < <(node -e 'const p = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).params; for (const k in p) console.log(k + "=" + p[k])' "$out.api.json")
-  VARGS=(); for p in "${PAIRS[@]}"; do VARGS+=(-v "$p"); done
+  # Parameters exactly as the API bound them (empty string = all). A read loop
+  # rather than mapfile, and node rather than `sed -z`, so this also runs on
+  # macOS's bash 3.2 and BSD sed; ${VARGS[@]+...} keeps an empty list legal
+  # under set -u there.
+  VARGS=()
+  while IFS= read -r p; do VARGS+=(-v "$p"); done < <(node -e 'const p = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).params; for (const k in p) console.log(k + "=" + p[k])' "$out.api.json")
 
-  { echo "SELECT json_agg(t) FROM ("; sed -z 's/;[[:space:]]*$//' "$ORIG/$file"; echo; echo ") t;"; } > "$out.sql"
-  if ! docker exec -i "$DW" psql -X -At -U postgres -d dw_db -v ON_ERROR_STOP=1 "${VARGS[@]}" < "$out.sql" > "$out.orig.json" 2> "$out.err"; then
+  { echo "SELECT json_agg(t) FROM ("; node -e 'process.stdout.write(require("fs").readFileSync(process.argv[1], "utf8").replace(/;\s*$/, ""))' "$ORIG/$file"; echo; echo ") t;"; } > "$out.sql"
+  if ! docker exec -i "$DW" psql -X -At -U postgres -d dw_db -v ON_ERROR_STOP=1 ${VARGS[@]+"${VARGS[@]}"} < "$out.sql" > "$out.orig.json" 2> "$out.err"; then
     problems=$((problems+1)); echo "  ORIGINAL SQL FAILED: $(cat "$out.err")"; continue
   fi
 
