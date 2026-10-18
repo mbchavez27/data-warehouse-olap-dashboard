@@ -30,7 +30,7 @@
 ## 3. ETL Pipeline Setup
 
 - [x] Select a programming language (Python, Java, etc.) for the ETL script.
-  - Evidence: Python via `uv` (`etl/pyproject.toml`, psycopg + pytest); CI runs the suites on every relevant push (`.github/workflows/pipeline-tests.yml` for the ETL and importer tests, `api-tests.yml` for the Go API, `dashboard-build.yml` for the dashboard build).
+  - Evidence: Python via `uv` (`etl/pyproject.toml`, psycopg + pytest); CI runs the suites on every relevant push (`.github/workflows/pipeline-tests.yml` for the ETL and importer tests, `api-tests.yml` for the Go API and the SQL-to-catalog query contract, `dashboard-tests.yml` for the dashboard's suites, `dashboard-build.yml` for the dashboard build).
 - [x] Write code to **Extract** data from the source database.
   - Evidence: read-only source queries are centralized in `etl/extract/queries.py`; `etl/load/date.py`, `etl/load/dimensions.py`, and `etl/load/facts.py` stream all six source tables through server-side cursors (10,000-row batches; no full-table reads).
 - [x] Write code to **Transform** the data (wrangle, clean, split, merge, aggregate, fix null values, correct data types).
@@ -54,11 +54,11 @@
 ## 5. Functional Testing
 
 - [ ] Prepare functional test scripts designed for efficient testing.
-  - State: unit and contract suites exist — `go test ./...` (API), `uv run --project etl pytest etl/tests` (ETL), `uv run --project db pytest db/source/importer` (importer) — plus the dashboard's column-contract suite `npm test` (15 checks over all 12 report levels, run in CI by `.github/workflows/dashboard-tests.yml`). A report-level functional script that drives the reports end to end is still pending.
+  - State: unit and contract suites exist — `go test ./...` (API), `uv run --project etl pytest etl/tests` (ETL), `uv run --project db pytest db/source/importer` (importer) — plus the dashboard's `npm test` (233 checks: a column contract for all 12 report levels and a server-rendered markup pass over the four reports in every view state, run in CI by `.github/workflows/dashboard-tests.yml`) and `go test -tags integration ./internal/reports/`, which prepares every query against the warehouse schema in CI (`.github/workflows/api-tests.yml`). A script that drives the reports end to end and reconciles their numbers is still pending.
 - [ ] Execute each query multiple times using different parameter values.
-  - State: `olap/benchmark/run_benchmark.py` runs all 18 report cases with varied filters, and `npm run check:contracts` replays all 14 requestable levels against the live API (evidence: `evidence/contract-check.json`). Both check timings and columns rather than results, so a correctness pass over parameter combinations is still pending.
+  - State: `olap/benchmark/run_benchmark.py` runs all 18 report cases with varied filters, `npm run check:contracts` replays all 14 requestable levels against the live API (evidence: `evidence/contract-check.json`), the markup suite renders each R4 view pinned and unpinned, and the Go integration test prepares every query against an empty schema. Timings, columns and rendering are covered; a correctness pass over parameter combinations is still pending.
 - [ ] Verify that the resulting reports and analytical data are correct.
-  - ETL input baseline: `evidence/etl-reconciliation.json` fixes the official warehouse totals that future report tests must reconcile against (1,000,000 deliveries; 1,999,824 order items; 36,500 rider-days; 10,999,917 units). `evidence/contract-check.json` records column-level agreement between the dashboard and the warehouse, but no report total has been reconciled to that baseline yet.
+  - ETL input baseline: `evidence/etl-reconciliation.json` fixes the official warehouse totals that future report tests must reconcile against (1,000,000 deliveries; 1,999,824 order items; 36,500 rider-days; 10,999,917 units). `evidence/contract-check.json` records column- and value-type agreement between the dashboard and the warehouse, and the markup suite checks the reports' own arithmetic against the data they are given — but no report total has been reconciled to that baseline yet.
 
 ## 6. Performance Testing & Optimization
 

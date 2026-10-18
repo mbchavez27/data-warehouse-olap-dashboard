@@ -127,20 +127,21 @@ from showing at once.
 
 ## Tests
 
-The sample data has to carry exactly the columns each SQL file returns: mock
-mode is the default, so a builder that drifts from its query shows a blank cell
-where live mode shows a value. `src/api/contracts.js` pins that down — it is
-generated from `GET /api/reports` and lists the columns of every path the
-dashboard can ask for.
+Two suites run without a database or a browser, and CI runs both on every
+change (`.github/workflows/dashboard-tests.yml`):
 
 ```bash
-npm test                    # no warehouse needed, runs in CI
-npm run sync:contracts      # regenerate the contract from the API
-npm run check:contracts     # diff the contract against the live API
+npm test                    # both suites, no warehouse needed
+npm run sync:contracts      # regenerate the column contract from the API
+npm run check:contracts     # diff columns and value types against the live API
 ```
 
-`npm test` uses Node's built-in runner and needs no database or browser. It
-checks three things:
+**Column contracts** (`tests/contracts.test.mjs`). The sample data has to carry
+exactly the columns each SQL file returns: mock mode is the default, so a
+builder that drifts from its query shows a blank cell where live mode shows a
+value. `src/api/contracts.js` pins that down — it is generated from
+`GET /api/reports` and lists the columns of every path the dashboard can ask
+for. The suite checks three things:
 
 1. every sample row of every level carries exactly its query's columns;
 2. no report reads a column its queries do not return;
@@ -151,13 +152,34 @@ checks three things:
 development rather than rendering a blank column. In a production build it logs
 instead of throwing, so the demo still renders.
 
+**Rendered reports** (`tests/report-markup.test.mjs`). The four reports are
+rendered on the server in every view state — each R4 view and grain, pinned and
+unpinned, both busiest-day sorts — and the markup is checked: row counts,
+hierarchy indentation, columns, charts, the calendar, legends, notes,
+breadcrumbs and figures. A case picks its view by replacing the component's
+`useState` defaults with a read from `tests/support/reportState.js`, and its
+data hook with `tests/support/useReport-mock.js`, which serves the sample rows
+synchronously (bundled with `esbuild`). Where a claim is about a value — a
+total, a busiest label, a deviation — the expectation is computed from the rows
+that were rendered, so the suite checks the component's arithmetic instead of
+restating a fixture. The patch list is asserted, so a renamed state literal
+fails the build rather than silently testing the default view.
+
 `npm run check:contracts` covers the one link CI cannot see — the SQL itself,
 because the source archive is not in the repository, so CI cannot build the
 warehouse. It compares the committed contract and the API's own column list
-against what all 14 requestable paths return, writes
-`evidence/contract-check.json`, and exits non-zero on any difference. Run it
+against what all 14 requestable paths return, and compares the value types of
+the sample rows with the ones the warehouse sends (a NUMERIC that started
+arriving as a string would slip past names alone). It writes
+`evidence/contract-check.json` and exits non-zero on any difference. Run it
 after changing a query, then `npm run sync:contracts` and extend the sample
 builder for any column you added.
+
+The SQL-to-catalog link runs in CI from the Go side as well:
+`go test -tags integration ./internal/reports/` applies
+`db/dw/init/01_dw_schema.sql` to a throwaway schema and prepares every query
+against it, comparing the columns Postgres reports with the ones `catalog.go`
+declares. Only the schema is needed, not the data.
 
 ## Folder layout
 
@@ -169,7 +191,8 @@ src/
   api/mock.js              sample rows shaped exactly like each SQL file's output
   api/contracts.js         generated: the columns each level returns (see Tests above)
   scripts/                 sync-contracts (regenerate the contract), check-contracts (diff it against the API)
-  tests/                   column-contract tests (npm test)
+  tests/                   column-contract and rendered-report suites (npm test)
+  tests/support/           the test seam: initial view state, the mock data hook, the render entry
   components/              FilterBar, Panel, Figures (KPI cards), RoutePath (drill path), ScopeLine
                            (scope sentence), Legend (encoding key), Tooltip (hover hint), DataTable,
                            Bar, HeatCell (heat matrix cell), LineChart (time series), ParetoChart
