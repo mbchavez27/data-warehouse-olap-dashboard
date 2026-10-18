@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 import { CONTRACTS } from '../src/api/contracts.js'
-import { MOCKED_LEVELS } from '../src/api/mock.js'
+import { MOCKED_LEVELS, mockReport } from '../src/api/mock.js'
 
 const args = process.argv.slice(2)
 const base =
@@ -23,6 +23,7 @@ const base =
 
 const startedAt = new Date()
 const checks = {}
+const live = {}
 
 // Compared as a set: the API serialises a row as a JSON object, and Go writes
 // map keys in sorted order, so the response never carries the SQL's column
@@ -57,12 +58,39 @@ for (const { path: level, declared } of paths.sort((a, b) => a.path.localeCompar
   }
   const payload = await response.json()
   const rows = Array.isArray(payload) ? payload : payload.rows ?? []
+  live[level] = rows
   const returned = rows.length ? Object.keys(rows[0]) : []
 
   // The contract has to match what the query actually returns.
   if (CONTRACTS[level]) check(level, CONTRACTS[level], returned)
   // And the API's own declaration has to match it too (catalog drift).
   check(`${level} (declared)`, declared, returned)
+}
+
+// The contract pins names, not types, so a query that starts returning a
+// NUMERIC as a string (or a boolean as "t") would slip past it and only show up
+// as a cell formatting oddly. Compare the value types the sample data produces
+// with the ones the warehouse sends.
+const valueTypes = (rows, column) => {
+  const types = new Set()
+  for (const row of rows) {
+    const value = row[column]
+    types.add(value === null || value === undefined ? 'null' : typeof value)
+  }
+  return [...types].sort().join('|')
+}
+const typed = (rows, columns) => columns.map((column) => `${column}:${valueTypes(rows, column)}`).sort()
+
+for (const level of MOCKED_LEVELS) {
+  const [report, name] = level.split('/')
+  const columns = CONTRACTS[level] ?? []
+  const sample = mockReport(report, name, {})
+  const warehouse = live[level] ?? []
+  checks[`${level} value types`] = {
+    expected: typed(sample, columns),
+    actual: typed(warehouse, columns),
+    passed: sample.length > 0 && warehouse.length > 0 && typed(sample, columns).join() === typed(warehouse, columns).join(),
+  }
 }
 
 // The sample data is only as trustworthy as its coverage.
@@ -76,9 +104,10 @@ checks['every mocked level is in the contract'] = {
 const failed = Object.entries(checks).filter(([, result]) => !result.passed).map(([name]) => name)
 const finishedAt = new Date()
 
-for (const { path: level } of paths.sort((a, b) => a.path.localeCompare(b.path))) {
-  const result = checks[level] ?? checks[`${level} (declared)`]
-  console.log(`  ${result?.passed ? 'ok  ' : 'FAIL'} ${level}`)
+for (const { path: level } of paths) {
+  const columns = checks[level]?.passed ?? checks[`${level} (declared)`]?.passed
+  const types = checks[`${level} value types`]
+  console.log(`  ${columns ? 'ok  ' : 'FAIL'} ${level}${types ? ` — value types ${types.passed ? 'ok' : 'FAIL'}` : ''}`)
 }
 if (failed.length) {
   console.log('\nDifferences:')
@@ -94,13 +123,14 @@ const evidence = {
   command: 'npm run check:contracts',
   api: { base, reports: reports.length, levels: paths.length },
   criteria:
-    'For every report level the dashboard can request, the committed column contract in olap-frontend/src/api/contracts.js and the API catalog both list the same columns the query returns (compared as a set: Go serialises a row as a JSON object with sorted keys, so the response carries no column order), and every level served by the sample data has a contract.',
+    'For every report level the dashboard can request, the committed column contract in olap-frontend/src/api/contracts.js and the API catalog both list the same columns the query returns (compared as a set: Go serialises a row as a JSON object with sorted keys, so the response carries no column order); every level served by the sample data has a contract; and in that sample data each column carries the same value types the warehouse sends.',
   levels: Object.fromEntries(
     paths.map(({ path: level }) => [
       level,
       {
         contractMatchesResponse: checks[level]?.passed ?? null,
         catalogMatchesResponse: checks[`${level} (declared)`]?.passed ?? null,
+        valueTypesMatch: checks[`${level} value types`]?.passed ?? null,
       },
     ]),
   ),
