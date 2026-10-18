@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 3000",
-    "test": "node --test",
+    "test": "node --test tests/contracts.test.mjs tests/report-markup.test.mjs",
     "sync:contracts": "node scripts/sync-contracts.mjs",
     "check:contracts": "node scripts/check-contracts.mjs"
   },
@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "esbuild": "0.21.5",
     "vite": "^5.4.11"
   }
 }

@@ -5,11 +5,13 @@ on:
     paths:
       - "olap-backend/**"
       - "olap/queries/**"
+      - "db/dw/init/**"
       - ".github/workflows/api-tests.yml"
   pull_request:
     paths:
       - "olap-backend/**"
       - "olap/queries/**"
+      - "db/dw/init/**"
       - ".github/workflows/api-tests.yml"
 
 permissions:
@@ -33,3 +35,35 @@ jobs:
       - name: API tests
         working-directory: olap-backend
         run: go test ./...
+
+  # The one link the database-free suites cannot see: that each query file
+  # still selects the columns catalog.go declares. The warehouse itself is not
+  # needed (the source archive is not in the repository), so this applies the
+  # DDL to a throwaway schema and prepares every query against it.
+  query-contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: olap-backend/go.mod
+          cache-dependency-path: olap-backend/go.sum
+
+      - name: Query columns against the warehouse schema
+        working-directory: olap-backend
+        env:
+          DW_TEST_DSN: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: go test -tags integration ./internal/reports/

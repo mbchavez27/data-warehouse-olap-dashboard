@@ -183,17 +183,21 @@ detail, and the endpoints each one calls.
 Test suites: `uv run --project etl pytest etl/tests` (ETL),
 `uv run --project db pytest db/source/importer` (source importer), and
 `go test ./...` in `olap-backend` (API). CI runs the suite for each area on the
-paths it covers — `.github/workflows/pipeline-tests.yml` (ETL and importer) and
-`api-tests.yml` (API) — and builds the dashboard
-(`.github/workflows/dashboard-build.yml`).
+paths it covers — `.github/workflows/pipeline-tests.yml` (ETL and importer),
+`api-tests.yml` (the API, plus every report query prepared against the warehouse
+schema) and `dashboard-tests.yml` (the dashboard's own suites) — and builds the
+dashboard (`.github/workflows/dashboard-build.yml`).
 
-The dashboard has its own suite. `npm test` in `olap-frontend` checks the
-sample data and the four reports against the generated column contract for all
-12 levels, needs no database, and runs in CI
-(`.github/workflows/dashboard-tests.yml`); `npm run check:contracts` diffs that
-contract against the live API and writes `evidence/contract-check.json`. Both
-are structural: report-level end-to-end checks that reconcile the analytical
-results to the ETL baseline are still to be added.
+The dashboard has its own suite. `npm test` in `olap-frontend` holds the sample
+data to a generated column contract for all 12 report levels and renders the
+four reports server-side in every view state (234 checks, no database, run in
+CI by `.github/workflows/dashboard-tests.yml`); `npm run check:contracts` diffs
+that contract, and the value types of the sample data, against the live API and
+writes `evidence/contract-check.json`. The SQL-to-catalog link is checked from
+the Go side too: `go test -tags integration ./internal/reports/` prepares every
+query against the warehouse schema in CI (`.github/workflows/api-tests.yml`).
+All of it is structural: report-level end-to-end checks that reconcile the
+analytical results to the ETL baseline are still to be added.
 
 Performance baseline: `olap/benchmark/run_benchmark.py` runs the 18 report cases
 (1 warm-up plus 5 measured runs each) and writes timings and
@@ -220,7 +224,7 @@ testing, the optimization pass, and the report itself.
 | 2. Data warehouse construction | Done — 3 facts, 6 dimensions, 5 hierarchies, executable readiness gate |
 | 3. ETL pipeline | Done — 1,000,000 deliveries + 1,999,824 order items + 36,500 rider-days, 15/15 reconciliation checks, 0 rejects |
 | 4. OLAP application | Done — 12 parameterized query levels, the Go API, and the dashboard's four reports |
-| 5. Functional testing | **Pending** — the dashboard has a column-contract suite (`npm test`) and a live contract check (`npm run check:contracts`); a report-level script that reconciles analytical results to the ETL baseline is still missing |
+| 5. Functional testing | **Pending** — the dashboard has a column-contract suite and a rendered-report suite (`npm test`, 234 checks), a live contract check (`npm run check:contracts`) and a Go schema↔query contract test in CI; a report-level script that reconciles analytical results to the ETL baseline is still missing |
 | 6. Performance testing | Baseline measured (18 cases, medians 66–8,224 ms) plus the generic-plan comparison; optimization and the before/after comparison **pending** |
 | 7. Final technical report | **Pending** — evidence is indexed in `docs/technical-documentation/index.md`; the report template is not filled in |
 

@@ -33,10 +33,11 @@ jobs:
         working-directory: olap-frontend
         run: npm ci
 
-      # Column contracts only: the sample data matches every report level's
-      # output columns, and no report reads a column a query does not return.
+      # Both dashboard suites: the sample data and the reports against the
+      # generated column contract, and the four reports rendered server-side
+      # in every view state. Neither needs a database or a browser.
       # `npm run check:contracts` covers the SQL itself, which needs the
       # warehouse, and the source archive is not in the repository.
-      - name: Column contracts
+      - name: Contracts and rendered reports
         working-directory: olap-frontend
         run: npm test

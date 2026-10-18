@@ -1,69 +1,83 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-17T20:31:53.450Z",
+  "generatedAt": "2026-10-18T04:16:06.777Z",
   "command": "npm run check:contracts",
   "api": {
     "base": "http://localhost:8080",
     "reports": 4,
     "levels": 14
   },
-  "criteria": "For every report level the dashboard can request, the committed column contract in olap-frontend/src/api/contracts.js and the API catalog both list the same columns the query returns (compared as a set: Go serialises a row as a JSON object with sorted keys, so the response carries no column order), and every level served by the sample data has a contract.",
+  "criteria": "For every report level the dashboard can request, the committed column contract in olap-frontend/src/api/contracts.js and the API catalog both list the same columns the query returns (compared as a set: Go serialises a row as a JSON object with sorted keys, so the response carries no column order); every level served by the sample data has a contract; and in that sample data each column carries the same value types the warehouse sends.",
   "levels": {
     "r1/category": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r1/product": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r2/courier_vehicle_cube": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": null
     },
     "r2/courier_vehicle_pivot": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": null
     },
     "r2/cube": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r2/pivot": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r2/rider": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r3/customer": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r3/deciles": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r3/geography": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r4/busiest_days": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r4/rollup": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r4/trend": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     },
     "r4/weekday_pivot": {
       "contractMatchesResponse": true,
-      "catalogMatchesResponse": true
+      "catalogMatchesResponse": true,
+      "valueTypesMatch": true
     }
   },
   "checks": {
@@ -751,6 +765,302 @@
       ],
       "passed": true
     },
+    "r1/category value types": {
+      "expected": [
+        "category:string",
+        "is_total:boolean",
+        "units:number",
+        "value:number",
+        "value_rank:null|number",
+        "value_share_pct:number"
+      ],
+      "actual": [
+        "category:string",
+        "is_total:boolean",
+        "units:number",
+        "value:number",
+        "value_rank:null|number",
+        "value_share_pct:number"
+      ],
+      "passed": true
+    },
+    "r1/product value types": {
+      "expected": [
+        "category:string",
+        "is_subtotal:boolean",
+        "product:string",
+        "rank_in_category:null|number",
+        "share_of_category_pct:number",
+        "units:number",
+        "value:number"
+      ],
+      "actual": [
+        "category:string",
+        "is_subtotal:boolean",
+        "product:string",
+        "rank_in_category:null|number",
+        "share_of_category_pct:number",
+        "units:number",
+        "value:number"
+      ],
+      "passed": true
+    },
+    "r2/cube value types": {
+      "expected": [
+        "courier:string",
+        "grouping_level:number",
+        "order_share_pct:number",
+        "orders:number",
+        "orders_per_rider:number",
+        "riders:number",
+        "units:number",
+        "vehicle:string"
+      ],
+      "actual": [
+        "courier:string",
+        "grouping_level:number",
+        "order_share_pct:number",
+        "orders:number",
+        "orders_per_rider:number",
+        "riders:number",
+        "units:number",
+        "vehicle:string"
+      ],
+      "passed": true
+    },
+    "r2/pivot value types": {
+      "expected": [
+        "bicycle:number",
+        "car:number",
+        "courier:string",
+        "is_total:boolean",
+        "motorcycle:number",
+        "riders:number",
+        "total:number",
+        "trike:number"
+      ],
+      "actual": [
+        "bicycle:number",
+        "car:number",
+        "courier:string",
+        "is_total:boolean",
+        "motorcycle:number",
+        "riders:number",
+        "total:number",
+        "trike:number"
+      ],
+      "passed": true
+    },
+    "r2/rider value types": {
+      "expected": [
+        "active_days:number",
+        "age_band:string",
+        "avg_orders_per_active_day:number",
+        "calendar_days:number",
+        "courier:string",
+        "orders:number",
+        "peak_day_orders:number",
+        "rider:string",
+        "units:number",
+        "utilization_pct:number",
+        "vehicle:string",
+        "workload_percentile:number",
+        "workload_rank:number"
+      ],
+      "actual": [
+        "active_days:number",
+        "age_band:string",
+        "avg_orders_per_active_day:number",
+        "calendar_days:number",
+        "courier:string",
+        "orders:number",
+        "peak_day_orders:number",
+        "rider:string",
+        "units:number",
+        "utilization_pct:number",
+        "vehicle:string",
+        "workload_percentile:number",
+        "workload_rank:number"
+      ],
+      "passed": true
+    },
+    "r3/deciles value types": {
+      "expected": [
+        "avg_value_per_customer:number",
+        "cumulative_share_pct:number",
+        "customers:number",
+        "decile:number",
+        "max_customer_value:number",
+        "min_customer_value:number",
+        "value:number",
+        "value_share_pct:number"
+      ],
+      "actual": [
+        "avg_value_per_customer:number",
+        "cumulative_share_pct:number",
+        "customers:number",
+        "decile:number",
+        "max_customer_value:number",
+        "min_customer_value:number",
+        "value:number",
+        "value_share_pct:number"
+      ],
+      "passed": true
+    },
+    "r3/geography value types": {
+      "expected": [
+        "customers:number",
+        "gender:string",
+        "grouping_level:number",
+        "location:string",
+        "orders:number",
+        "value:number",
+        "value_per_customer:number",
+        "value_rank:null|number"
+      ],
+      "actual": [
+        "customers:number",
+        "gender:string",
+        "grouping_level:number",
+        "location:string",
+        "orders:number",
+        "value:number",
+        "value_per_customer:number",
+        "value_rank:null|number"
+      ],
+      "passed": true
+    },
+    "r3/customer value types": {
+      "expected": [
+        "avg_order_value:number",
+        "city:string",
+        "country:string",
+        "customer:string",
+        "decile:number",
+        "gender:string",
+        "orders:number",
+        "units:number",
+        "value:number",
+        "value_percentile:number",
+        "value_rank:number"
+      ],
+      "actual": [
+        "avg_order_value:number",
+        "city:string",
+        "country:string",
+        "customer:string",
+        "decile:number",
+        "gender:string",
+        "orders:number",
+        "units:number",
+        "value:number",
+        "value_percentile:number",
+        "value_rank:number"
+      ],
+      "passed": true
+    },
+    "r4/rollup value types": {
+      "expected": [
+        "days:number",
+        "hierarchy_level:string",
+        "month:null|number",
+        "month_name:null|string",
+        "orders:number",
+        "orders_per_day:number",
+        "quarter:null|number",
+        "units:number",
+        "year:null|number"
+      ],
+      "actual": [
+        "days:number",
+        "hierarchy_level:string",
+        "month:null|number",
+        "month_name:null|string",
+        "orders:number",
+        "orders_per_day:number",
+        "quarter:null|number",
+        "units:number",
+        "year:null|number"
+      ],
+      "passed": true
+    },
+    "r4/trend value types": {
+      "expected": [
+        "change_vs_previous_pct:null|number",
+        "days:number",
+        "moving_avg_orders_per_day:number",
+        "orders:number",
+        "orders_per_day:number",
+        "period_label:string",
+        "period_start:string",
+        "units:number"
+      ],
+      "actual": [
+        "change_vs_previous_pct:null|number",
+        "days:number",
+        "moving_avg_orders_per_day:number",
+        "orders:number",
+        "orders_per_day:number",
+        "period_label:string",
+        "period_start:string",
+        "units:number"
+      ],
+      "passed": true
+    },
+    "r4/weekday_pivot value types": {
+      "expected": [
+        "all_days:number",
+        "fri:number",
+        "is_total:boolean",
+        "mon:number",
+        "month_label:string",
+        "sat:number",
+        "sun:number",
+        "thu:number",
+        "tue:number",
+        "wed:number"
+      ],
+      "actual": [
+        "all_days:number",
+        "fri:number",
+        "is_total:boolean",
+        "mon:number",
+        "month_label:string",
+        "sat:number",
+        "sun:number",
+        "thu:number",
+        "tue:number",
+        "wed:number"
+      ],
+      "passed": true
+    },
+    "r4/busiest_days value types": {
+      "expected": [
+        "active_riders:number",
+        "date:string",
+        "day_name:string",
+        "demand_rank:number",
+        "is_payday:boolean",
+        "is_weekend:boolean",
+        "orders:number",
+        "orders_per_active_rider:number",
+        "units:number",
+        "vs_average_pct:number"
+      ],
+      "actual": [
+        "active_riders:number",
+        "date:string",
+        "day_name:string",
+        "demand_rank:number",
+        "is_payday:boolean",
+        "is_weekend:boolean",
+        "orders:number",
+        "orders_per_active_rider:number",
+        "units:number",
+        "vs_average_pct:number"
+      ],
+      "passed": true
+    },
     "every mocked level is in the contract": {
       "expected": [
         "r1/category",
@@ -784,6 +1094,6 @@
     }
   },
   "failedChecks": [],
-  "durationMs": 43104,
+  "durationMs": 31042,
   "passed": true
 }

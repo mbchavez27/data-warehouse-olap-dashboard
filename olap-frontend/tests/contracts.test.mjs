@@ -14,7 +14,7 @@
 // covers that against a running API.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -95,6 +95,16 @@ function rowVariables(text, columns) {
   }
   return rows
 }
+
+test('every test file is wired into npm test', () => {
+  // The runner exits 0 when it matches no files, so a file that is not named in
+  // the script would quietly stop being tested — on Node 20 its directory
+  // discovery does not cover everything this repo relies on either.
+  const root = path.join(here, '..')
+  const files = readdirSync(path.join(root, 'tests')).filter((name) => name.endsWith('.test.mjs'))
+  const script = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')).scripts.test
+  assert.deepEqual(files.filter((name) => !script.includes(name)), [], 'name the file in olap-frontend/package.json')
+})
 
 test('every level the sample data serves has a generated contract', () => {
   const missing = MOCKED_LEVELS.filter((level) => !CONTRACTS[level])
