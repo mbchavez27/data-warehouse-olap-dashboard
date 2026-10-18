@@ -189,12 +189,15 @@ so a tap reads the nearest point (on the dot strip, the nearest dot), a sideways
 drag scrubs while vertical swipes still scroll, and a touch reading stays until
 you tap elsewhere. Readout bubbles stay inside the chart near its edges.
 
-**Dark mode** follows the system setting. Every colour in `src/styles.css` reads
-from a token on `:root`, and a dark block redefines each one; `data-theme="light"`
-or `"dark"` on `<html>` pins a theme instead. Dark-theme text meets WCAG AA
-contrast (4.97:1 at the lowest, on the strongest orange heat cell). In the light
-theme the muted grey (`--ink-3`, axis labels and secondary text) is 3.1:1 on
-white, under AA's 4.5:1 for small text.
+**Light and dark mode.** The switch at the bottom of the sidebar flips between
+them. Until a viewer picks one, the page follows the system setting (and keeps
+up if it changes); a choice is pinned with `data-theme` on `<html>` and
+remembered in that browser (`src/lib/theme.js`), and a small script in
+`index.html` applies it before the first paint so a dark page never flashes
+light. Every colour in `src/styles.css` reads from a token on `:root`, and a dark
+block redefines each one. Text meets WCAG AA contrast in both themes: the muted
+grey (`--ink-3`) is at least 4.7:1 on every light background, and dark text is
+4.97:1 at the lowest, on the strongest orange heat cell. Tests hold both.
 
 ## Tests
 
@@ -274,8 +277,10 @@ src/
                            (scope sentence), Legend (encoding key), Tooltip (hover hint), DataTable,
                            Bar, HeatCell (heat matrix cell), LineChart (time series), ParetoChart
                            (concentration), DotStrip (spread around the median), CalendarGrid
-                           (demand calendar), Segmented, ExportButton, ReportStatus, Icons
+                           (demand calendar), Segmented, ExportButton, ReportStatus,
+                           ThemeToggle (light / dark switch), Icons
   lib/chartKeys.js         keyboard and pointer reading shared by the charts
+  lib/theme.js             light / dark choice: system default, pinned and remembered
   lib/csv.js               Export CSV
   lib/dimensions.js        filter options shared by all reports (values match the SQL)
   lib/format.js            peso / percent / count formatting

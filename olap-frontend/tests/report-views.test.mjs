@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 
 import { compact, num, pct, peso } from '../src/lib/format.js'
+import { THEME_KEY, applyTheme, currentTheme, otherTheme } from '../src/lib/theme.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const support = path.join(here, 'support')
@@ -374,6 +375,46 @@ test('the dark theme redefines every colour token, both ways it can switch on', 
   assert.ok(light.length > 10, `${light.length} light colour tokens`)
   assert.deepEqual(system, light, 'the system-setting dark block')
   assert.deepEqual(pinned, light, 'the data-theme="dark" block')
+})
+
+test('the theme switch follows the system until a choice pins it', () => {
+  const root = { dataset: {} }
+  const system = (dark) => () => ({ matches: dark })
+  assert.equal(currentTheme(root, system(true)), 'dark', 'no choice yet: the system setting')
+  assert.equal(currentTheme(root, system(false)), 'light')
+
+  const saved = {}
+  const storage = { setItem: (k, v) => (saved[k] = v) }
+  applyTheme(otherTheme('dark'), root, storage)
+  assert.equal(root.dataset.theme, 'light')
+  assert.equal(saved[THEME_KEY], 'light', 'the choice is remembered')
+  assert.equal(currentTheme(root, system(true)), 'light', 'a pinned choice beats the system setting')
+
+  const blocked = { setItem: () => { throw new Error('storage disabled') } }
+  assert.doesNotThrow(() => applyTheme('dark', root, blocked), 'blocked storage still switches')
+  assert.equal(root.dataset.theme, 'dark')
+
+  const html = readFileSync(path.join(here, '..', 'index.html'), 'utf8')
+  assert.ok(html.includes(`localStorage.getItem('${THEME_KEY}')`), 'index.html restores the same key before paint')
+})
+
+test('light-theme muted text meets WCAG AA on every light background', () => {
+  const css = readFileSync(path.join(here, '..', 'src', 'styles.css'), 'utf8')
+  const light = css.match(/:root \{([\s\S]*?)\n\}/)[1]
+  const token = (name) => light.match(new RegExp(`${name}:\\s*(#[0-9a-f]{6})`, 'i'))[1]
+  const channel = (hex, i) => {
+    const v = parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  }
+  const luminance = (hex) => 0.2126 * channel(hex, 0) + 0.7152 * channel(hex, 1) + 0.0722 * channel(hex, 2)
+  const contrast = (a, b) => {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x)
+    return (hi + 0.05) / (lo + 0.05)
+  }
+  for (const bg of ['--surface', '--surface-2', '--paper', '--route-tint', '--signal-tint']) {
+    const ratio = contrast(token('--ink-3'), token(bg))
+    assert.ok(ratio >= 4.5, `--ink-3 on ${bg} is ${ratio.toFixed(2)}:1`)
+  }
 })
 
 test('a report that renames its state literal fails the harness instead of passing', async () => {

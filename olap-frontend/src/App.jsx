@@ -3,6 +3,7 @@ import { REPORTS } from './reports/index.js'
 import { isMock } from './api/client.js'
 import { DATA_RANGE } from './lib/dimensions.js'
 import Logo from './components/Logo.jsx'
+import ThemeToggle from './components/ThemeToggle.jsx'
 
 // The open report lives in the URL hash (#r1, #r2, ...) so a refresh or a
 // shared link lands on the same report.
@@ -46,6 +47,9 @@ export default function App() {
             })}
           </ul>
         </nav>
+        <div className="sidebar-foot">
+          <ThemeToggle />
+        </div>
       </aside>
 
       <div className="main">

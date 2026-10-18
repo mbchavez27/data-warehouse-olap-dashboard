@@ -5,7 +5,7 @@
 :root {
   --ink: #111827;
   --ink-2: #4b5563;
-  --ink-3: #8a93a1;
+  --ink-3: #636b7a;
   --paper: #f5f6f8;
   --surface: #ffffff;
   --surface-2: #f9fafb;
@@ -203,6 +203,40 @@ select {
 
 .nav {
   padding: 18px 12px;
+}
+
+/* Bottom of the sidebar: the light / dark switch. */
+.sidebar-foot {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.theme-toggle-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
 }
 
 .nav-label {
@@ -1400,6 +1434,16 @@ tr.is-total td {
 
   .nav-label {
     display: none;
+  }
+
+  .sidebar-foot {
+    margin-top: 0;
+    padding: 4px 12px 8px;
+    border-top: 0;
+  }
+
+  .theme-toggle {
+    width: auto;
   }
 
   .report-nav {
