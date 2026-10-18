@@ -25,7 +25,9 @@ START_COMMAND = (
     "dw_db",
 )
 REBUILD_SCRIPT = ("db/scripts/setup_dw.sh", "--schema-only")
-PHASES = ("--date", "--dims", "--facts", "--reconcile", "--check")
+# --optimize rebuilds the summary views the reports read; it must follow every
+# load, so a fresh or rebuilt warehouse never serves reports without them.
+PHASES = ("--date", "--dims", "--facts", "--reconcile", "--optimize", "--check")
 
 
 class UsageError(ValueError):

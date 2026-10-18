@@ -107,6 +107,12 @@ def table_metrics(mode: str, summary: Mapping[str, Any]) -> Dict[str, Dict[str, 
             }
             for table, counts in summary.items()
         }
+    if mode == "optimize":
+        # The four views build together, so each shares the phase's time.
+        return {
+            view: {"rowsWritten": rows, "seconds": summary["seconds"]}
+            for view, rows in summary["views"].items()
+        }
     if mode == "facts":
         return {
             table: {

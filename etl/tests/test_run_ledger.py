@@ -102,6 +102,11 @@ def test_append_record_preserves_existing_lines_and_appends_one_json_object(tmp_
             {"FACT_ORDERITEM": {"loaded": 1_999_824, "seconds": 12.5}},
             {"FACT_ORDERITEM": {"rowsWritten": 1_999_824, "seconds": 12.5}},
         ),
+        (
+            "optimize",
+            {"views": {"AGG_RIDER_DAY": 145_825}, "checks": {}, "seconds": 4.2},
+            {"AGG_RIDER_DAY": {"rowsWritten": 145_825, "seconds": 4.2}},
+        ),
         ("check", {"warehouse": {"passed": True}}, {}),
         ("reconcile", {"passed": True}, {}),
     ],

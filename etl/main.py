@@ -14,6 +14,7 @@ from core import run_ledger
 from load import date as load_date
 from load import dimensions as load_dims
 from load import facts as load_facts
+from load import summaries as load_summaries
 from validate import preflight, reconcile
 
 
@@ -31,12 +32,14 @@ def usage() -> str:
             "  uv run --project etl python etl/main.py --facts",
             "  uv run --project etl python etl/main.py --reconcile",
             "  uv run --project etl python etl/main.py --reconcile --output <path>",
+            "  uv run --project etl python etl/main.py --optimize",
             "",
             "--check runs the read-only readiness gate (works before and after loads).",
             "--date replaces DIM_DATE from the parsed source delivery-date range.",
             "--dims upserts DIM_RIDER, DIM_GEOGRAPHY, DIM_CUSTOMER, DIM_PRODUCT.",
             "--facts reloads FACT_ORDERDELIVERY, FACT_ORDERITEM, FACT_RIDERDAILY.",
             "--reconcile writes read-only source-to-warehouse JSON evidence.",
+            "--optimize rebuilds the AGG_* summary views the reports read (db/dw/optimize/).",
         ]
     )
 
@@ -93,6 +96,13 @@ def _execute(argv: List[str]) -> Tuple[str, Dict[str, Any]]:
         passed = sum(check["passed"] for check in report["checks"].values())
         print(f"reconciliation passed: {passed}/{len(report['checks'])} checks")
         return "reconcile", report
+    if argv == ["--optimize"]:
+        summary = load_summaries.run_summary_build()
+        for view, rows in summary["views"].items():
+            print(f"{view}: {rows:,} rows")
+        checks = summary["checks"]
+        print(f"summary views match the facts: {sum(checks.values())}/{len(checks)} checks; {summary['seconds']}s")
+        return "optimize", summary
     raise UsageError(usage())
 
 
@@ -103,7 +113,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
 
 def _mode_label(argv: List[str]) -> str:
-    if argv and argv[0] in {"--check", "--date", "--dims", "--facts", "--reconcile"}:
+    if argv and argv[0] in {"--check", "--date", "--dims", "--facts", "--reconcile", "--optimize"}:
         return argv[0][2:]
     return "invalid"
 
