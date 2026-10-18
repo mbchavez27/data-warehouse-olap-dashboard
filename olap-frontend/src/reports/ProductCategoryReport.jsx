@@ -37,7 +37,7 @@ export default function ProductCategoryReport() {
 
   const level = category ? 'product' : 'category'
   const params = category ? { ...filters, category, top_n: topN } : filters
-  const { rows, loading, error } = useReport('r1', level, params)
+  const { rows, loading, error, retry } = useReport('r1', level, params)
 
   const isTotalRow = (r) => (level === 'category' ? r.is_total : r.is_subtotal)
   const total = rows.find(isTotalRow)
@@ -205,7 +205,7 @@ export default function ProductCategoryReport() {
           )
         }
       >
-        <ReportStatus loading={loading} error={error} empty={empty} />
+        <ReportStatus loading={loading} error={error} empty={empty} onRetry={retry} />
         {!error && !empty && (
           <DataTable
             caption={level === 'category' ? 'Units and value by category' : `Top products in ${category}`}

@@ -3,11 +3,13 @@ import { fetchReport } from './client.js'
 
 // Loads one report level. Rows from the previous request stay on screen while
 // the next one loads, but only if they belong to the same level (different
-// levels return different columns).
+// levels return different columns). `retry` re-sends the same request, for a
+// "Try again" after an error.
 export function useReport(report, level, params) {
   const id = `${report}/${level}`
   const paramsKey = JSON.stringify(params)
   const [state, setState] = useState({ id: null, rows: [], loading: true, error: null })
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -19,11 +21,12 @@ export function useReport(report, level, params) {
         setState({ id, rows: [], loading: false, error: err.message || 'The report could not be loaded.' })
       })
     return () => controller.abort()
-  }, [report, level, id, paramsKey])
+  }, [report, level, id, paramsKey, attempt])
 
   return {
     rows: state.id === id ? state.rows : [],
     loading: state.loading || state.id !== id,
     error: state.error,
+    retry: () => setAttempt((n) => n + 1),
   }
 }

@@ -21,6 +21,7 @@ import { build } from 'esbuild'
 
 import { compact, num, pct, peso } from '../src/lib/format.js'
 import { THEME_KEY, applyTheme, currentTheme, otherTheme } from '../src/lib/theme.js'
+import { HOME, NOT_FOUND, routeFromHash } from '../src/lib/route.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const support = path.join(here, 'support')
@@ -64,9 +65,23 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import ProductCategoryReport from ${JSON.stringify(path.join(reports, 'ProductCategoryReport.jsx'))}
 import FleetWorkloadReport from ${JSON.stringify(path.join(reports, 'FleetWorkloadReport.jsx'))}
 import CustomerValueReport from ${JSON.stringify(path.join(reports, 'CustomerValueReport.jsx'))}
+import Home from ${JSON.stringify(path.join(here, '..', 'src', 'Home.jsx'))}
+import NotFound from ${JSON.stringify(path.join(here, '..', 'src', 'NotFound.jsx'))}
+import ErrorBoundary from ${JSON.stringify(path.join(here, '..', 'src', 'components', 'ErrorBoundary.jsx'))}
+import ReportStatus from ${JSON.stringify(path.join(here, '..', 'src', 'components', 'ReportStatus.jsx'))}
+export { REPORTS } from ${JSON.stringify(path.join(reports, 'index.js'))}
 export { setInitialState, lastRequest } from ${JSON.stringify(path.join(support, 'reportState.js'))}
 const COMPONENTS = { r1: ProductCategoryReport, r2: FleetWorkloadReport, r3: CustomerValueReport }
 export const render = (report) => renderToStaticMarkup(createElement(COMPONENTS[report]))
+export const renderHome = () => renderToStaticMarkup(createElement(Home))
+export const renderNotFound = (hash) => renderToStaticMarkup(createElement(NotFound, { hash }))
+export const renderStatus = (props) => renderToStaticMarkup(createElement(ReportStatus, props))
+// Server rendering can't trigger a boundary, so put it in its caught state by hand.
+export const renderCrashed = (error) => {
+  const boundary = new ErrorBoundary({ children: null })
+  boundary.state = ErrorBoundary.getDerivedStateFromError(error)
+  return renderToStaticMarkup(boundary.render())
+}
 `
 
 const buildHarness = (patches) =>
@@ -360,6 +375,47 @@ for (const testCase of CASES) {
     }
   })
 }
+
+test('the home page opens by default and links every report', () => {
+  const ids = harness.REPORTS.map((r) => r.id)
+  assert.equal(routeFromHash('', ids), HOME, 'no hash opens the home page')
+  assert.equal(routeFromHash('#home', ids), HOME)
+  assert.equal(routeFromHash('#r9', ids), NOT_FOUND, 'a stale link opens the not-found page, not a report')
+  assert.equal(routeFromHash('#oops', ids), NOT_FOUND)
+  assert.equal(routeFromHash('#r3', ids), 'r3', 'a report link still opens that report')
+  assert.equal(routeFromHash(undefined, ids), HOME)
+
+  const html = harness.renderHome()
+  assert.ok(html.includes('class="home-title">Road Runner<'), 'the title')
+  assert.ok(html.includes('Last-mile logistics analytics'), 'the subtitle')
+  assert.equal(count(html, 'class="home-card"'), harness.REPORTS.length, 'one card per report')
+  for (const r of harness.REPORTS) {
+    assert.ok(html.includes(`href="#${r.id}" class="home-card"`), `${r.id} has a card linking to it`)
+    assert.ok(text(html).includes(r.name) && text(html).includes(r.explore), `${r.id} card names and summarizes it`)
+    assert.ok(r.explore?.length > 20, `${r.id} has an explore line`)
+  }
+  assert.ok(!html.includes('undefined') && !html.includes('NaN'))
+})
+
+test('the error pages say what happened and offer the way out', () => {
+  const missing = harness.renderNotFound('#r9')
+  assert.ok(missing.includes('Page not found') && missing.includes('<code>#r9</code>'), 'names the bad link')
+  assert.ok(missing.includes('href="#home" class="button button-primary"'), 'links home')
+  for (const r of harness.REPORTS) assert.ok(missing.includes(`href="#${r.id}"`), `links ${r.id}`)
+  assert.ok(missing.includes('role="alert"'))
+
+  const crashed = harness.renderCrashed(new Error('boom in R2'))
+  assert.ok(crashed.includes('Something went wrong') && crashed.includes('This page hit an error'))
+  assert.ok(crashed.includes('Reload the page') && crashed.includes('href="#home"'), 'reload and home actions')
+  assert.ok(crashed.includes('<summary>Technical details</summary>') && crashed.includes('boom in R2'), 'details folded away')
+
+  const failed = harness.renderStatus({ error: "Couldn't reach the report service.", onRetry: () => {} })
+  assert.ok(failed.includes("This report didn&#x27;t load.") && failed.includes('reach the report service'))
+  assert.ok(failed.includes('>Try again</button>'), 'a retry button when a retry is possible')
+  assert.ok(!failed.includes('8080'), 'no developer-only port in a message visitors see')
+  assert.ok(!harness.renderStatus({ error: 'x' }).includes('Try again'), 'no button without a retry')
+  assert.ok(harness.renderStatus({ empty: true, loading: false }).includes('No deliveries match these filters'))
+})
 
 test('the dark theme redefines every colour token, both ways it can switch on', () => {
   const css = readFileSync(path.join(here, '..', 'src', 'styles.css'), 'utf8')

@@ -66,3 +66,17 @@ export const MoonIcon = (p) => (
     <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
   </svg>
 )
+
+export const HomeIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M3.5 10.5 12 4l8.5 6.5" />
+    <path d="M5.5 9v10.5h13V9" />
+    <path d="M10 19.5v-5h4v5" />
+  </svg>
+)
+
+export const ArrowRightIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </svg>
+)

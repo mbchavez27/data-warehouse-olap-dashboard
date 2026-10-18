@@ -58,7 +58,7 @@ export default function CustomerValueReport() {
   if (view === 'geography') params = { ...filters, level: geoLevel, country: geoLevel === 'city' ? drill.country || '' : '', top_n: topN }
   else if (view === 'customer') params = { ...filters, country: drill.country || '', city: drill.city || '', decile: drill.decile || '', top_n: topN }
   else params = { ...filters }
-  const { rows, loading, error } = useReport('r3', view, params)
+  const { rows, loading, error, retry } = useReport('r3', view, params)
 
   // ---- drill path ----
   const path =
@@ -390,7 +390,7 @@ export default function CustomerValueReport() {
         legend={!error && !empty ? <Legend items={legend} /> : null}
         footer={!error && !empty && note}
       >
-        <ReportStatus loading={loading} error={error} empty={empty} />
+        <ReportStatus loading={loading} error={error} empty={empty} onRetry={retry} />
         {!error && !empty && chart && <div className="panel-chart">{chart}</div>}
         {!error && !empty && <DataTable columns={columns} rows={rows} {...table} />}
       </Panel>

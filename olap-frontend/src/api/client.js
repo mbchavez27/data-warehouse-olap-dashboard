@@ -28,14 +28,24 @@ export async function fetchReport(report, level, params, { signal } = {}) {
 
   const query = new URLSearchParams(sent).toString()
   const url = `${BASE}/reports/${report}/${level}${query ? `?${query}` : ''}`
-  const res = await fetch(url, { signal })
+  let res
+  try {
+    res = await fetch(url, { signal })
+  } catch (err) {
+    // A network failure surfaces as the browser's bare "Failed to fetch".
+    if (err.name === 'AbortError') throw err
+    throw new Error("Couldn't reach the report service.")
+  }
   if (!res.ok) {
     let message = `The report service answered ${res.status} ${res.statusText}.`
     try {
       const body = await res.json()
       if (body?.error) message = body.error
     } catch {
-      // body wasn't JSON; keep the status message
+      // Not JSON. The API always explains its own errors in JSON, so an empty
+      // 5xx comes from the /api proxy in front of it: the API is down or
+      // restarting, not broken.
+      if (res.status >= 500) message = `Couldn't reach the report service (HTTP ${res.status}).`
     }
     throw new Error(message)
   }

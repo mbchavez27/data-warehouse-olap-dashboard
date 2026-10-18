@@ -82,6 +82,36 @@ the SQL output column names exactly (`value_share_pct`, `is_total`,
 **Errors:** any non-2xx status. If the body is `{ "error": "message" }`, that
 message is shown to the user.
 
+## Home page
+
+Opening the dashboard (no hash, or `#home`) shows the home page
+(`src/Home.jsx`): the Road Runner title, the "Last-mile logistics analytics"
+subtitle, what the dashboard covers and the data's date range, and a card per
+report with the question it answers, a line on how to explore it (`explore` in
+`src/reports/index.js`) and a link to open it. It requests no data, so each
+report stays the only source of its numbers. The sidebar's Home link and the
+logo return to it (`src/lib/route.js`).
+
+## When something goes wrong
+
+- **A link to a page that doesn't exist** (`#r9`, a typo, an old bookmark)
+  opens a "Page not found" page (`src/NotFound.jsx`) naming the bad link, with
+  links home and to each report, instead of silently opening a report.
+- **A report that fails to load** shows what went wrong in its panel with a
+  **Try again** button that re-sends the same request (`retry` from
+  `src/api/useReport.js`). The messages are written for visitors: the API's own
+  error text when it sends one, and "Couldn't reach the report service" when
+  the network fails or the `/api` proxy answers an empty 5xx because the API is
+  down or restarting (`src/api/client.js`).
+- **A crash while rendering a page** is caught by `ErrorBoundary`, which shows
+  a "Something went wrong" page with Reload and Home buttons and the technical
+  details folded away, instead of a blank screen. The sidebar keeps working, and
+  moving to another page clears the error.
+- **No rows for the chosen filters** says so and suggests another period or
+  clearing a filter.
+
+The not-found and crash pages share `src/components/ErrorPage.jsx`.
+
 ## How the reports map to OLAP operations
 
 | Report | Drill-down / roll-up | Slice | Dice | Pivot |
@@ -265,7 +295,9 @@ declares. Only the schema is needed, not the data.
 
 ```
 src/
-  App.jsx                  sidebar + report header; the open report is in the URL hash (#r1..#r4)
+  App.jsx                  sidebar + report header; the open page is in the URL hash (#home, #r1..#r4)
+  Home.jsx                 home page: title, overview and a card per report
+  NotFound.jsx             page for a link to a page that doesn't exist
   api/client.js            the only code that calls the API (mock or live)
   api/useReport.js         React hook: loads one report level, keeps old rows while reloading
   api/mock.js              sample rows shaped exactly like each SQL file's output
@@ -278,9 +310,11 @@ src/
                            Bar, HeatCell (heat matrix cell), LineChart (time series), ParetoChart
                            (concentration), DotStrip (spread around the median), CalendarGrid
                            (demand calendar), Segmented, ExportButton, ReportStatus,
-                           ThemeToggle (light / dark switch), Icons
+                           ThemeToggle (light / dark switch), ErrorPage and ErrorBoundary
+                           (not-found and crashed-page screens), Icons
   lib/chartKeys.js         keyboard and pointer reading shared by the charts
   lib/theme.js             light / dark choice: system default, pinned and remembered
+  lib/route.js             which page a URL hash opens (a report, else home)
   lib/csv.js               Export CSV
   lib/dimensions.js        filter options shared by all reports (values match the SQL)
   lib/format.js            peso / percent / count formatting

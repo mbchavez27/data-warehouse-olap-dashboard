@@ -2,36 +2,49 @@ import { useEffect, useState } from 'react'
 import { REPORTS } from './reports/index.js'
 import { isMock } from './api/client.js'
 import { DATA_RANGE } from './lib/dimensions.js'
+import { HOME, NOT_FOUND, routeFromHash } from './lib/route.js'
 import Logo from './components/Logo.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
+import { HomeIcon } from './components/Icons.jsx'
+import Home from './Home.jsx'
+import NotFound from './NotFound.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
-// The open report lives in the URL hash (#r1, #r2, ...) so a refresh or a
-// shared link lands on the same report.
-const reportFromHash = () => {
-  const id = window.location.hash.replace('#', '')
-  return REPORTS.some((r) => r.id === id) ? id : REPORTS[0].id
-}
+// The open page lives in the URL hash (#r1, #r2, ... or #home) so a refresh or
+// a shared link lands on the same page. No hash opens the home page, and an
+// unknown hash the not-found page.
+const REPORT_IDS = REPORTS.map((r) => r.id)
 
 export default function App() {
-  const [activeId, setActiveId] = useState(reportFromHash)
+  // The hash itself, not just the page it opens, so moving between two unknown
+  // links still updates the not-found page.
+  const [hash, setHash] = useState(() => window.location.hash)
 
   useEffect(() => {
-    const onHashChange = () => setActiveId(reportFromHash())
+    const onHashChange = () => setHash(window.location.hash)
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
+  const activeId = routeFromHash(hash, REPORT_IDS)
+
+  const isHome = activeId === HOME
+  const isNotFound = activeId === NOT_FOUND
   const active = REPORTS.find((r) => r.id === activeId)
-  const Report = active.component
+  const Report = active?.component
 
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="brand">
+        <a href="#home" className="brand" aria-label="Road Runner home">
           <Logo className="brand-mark" />
           <span className="brand-name">Road Runner</span>
-        </div>
+        </a>
         <nav className="nav" aria-label="Reports">
+          <a href="#home" className="report-link home-link" aria-current={isHome ? 'page' : undefined}>
+            <HomeIcon className="report-icon" />
+            <span>Home</span>
+          </a>
           <p className="nav-label">Reports</p>
           <ul className="report-nav">
             {REPORTS.map((r) => {
@@ -55,9 +68,17 @@ export default function App() {
       <div className="main">
         <header className="topbar">
           <nav className="crumbs" aria-label="Breadcrumb">
-            <span>Reports</span>
-            <span className="crumbs-sep" aria-hidden="true">/</span>
-            <span aria-current="page">{active.name}</span>
+            {isHome ? (
+              <span aria-current="page">Home</span>
+            ) : (
+              <>
+                <a href="#home" className="crumbs-link">
+                  Home
+                </a>
+                <span className="crumbs-sep" aria-hidden="true">/</span>
+                <span aria-current="page">{isNotFound ? 'Page not found' : active.name}</span>
+              </>
+            )}
           </nav>
           <div className="topbar-meta">
             {isMock && (
@@ -73,11 +94,21 @@ export default function App() {
         </header>
 
         <main className="page">
-          <header className="page-header">
-            <h1>{active.name}</h1>
-            <p>{active.question}</p>
-          </header>
-          <Report key={active.id} />
+          <ErrorBoundary key={activeId}>
+            {isHome ? (
+              <Home />
+            ) : isNotFound ? (
+              <NotFound hash={hash} />
+            ) : (
+              <>
+                <header className="page-header">
+                  <h1>{active.name}</h1>
+                  <p>{active.question}</p>
+                </header>
+                <Report key={active.id} />
+              </>
+            )}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

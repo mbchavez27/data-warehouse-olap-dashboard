@@ -130,7 +130,7 @@ export default function DemandCalendarReport() {
   if (view === 'trend') params = { ...applied, level: grain }
   else if (view === 'busiest') params = { ...applied, sort, top_n: topN }
   else params = applied
-  const { rows, loading, error } = useReport('r4', LEVEL_BY_VIEW[view], params)
+  const { rows, loading, error, retry } = useReport('r4', LEVEL_BY_VIEW[view], params)
 
   // ---- drill path: the period filters, read back as the date hierarchy ----
   const path = [{ label: 'All dates' }]
@@ -559,7 +559,7 @@ export default function DemandCalendarReport() {
         legend={!error && !empty && legend.length ? <Legend items={legend} /> : null}
         footer={!error && !empty && note}
       >
-        <ReportStatus loading={loading} error={error} empty={empty} />
+        <ReportStatus loading={loading} error={error} empty={empty} onRetry={retry} />
         {!error && !empty && calendar && <div className="panel-chart">{calendar}</div>}
         {!error && !empty && chart && <div className="panel-chart">{chart}</div>}
         {!error && !empty && showTable && !collapseTable && <DataTable columns={columns} rows={rows} {...table} />}

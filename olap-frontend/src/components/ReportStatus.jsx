@@ -1,13 +1,21 @@
 import { DATA_RANGE } from '../lib/dimensions.js'
 
 // Error and empty states, written as directions rather than mood. Loading is
-// shown by the panel's progress bar.
-export default function ReportStatus({ loading, error, empty }) {
+// shown by the panel's progress bar. `onRetry` (useReport's retry) adds a
+// "Try again" button to the error.
+export default function ReportStatus({ loading, error, empty, onRetry }) {
   if (error) {
     return (
       <div className="status is-error" role="alert">
-        <strong>This report didn't load.</strong> {error} Check that the Go API is running on port 8080, then change a
-        filter to try again.
+        <p>
+          <strong>This report didn't load.</strong> {error} The report service may be down or restarting; try again
+          in a moment.
+        </p>
+        {onRetry && (
+          <button type="button" className="button status-retry" onClick={onRetry}>
+            Try again
+          </button>
+        )}
       </div>
     )
   }

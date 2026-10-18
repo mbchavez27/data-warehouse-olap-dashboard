@@ -79,7 +79,7 @@ export default function FleetWorkloadReport() {
       courier, vehicle, sort, top_n: topN,
     }
   }
-  const { rows, loading, error } = useReport('r2', level, params)
+  const { rows, loading, error, retry } = useReport('r2', level, params)
 
   // ---- drill path ----
   const stops = [{ label: 'All couriers' }]
@@ -428,7 +428,7 @@ export default function FleetWorkloadReport() {
         legend={!error && !empty ? <Legend items={legend} /> : null}
         footer={!error && !empty && note}
       >
-        <ReportStatus loading={loading} error={error} empty={empty} />
+        <ReportStatus loading={loading} error={error} empty={empty} onRetry={retry} />
         {!error && !empty && chart && <div className="panel-chart">{chart}</div>}
         {!error && !empty && <DataTable columns={columns} rows={tableRows} {...table} />}
       </Panel>

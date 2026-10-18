@@ -158,6 +158,8 @@ select {
   height: var(--topbar-h);
   padding: 0 18px;
   border-bottom: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
 }
 
 .brand-mark {
@@ -284,6 +286,10 @@ select {
   color: var(--route);
 }
 
+.home-link {
+  margin-bottom: 14px;
+}
+
 .main {
   min-width: 0;
   display: flex;
@@ -313,6 +319,15 @@ select {
   font-size: 0.88rem;
   color: var(--ink-3);
   white-space: nowrap;
+}
+
+.crumbs-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.crumbs-link:hover {
+  color: var(--route);
 }
 
 .crumbs [aria-current] {
@@ -374,6 +389,142 @@ select {
   margin: 6px 0 0;
   max-width: 72ch;
   color: var(--ink-2);
+}
+
+/* ---------- home page ---------- */
+
+.home-hero {
+  margin: 8px 0 36px;
+}
+
+.home-mark {
+  width: 56px;
+  height: 56px;
+}
+
+.home-title {
+  margin: 10px 0 0;
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.home-sub {
+  margin: 6px 0 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--route);
+}
+
+.home-lead {
+  margin: 14px 0 0;
+  max-width: 64ch;
+  color: var(--ink-2);
+}
+
+.home-meta {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+
+.home-heading {
+  margin: 0 0 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-grid > li {
+  display: flex;
+}
+
+.home-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+
+.home-card:hover {
+  border-color: var(--route);
+}
+
+.home-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home-card-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--route);
+}
+
+.home-card-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.home-card-title {
+  margin: 12px 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.home-card-question {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
+.home-card-explore {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+
+/* Pinned to the bottom so the links line up across cards of different heights. */
+.home-card-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 14px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--route);
+}
+
+.home-card-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.15s ease;
+}
+
+.home-card:hover .home-card-arrow {
+  transform: translateX(3px);
 }
 
 /* ---------- filter toolbar ---------- */
@@ -1052,7 +1203,21 @@ select {
   box-shadow: var(--shadow);
   font-size: 0.85rem;
   font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
   cursor: pointer;
+}
+
+/* The one action a page most wants you to take. */
+.button-primary {
+  border-color: var(--route);
+  background: var(--route);
+  color: var(--surface); /* white on the light blue, near-black on the dark theme's lighter blue */
+}
+
+.button-primary:hover:not(:disabled) {
+  border-color: var(--route-hover);
+  background: var(--route-hover);
 }
 
 .button:hover:not(:disabled) {
@@ -1194,6 +1359,103 @@ button.route-label:hover {
 .status.is-error {
   border-left-color: var(--error);
   background: var(--error-tint);
+}
+
+.status p {
+  margin: 0;
+}
+
+.status-retry {
+  margin-top: 10px;
+}
+
+/* ---------- error pages (not found, crashed page) ---------- */
+
+.error-page {
+  max-width: 60ch;
+  margin: 24px 0;
+}
+
+.error-page-mark {
+  width: 44px;
+  height: 44px;
+  opacity: 0.85;
+}
+
+.error-page-code {
+  margin: 12px 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--error);
+}
+
+.error-page-title {
+  margin: 6px 0 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.error-page-body {
+  margin-top: 10px;
+  color: var(--ink-2);
+}
+
+.error-page-body p {
+  margin: 0;
+}
+
+.error-page-body code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  font-size: 0.9em;
+}
+
+.error-page-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.error-page-links a {
+  color: var(--route);
+  font-weight: 500;
+}
+
+.error-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.error-page-details {
+  margin-top: 20px;
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+
+.error-page-details summary {
+  cursor: pointer;
+}
+
+.error-page-details pre {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  max-height: 220px;
+  overflow: auto;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .status.is-placeholder {
@@ -1436,6 +1698,14 @@ tr.is-total td {
     display: none;
   }
 
+  .home-link {
+    margin-bottom: 0;
+  }
+
+  .home-title {
+    font-size: 2rem;
+  }
+
   .sidebar-foot {
     margin-top: 0;
     padding: 4px 12px 8px;
@@ -1483,8 +1753,13 @@ tr.is-total td {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bar-fill {
+  .bar-fill,
+  .home-card-arrow {
     transition: none;
+  }
+
+  .home-card:hover .home-card-arrow {
+    transform: none;
   }
 
   .panel-progress span {
