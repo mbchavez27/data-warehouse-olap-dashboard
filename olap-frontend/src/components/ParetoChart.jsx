@@ -10,6 +10,8 @@ import { useState } from 'react'
 //   format      (v) => string
 //   barName / lineName    legend and hover names
 //   lineHint    what the line means, shown beside its name in the legend (optional)
+//   reference / referenceName   a dashed level line and its legend name
+//               (optional; e.g. 80 for "80% of value")
 //   title       accessible name
 //   max         top of the scale; pass it to pin the axis (a Pareto of shares
 //               wants 100 so the cumulative line lands on the top gridline)
@@ -23,6 +25,8 @@ export default function ParetoChart({
   lineHint,
   title = 'Concentration',
   max,
+  reference,
+  referenceName,
 }) {
   const [hover, setHover] = useState(null)
 
@@ -73,6 +77,10 @@ export default function ParetoChart({
             className={`chart-bar${hover === i ? ' is-on' : ''}`}
           />
         ))}
+
+        {Number.isFinite(reference) && (
+          <line x1={pad.l} x2={W - pad.r} y1={y(reference)} y2={y(reference)} className="chart-reference" />
+        )}
 
         <path d={path} className="chart-line" />
 
@@ -126,6 +134,12 @@ export default function ParetoChart({
           {lineName}
           {lineHint && <span className="chart-legend-hint">— {lineHint}</span>}
         </li>
+        {Number.isFinite(reference) && referenceName && (
+          <li>
+            <i className="is-dashed" />
+            {referenceName}
+          </li>
+        )}
       </ul>
     </div>
   )

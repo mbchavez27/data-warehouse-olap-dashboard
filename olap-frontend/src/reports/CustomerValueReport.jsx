@@ -118,6 +118,8 @@ export default function CustomerValueReport() {
         barName="Share of value"
         lineName="Running total"
         lineHint="the share of value held by decile 1 through that decile, so it ends at 100%"
+        reference={80}
+        referenceName="80% of value"
       />
     )
     columns = [

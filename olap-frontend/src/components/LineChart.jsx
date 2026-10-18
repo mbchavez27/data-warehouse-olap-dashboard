@@ -6,9 +6,22 @@ import { useState } from 'react'
 //
 //   labels   string[]                       one x label per point
 //   series   { name, values, dashed? }[]    one line each; `values` are numbers
-//   format   (v) => string                  axis and hover formatting
+//   format   (v) => string                  hover formatting
+//   axisFormat (v) => string                y-axis labels (defaults to format)
 //   title    string                         accessible name for the chart
-export default function LineChart({ labels, series, format = String, title = 'Chart' }) {
+
+// Round gridlines: a step of 1, 2 or 5 x 10^n that gives about `count` lines,
+// with the top of the scale on the first step at or above the peak.
+function niceTicks(peak, count = 4) {
+  if (!(peak > 0)) return [0, 1]
+  const raw = peak / count
+  const magnitude = 10 ** Math.floor(Math.log10(raw))
+  const step = [1, 2, 5, 10].map((m) => m * magnitude).find((s) => s >= raw)
+  const top = Math.ceil(peak / step) * step
+  return Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step)
+}
+
+export default function LineChart({ labels, series, format = String, axisFormat = format, title = 'Chart' }) {
   const [hover, setHover] = useState(null)
 
   if (!labels.length) return null
@@ -19,7 +32,8 @@ export default function LineChart({ labels, series, format = String, title = 'Ch
   const n = labels.length
   const numbers = series.flatMap((s) => s.values.map(Number)).filter(Number.isFinite)
   const peak = numbers.length ? Math.max(...numbers) : 0
-  const yMax = peak > 0 ? peak * 1.08 : 1
+  const gridValues = niceTicks(peak)
+  const yMax = gridValues[gridValues.length - 1]
 
   const x = (i) => (n === 1 ? W / 2 : pad.l + (i * (W - pad.l - pad.r)) / (n - 1))
   const y = (v) => H - pad.b - ((Number(v) || 0) / yMax) * (H - pad.t - pad.b)
@@ -27,7 +41,6 @@ export default function LineChart({ labels, series, format = String, title = 'Ch
   const area = (values) =>
     `${path(values)} L${x(n - 1).toFixed(1)},${H - pad.b} L${x(0).toFixed(1)},${H - pad.b} Z`
 
-  const gridValues = [0, 0.5, 1].map((f) => yMax * f)
   const labelEvery = Math.max(1, Math.ceil(n / 8))
 
   // Nearest point to the cursor: the overlay rect covers the plot area, so the
@@ -47,7 +60,7 @@ export default function LineChart({ labels, series, format = String, title = 'Ch
           <g key={gv}>
             <line x1={pad.l} x2={W - pad.r} y1={y(gv)} y2={y(gv)} className="chart-grid" />
             <text x={pad.l - 8} y={y(gv) + 4} className="chart-axis" textAnchor="end">
-              {format(gv)}
+              {axisFormat(gv)}
             </text>
           </g>
         ))}

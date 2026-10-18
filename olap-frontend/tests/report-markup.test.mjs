@@ -101,6 +101,11 @@ function scopeLine(html) {
   return match ? text(match[1]) : null
 }
 
+// The y-axis labels (right-aligned chart-axis text), as numbers.
+function axisValues(html) {
+  return [...html.matchAll(/class="chart-axis" text-anchor="end">([^<]+)</g)].map((m) => Number(m[1].replace(/,/g, '')))
+}
+
 function chartLegend(html) {
   const match = html.match(/<ul class="chart-legend">(.*?)<\/ul>/s)
   return match ? text(match[1]) : ''
@@ -237,6 +242,17 @@ const CASES = [
           figure(html, 'Quietest period'),
         ],
         ['bar legend', html.includes('Bar length = orders')],
+        ['arrow legend', html.includes('up or down on the period before')],
+        [
+          'every change carries an arrow in its direction',
+          (html.match(/change is-up/g) ?? []).length === rows.filter((r) => Number(r.change_vs_previous_pct) > 0).length &&
+            (html.match(/change is-down/g) ?? []).length === rows.filter((r) => Number(r.change_vs_previous_pct) < 0).length,
+        ],
+        [
+          'y-axis gridlines sit on round values',
+          axisValues(html).length >= 3 && axisValues(html).every((v) => v % 10 === 0),
+          axisValues(html).join(', '),
+        ],
         ['one breadcrumb stop', stopsIn(html) === 1, String(stopsIn(html))],
       ]
     },
@@ -421,7 +437,7 @@ const CASES = [
           ),
         ],
         ['the top day is named', html.includes(dayLabel(top.date)), dayLabel(top.date)],
-        ['a plus signed deviation', /class="num">\+\d+\.\d%</.test(html)],
+        ['a plus signed deviation, arrowed up', /▲<\/span> \+\d+\.\d%</.test(html)],
         [
           'the peak deviation is the top row, a little over the average',
           html.includes(`+${pct(top.vs_average_pct)}`) && Number(top.vs_average_pct) > 0 && Number(top.vs_average_pct) < 15,
@@ -440,7 +456,8 @@ const CASES = [
         ['renders every row the query returned', rowsIn(html) === rows.length, `${rowsIn(html)} of ${rows.length}`],
         ['quietest first is selected', html.includes('aria-checked="true" class="is-on">Quietest first')],
         ['top 20 is selected', html.includes('aria-checked="true" class="is-on">Top 20')],
-        ['negative deviations', /class="num">-\d+\.\d%</.test(html)],
+        ['negative deviations, arrowed down', /▼<\/span> -\d+\.\d%</.test(html)],
+        ['no up arrows among the quietest days', !html.includes('change is-up')],
         ['the top row is the quietest day', rows.every((r) => Number(r.vs_average_pct) < 0)],
         ['caption follows the sort', html.includes('Quietest days')],
       ]

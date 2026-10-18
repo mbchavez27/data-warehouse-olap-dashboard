@@ -91,6 +91,20 @@ function dayLabel(date) {
 
 const signed = (v) => (v === null || v === undefined || v === '' ? '–' : `${Number(v) > 0 ? '+' : ''}${pct(v)}`)
 
+// A signed % for a table cell, with an arrow so ups and downs scan at a glance.
+// The arrow is decoration; the sign already carries the meaning for a reader.
+function Change({ value }) {
+  if (value === null || value === undefined || value === '') return '–'
+  const v = Number(value)
+  if (!v) return signed(value)
+  return (
+    <span className={`change ${v > 0 ? 'is-up' : 'is-down'}`}>
+      <span aria-hidden="true">{v > 0 ? '▲' : '▼'}</span>
+      {` ${signed(value)}`}
+    </span>
+  )
+}
+
 // Names the filters a level ignores, so a value left over from another view
 // never looks applied.
 function notApplied(filters, names) {
@@ -256,6 +270,7 @@ export default function DemandCalendarReport() {
         labels={rows.map((r) => r.period_label)}
         series={series}
         format={perDay ? dec1 : num}
+        axisFormat={num}
       />
     )
     if (grain === 'day') {
@@ -311,7 +326,7 @@ export default function DemandCalendarReport() {
         key: 'change_vs_previous_pct',
         label: 'Change vs previous',
         align: 'right',
-        render: (r) => signed(r.change_vs_previous_pct),
+        render: (r) => <Change value={r.change_vs_previous_pct} />,
         csv: (r) => (r.change_vs_previous_pct === null ? '' : r.change_vs_previous_pct),
       },
       {
@@ -324,7 +339,12 @@ export default function DemandCalendarReport() {
     ]
     table = { caption: `Orders by ${grain}`, rowKey: (r) => `${r.period_label}-${r.period_start}` }
     showTable = grain !== 'day'
-    legend = showTable ? [{ swatch: 'bar', label: 'Bar length = orders, relative to the busiest period listed' }] : []
+    legend = showTable
+      ? [
+          { swatch: 'bar', label: 'Bar length = orders, relative to the busiest period listed' },
+          { swatch: 'glyph', glyph: '▲▼', label: 'Change vs previous: up or down on the period before' },
+        ]
+      : []
     note = `Each row is one ${grain}, and orders per day divides a period's orders by its calendar days, so the 7-day September 2024 and the 23-day September 2025 compare with full months.${
       showingAverage ? ' The dashed line is a 7-period moving average.' : ''
     }${
@@ -471,7 +491,7 @@ export default function DemandCalendarReport() {
         key: 'vs_average_pct',
         label: 'Versus the average day',
         align: 'right',
-        render: (r) => signed(r.vs_average_pct),
+        render: (r) => <Change value={r.vs_average_pct} />,
         csv: (r) => (r.vs_average_pct === null ? '' : r.vs_average_pct),
       },
       { key: 'units', label: 'Units', align: 'right', render: (r) => num(r.units) },
@@ -487,8 +507,8 @@ export default function DemandCalendarReport() {
     legend = [
       {
         swatch: 'glyph',
-        glyph: '±',
-        label: 'That column compares a day with the average day in the same slice',
+        glyph: '▲▼',
+        label: 'That column compares a day with the average day in the same slice: above or below it',
       },
     ]
     note = `Ranked from every day in the slice, not only the rows shown. "Versus the average day" is each day's orders against the average day in the same slice, so +5% is how far a spike really rises above a level base. Weekend and payday days are marked next to the day name, because those are the days the calendar would flag.`

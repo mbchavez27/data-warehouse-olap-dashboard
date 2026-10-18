@@ -662,6 +662,12 @@ select {
   stroke-dasharray: 5 4;
 }
 
+.chart-reference {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+}
+
 .chart-crosshair {
   stroke: var(--line);
   stroke-width: 1;
@@ -1089,6 +1095,19 @@ tr.is-total td {
 
 .cell-muted {
   color: var(--ink-3);
+}
+
+/* Signed % cells: blue up, orange down, the same pair as the diverging heat. */
+.change.is-up > span {
+  color: var(--route);
+}
+
+.change.is-down > span {
+  color: var(--dip);
+}
+
+.change > span {
+  font-size: 0.7em;
 }
 
 /* R4's roll-up indents the finer levels: a month sits furthest in, its quarter
