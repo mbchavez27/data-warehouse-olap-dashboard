@@ -1,0 +1,406 @@
+# Negative control: DWTEST_NEGATIVE_CONTROL=1 drops one source order from the reference.
+# Expected: the suite FAILS. No database is modified.
+date: 2026-10-18T09:09:15Z
+health: {"database": "ok", "status": "ok"}
+container stadvdb-mco1-dw-db: running
+container stadvdb-mco1-source-db: running
+
+...........................................FFFFFFF..FFFFF.FFFFFFFFFFFFFFF........F....F......
+======================================================================
+FAIL: test_cube (test_report_correctness.TestReferenceR2.test_cube) (filters={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 91, in test_cube
+    self.exact("r2", "courier_vehicle_cube", s.r2_cube(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 6 column orders: api=129956 reference=129955\n  api: {'courier': 'JNT', 'grouping_level': 0, 'order_share_pct': 13.0, 'orders': 129956, 'orders_per_rider': 9997, 'riders': 13, 'units': 1431613, 'vehicle': 'Motorcycle'}\n  ref: {'courier': 'JNT', 'vehicle': 'Motorcycle', 'orders': 129955, 'units': 1431601, 'riders': 13, 'orders_per_rider': Decimal('9997'), 'order_share_pct': Decimal('13.0'), 'grouping_level': 0}" is not None : r2/courier_vehicle_cube {}: row 6 column orders: api=129956 reference=129955
+  api: {'courier': 'JNT', 'grouping_level': 0, 'order_share_pct': 13.0, 'orders': 129956, 'orders_per_rider': 9997, 'riders': 13, 'units': 1431613, 'vehicle': 'Motorcycle'}
+  ref: {'courier': 'JNT', 'vehicle': 'Motorcycle', 'orders': 129955, 'units': 1431601, 'riders': 13, 'orders_per_rider': Decimal('9997'), 'order_share_pct': Decimal('13.0'), 'grouping_level': 0}
+
+======================================================================
+FAIL: test_cube (test_report_correctness.TestReferenceR2.test_cube) (filters={'year': 2025, 'quarter': 2})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 91, in test_cube
+    self.exact("r2", "courier_vehicle_cube", s.r2_cube(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 6 column orders: api=32381 reference=32380\n  api: {'courier': 'JNT', 'grouping_level': 0, 'order_share_pct': 13.0, 'orders': 32381, 'orders_per_rider': 2491, 'riders': 13, 'units': 358173, 'vehicle': 'Motorcycle'}\n  ref: {'courier': 'JNT', 'vehicle': 'Motorcycle', 'orders': 32380, 'units': 358161, 'riders': 13, 'orders_per_rider': Decimal('2491'), 'order_share_pct': Decimal('13.0'), 'grouping_level': 0}" is not None : r2/courier_vehicle_cube {'year': 2025, 'quarter': 2}: row 6 column orders: api=32381 reference=32380
+  api: {'courier': 'JNT', 'grouping_level': 0, 'order_share_pct': 13.0, 'orders': 32381, 'orders_per_rider': 2491, 'riders': 13, 'units': 358173, 'vehicle': 'Motorcycle'}
+  ref: {'courier': 'JNT', 'vehicle': 'Motorcycle', 'orders': 32380, 'units': 358161, 'riders': 13, 'orders_per_rider': Decimal('2491'), 'order_share_pct': Decimal('13.0'), 'grouping_level': 0}
+
+======================================================================
+FAIL: test_cube (test_report_correctness.TestReferenceR2.test_cube) (filters={'size_group': 'Heavy'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 91, in test_cube
+    self.exact("r2", "courier_vehicle_cube", s.r2_cube(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 6 column orders: api=61969 reference=61968\n  api: {'courier': 'JNT', 'grouping_level': 0, 'order_share_pct': 13.0, 'orders': 61969, 'orders_per_rider': 4767, 'riders': 13, 'units': 1006627, 'vehicle': 'Motorcycle'}\n  ref: {'courier': 'JNT', 'vehicle': 'Motorcycle', 'orders': 61968, 'units': 1006615, 'riders': 13, 'orders_per_rider': Decimal('4767'), 'order_share_pct': Decimal('13.0'), 'grouping_level': 0}" is not None : r2/courier_vehicle_cube {'size_group': 'Heavy'}: row 6 column orders: api=61969 reference=61968
+  api: {'courier': 'JNT', 'grouping_level': 0, 'order_share_pct': 13.0, 'orders': 61969, 'orders_per_rider': 4767, 'riders': 13, 'units': 1006627, 'vehicle': 'Motorcycle'}
+  ref: {'courier': 'JNT', 'vehicle': 'Motorcycle', 'orders': 61968, 'units': 1006615, 'riders': 13, 'orders_per_rider': Decimal('4767'), 'order_share_pct': Decimal('13.0'), 'grouping_level': 0}
+
+======================================================================
+FAIL: test_pivot (test_report_correctness.TestReferenceR2.test_pivot) (filters={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 102, in test_pivot
+    self.exact("r2", "courier_vehicle_pivot", s.r2_pivot(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 1 column motorcycle: api=129956 reference=129955\n  api: {'bicycle': 89701, 'car': 50169, 'courier': 'JNT', 'is_total': False, 'motorcycle': 129956, 'riders': 31, 'total': 309896, 'trike': 40070}\n  ref: {'courier': 'JNT', 'motorcycle': 129955, 'bicycle': 89701, 'car': 50169, 'trike': 40070, 'total': 309895, 'riders': 31, 'is_total': False}" is not None : r2/courier_vehicle_pivot {}: row 1 column motorcycle: api=129956 reference=129955
+  api: {'bicycle': 89701, 'car': 50169, 'courier': 'JNT', 'is_total': False, 'motorcycle': 129956, 'riders': 31, 'total': 309896, 'trike': 40070}
+  ref: {'courier': 'JNT', 'motorcycle': 129955, 'bicycle': 89701, 'car': 50169, 'trike': 40070, 'total': 309895, 'riders': 31, 'is_total': False}
+
+======================================================================
+FAIL: test_pivot (test_report_correctness.TestReferenceR2.test_pivot) (filters={'measure': 'orders'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 102, in test_pivot
+    self.exact("r2", "courier_vehicle_pivot", s.r2_pivot(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 1 column motorcycle: api=129956 reference=129955\n  api: {'bicycle': 89701, 'car': 50169, 'courier': 'JNT', 'is_total': False, 'motorcycle': 129956, 'riders': 31, 'total': 309896, 'trike': 40070}\n  ref: {'courier': 'JNT', 'motorcycle': 129955, 'bicycle': 89701, 'car': 50169, 'trike': 40070, 'total': 309895, 'riders': 31, 'is_total': False}" is not None : r2/courier_vehicle_pivot {'measure': 'orders'}: row 1 column motorcycle: api=129956 reference=129955
+  api: {'bicycle': 89701, 'car': 50169, 'courier': 'JNT', 'is_total': False, 'motorcycle': 129956, 'riders': 31, 'total': 309896, 'trike': 40070}
+  ref: {'courier': 'JNT', 'motorcycle': 129955, 'bicycle': 89701, 'car': 50169, 'trike': 40070, 'total': 309895, 'riders': 31, 'is_total': False}
+
+======================================================================
+FAIL: test_rider (test_report_correctness.TestReferenceR2.test_rider) (filters={'sort': 'most', 'top_n': 100})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 115, in test_rider
+    self.ranked("r2", "rider", ref, "orders", "rider", limit, **filters)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 35, in ranked
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 38 (Haylie Bauch) column workload_rank: api=39 reference=40\n  api: {'active_days': 365, 'age_band': '40-49', 'avg_orders_per_active_day': 27.5, 'calendar_days': 365, 'courier': 'JNT', 'orders': 10025, 'peak_day_orders': 40, 'rider': 'Haylie Bauch', 'units': 110066, 'utilization_pct': 100.0, 'vehicle': 'Motorcycle', 'workload_percentile': 60.6, 'workload_rank': 39}\n  ref: {'workload_rank': 40, 'rider': 'Haylie Bauch', 'courier': 'JNT', 'vehicle': 'Motorcycle', 'age_band': '40-49', 'orders': 10024, 'units': 110054, 'active_days': 365, 'calendar_days': 365, 'utilization_pct': Decimal('100.0'), 'avg_orders_per_active_day': Decimal('27.5'), 'peak_day_orders': 40, 'workload_percentile': Decimal('60.6')}" is not None : r2/rider {'sort': 'most', 'top_n': 100}: row 38 (Haylie Bauch) column workload_rank: api=39 reference=40
+  api: {'active_days': 365, 'age_band': '40-49', 'avg_orders_per_active_day': 27.5, 'calendar_days': 365, 'courier': 'JNT', 'orders': 10025, 'peak_day_orders': 40, 'rider': 'Haylie Bauch', 'units': 110066, 'utilization_pct': 100.0, 'vehicle': 'Motorcycle', 'workload_percentile': 60.6, 'workload_rank': 39}
+  ref: {'workload_rank': 40, 'rider': 'Haylie Bauch', 'courier': 'JNT', 'vehicle': 'Motorcycle', 'age_band': '40-49', 'orders': 10024, 'units': 110054, 'active_days': 365, 'calendar_days': 365, 'utilization_pct': Decimal('100.0'), 'avg_orders_per_active_day': Decimal('27.5'), 'peak_day_orders': 40, 'workload_percentile': Decimal('60.6')}
+
+======================================================================
+FAIL: test_rider (test_report_correctness.TestReferenceR2.test_rider) (filters={'sort': 'least', 'top_n': 100})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 115, in test_rider
+    self.ranked("r2", "rider", ref, "orders", "rider", limit, **filters)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 35, in ranked
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'row 60 orders: api=10025 reference=10024' is not None : r2/rider {'sort': 'least', 'top_n': 100}: row 60 orders: api=10025 reference=10024
+
+======================================================================
+FAIL: test_deciles (test_report_correctness.TestReferenceR3.test_deciles) (filters={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 135, in test_deciles
+    self.exact("r3", "deciles", s.r3_deciles(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 5 column value: api=5052686839.64 reference=Decimal('5052658237.06')\n  api: {'avg_value_per_customer': 505268.68, 'cumulative_share_pct': 74.6, 'customers': 10000, 'decile': 6, 'max_customer_value': 531717.59, 'min_customer_value': 478530.21, 'value': 5052686839.64, 'value_share_pct': 9.2}\n  ref: {'decile': 6, 'customers': 10000, 'value': Decimal('5052658237.06'), 'value_share_pct': Decimal('9.2'), 'cumulative_share_pct': Decimal('74.6'), 'avg_value_per_customer': Decimal('505265.82'), 'min_customer_value': Decimal('478530.19'), 'max_customer_value': Decimal('531717.59')}" is not None : r3/deciles {}: row 5 column value: api=5052686839.64 reference=Decimal('5052658237.06')
+  api: {'avg_value_per_customer': 505268.68, 'cumulative_share_pct': 74.6, 'customers': 10000, 'decile': 6, 'max_customer_value': 531717.59, 'min_customer_value': 478530.21, 'value': 5052686839.64, 'value_share_pct': 9.2}
+  ref: {'decile': 6, 'customers': 10000, 'value': Decimal('5052658237.06'), 'value_share_pct': Decimal('9.2'), 'cumulative_share_pct': Decimal('74.6'), 'avg_value_per_customer': Decimal('505265.82'), 'min_customer_value': Decimal('478530.19'), 'max_customer_value': Decimal('531717.59')}
+
+======================================================================
+FAIL: test_deciles (test_report_correctness.TestReferenceR3.test_deciles) (filters={'gender': 'F', 'year': 2025})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 135, in test_deciles
+    self.exact("r3", "deciles", s.r3_deciles(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 2 column value: api=2583216878.03 reference=Decimal('2583207396.11')\n  api: {'avg_value_per_customer': 513868.49, 'cumulative_share_pct': 46.4, 'customers': 5027, 'decile': 3, 'max_customer_value': 547346.08, 'min_customer_value': 483488.76, 'value': 2583216878.03, 'value_share_pct': 12.8}\n  ref: {'decile': 3, 'customers': 5027, 'value': Decimal('2583207396.11'), 'value_share_pct': Decimal('12.8'), 'cumulative_share_pct': Decimal('46.4'), 'avg_value_per_customer': Decimal('513866.60'), 'min_customer_value': Decimal('483478.31'), 'max_customer_value': Decimal('547346.08')}" is not None : r3/deciles {'gender': 'F', 'year': 2025}: row 2 column value: api=2583216878.03 reference=Decimal('2583207396.11')
+  api: {'avg_value_per_customer': 513868.49, 'cumulative_share_pct': 46.4, 'customers': 5027, 'decile': 3, 'max_customer_value': 547346.08, 'min_customer_value': 483488.76, 'value': 2583216878.03, 'value_share_pct': 12.8}
+  ref: {'decile': 3, 'customers': 5027, 'value': Decimal('2583207396.11'), 'value_share_pct': Decimal('12.8'), 'cumulative_share_pct': Decimal('46.4'), 'avg_value_per_customer': Decimal('513866.60'), 'min_customer_value': Decimal('483478.31'), 'max_customer_value': Decimal('547346.08')}
+
+======================================================================
+FAIL: test_geography (test_report_correctness.TestReferenceR3.test_geography) (filters={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 146, in test_geography
+    self.exact("r3", "geography", s.r3_geography(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 60 column orders: api=1000000 reference=999999\n  api: {'customers': 99996, 'gender': 'All', 'grouping_level': 3, 'location': 'All locations', 'orders': 1000000, 'value': 54847773792.91, 'value_per_customer': 548499.68, 'value_rank': None}\n  ref: {'location': 'All locations', 'gender': 'All', 'customers': 99996, 'orders': 999999, 'value': Decimal('54847714086.21'), 'value_per_customer': Decimal('548499.08'), 'value_rank': None, 'grouping_level': 3}" is not None : r3/geography {}: row 60 column orders: api=1000000 reference=999999
+  api: {'customers': 99996, 'gender': 'All', 'grouping_level': 3, 'location': 'All locations', 'orders': 1000000, 'value': 54847773792.91, 'value_per_customer': 548499.68, 'value_rank': None}
+  ref: {'location': 'All locations', 'gender': 'All', 'customers': 99996, 'orders': 999999, 'value': Decimal('54847714086.21'), 'value_per_customer': Decimal('548499.08'), 'value_rank': None, 'grouping_level': 3}
+
+======================================================================
+FAIL: test_geography (test_report_correctness.TestReferenceR3.test_geography) (filters={'level': 'country', 'top_n': 5})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 146, in test_geography
+    self.exact("r3", "geography", s.r3_geography(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 15 column orders: api=1000000 reference=999999\n  api: {'customers': 99996, 'gender': 'All', 'grouping_level': 3, 'location': 'All locations', 'orders': 1000000, 'value': 54847773792.91, 'value_per_customer': 548499.68, 'value_rank': None}\n  ref: {'location': 'All locations', 'gender': 'All', 'customers': 99996, 'orders': 999999, 'value': Decimal('54847714086.21'), 'value_per_customer': Decimal('548499.08'), 'value_rank': None, 'grouping_level': 3}" is not None : r3/geography {'level': 'country', 'top_n': 5}: row 15 column orders: api=1000000 reference=999999
+  api: {'customers': 99996, 'gender': 'All', 'grouping_level': 3, 'location': 'All locations', 'orders': 1000000, 'value': 54847773792.91, 'value_per_customer': 548499.68, 'value_rank': None}
+  ref: {'location': 'All locations', 'gender': 'All', 'customers': 99996, 'orders': 999999, 'value': Decimal('54847714086.21'), 'value_per_customer': Decimal('548499.08'), 'value_rank': None, 'grouping_level': 3}
+
+======================================================================
+FAIL: test_geography (test_report_correctness.TestReferenceR3.test_geography) (filters={'level': 'country', 'year': 2025, 'quarter': 2})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 146, in test_geography
+    self.exact("r3", "geography", s.r3_geography(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 60 column orders: api=249419 reference=249418\n  api: {'customers': 91606, 'gender': 'All', 'grouping_level': 3, 'location': 'All locations', 'orders': 249419, 'value': 13670371001.28, 'value_per_customer': 149230.08, 'value_rank': None}\n  ref: {'location': 'All locations', 'gender': 'All', 'customers': 91606, 'orders': 249418, 'value': Decimal('13670311294.58'), 'value_per_customer': Decimal('149229.43'), 'value_rank': None, 'grouping_level': 3}" is not None : r3/geography {'level': 'country', 'year': 2025, 'quarter': 2}: row 60 column orders: api=249419 reference=249418
+  api: {'customers': 91606, 'gender': 'All', 'grouping_level': 3, 'location': 'All locations', 'orders': 249419, 'value': 13670371001.28, 'value_per_customer': 149230.08, 'value_rank': None}
+  ref: {'location': 'All locations', 'gender': 'All', 'customers': 91606, 'orders': 249418, 'value': Decimal('13670311294.58'), 'value_per_customer': Decimal('149229.43'), 'value_rank': None, 'grouping_level': 3}
+
+======================================================================
+FAIL: test_rollup (test_report_correctness.TestReferenceR4.test_rollup) (filters={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 170, in test_rollup
+    self.exact("r4", "rollup", s.r4_rollup(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 12 column orders: api=84924 reference=84923\n  api: {'days': 31, 'hierarchy_level': 'month', 'month': 5, 'month_name': 'May', 'orders': 84924, 'orders_per_day': 2739.5, 'quarter': 2, 'units': 931403, 'year': 2025}\n  ref: {'hierarchy_level': 'month', 'year': 2025, 'quarter': 2, 'month': 5, 'month_name': 'May', 'days': 31, 'orders': 84923, 'units': 931391, 'orders_per_day': Decimal('2739.5')}" is not None : r4/rollup {}: row 12 column orders: api=84924 reference=84923
+  api: {'days': 31, 'hierarchy_level': 'month', 'month': 5, 'month_name': 'May', 'orders': 84924, 'orders_per_day': 2739.5, 'quarter': 2, 'units': 931403, 'year': 2025}
+  ref: {'hierarchy_level': 'month', 'year': 2025, 'quarter': 2, 'month': 5, 'month_name': 'May', 'days': 31, 'orders': 84923, 'units': 931391, 'orders_per_day': Decimal('2739.5')}
+
+======================================================================
+FAIL: test_rollup (test_report_correctness.TestReferenceR4.test_rollup) (filters={'year': 2025})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 170, in test_rollup
+    self.exact("r4", "rollup", s.r4_rollup(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 5 column orders: api=84924 reference=84923\n  api: {'days': 31, 'hierarchy_level': 'month', 'month': 5, 'month_name': 'May', 'orders': 84924, 'orders_per_day': 2739.5, 'quarter': 2, 'units': 931403, 'year': 2025}\n  ref: {'hierarchy_level': 'month', 'year': 2025, 'quarter': 2, 'month': 5, 'month_name': 'May', 'days': 31, 'orders': 84923, 'units': 931391, 'orders_per_day': Decimal('2739.5')}" is not None : r4/rollup {'year': 2025}: row 5 column orders: api=84924 reference=84923
+  api: {'days': 31, 'hierarchy_level': 'month', 'month': 5, 'month_name': 'May', 'orders': 84924, 'orders_per_day': 2739.5, 'quarter': 2, 'units': 931403, 'year': 2025}
+  ref: {'hierarchy_level': 'month', 'year': 2025, 'quarter': 2, 'month': 5, 'month_name': 'May', 'days': 31, 'orders': 84923, 'units': 931391, 'orders_per_day': Decimal('2739.5')}
+
+======================================================================
+FAIL: test_rollup (test_report_correctness.TestReferenceR4.test_rollup) (filters={'payday': 'no', 'year': 2025})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 170, in test_rollup
+    self.exact("r4", "rollup", s.r4_rollup(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 5 column orders: api=79442 reference=79441\n  api: {'days': 29, 'hierarchy_level': 'month', 'month': 5, 'month_name': 'May', 'orders': 79442, 'orders_per_day': 2739.4, 'quarter': 2, 'units': 871171, 'year': 2025}\n  ref: {'hierarchy_level': 'month', 'year': 2025, 'quarter': 2, 'month': 5, 'month_name': 'May', 'days': 29, 'orders': 79441, 'units': 871159, 'orders_per_day': Decimal('2739.3')}" is not None : r4/rollup {'payday': 'no', 'year': 2025}: row 5 column orders: api=79442 reference=79441
+  api: {'days': 29, 'hierarchy_level': 'month', 'month': 5, 'month_name': 'May', 'orders': 79442, 'orders_per_day': 2739.4, 'quarter': 2, 'units': 871171, 'year': 2025}
+  ref: {'hierarchy_level': 'month', 'year': 2025, 'quarter': 2, 'month': 5, 'month_name': 'May', 'days': 29, 'orders': 79441, 'units': 871159, 'orders_per_day': Decimal('2739.3')}
+
+======================================================================
+FAIL: test_rollup (test_report_correctness.TestReferenceR4.test_rollup) (filters={'size_group': 'Heavy'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 170, in test_rollup
+    self.exact("r4", "rollup", s.r4_rollup(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 12 column orders: api=40355 reference=40354\n  api: {'days': 31, 'hierarchy_level': 'month', 'month': 5, 'month_name': 'May', 'orders': 40355, 'orders_per_day': 1301.8, 'quarter': 2, 'units': 654660, 'year': 2025}\n  ref: {'hierarchy_level': 'month', 'year': 2025, 'quarter': 2, 'month': 5, 'month_name': 'May', 'days': 31, 'orders': 40354, 'units': 654648, 'orders_per_day': Decimal('1301.7')}" is not None : r4/rollup {'size_group': 'Heavy'}: row 12 column orders: api=40355 reference=40354
+  api: {'days': 31, 'hierarchy_level': 'month', 'month': 5, 'month_name': 'May', 'orders': 40355, 'orders_per_day': 1301.8, 'quarter': 2, 'units': 654660, 'year': 2025}
+  ref: {'hierarchy_level': 'month', 'year': 2025, 'quarter': 2, 'month': 5, 'month_name': 'May', 'days': 31, 'orders': 40354, 'units': 654648, 'orders_per_day': Decimal('1301.7')}
+
+======================================================================
+FAIL: test_trend (test_report_correctness.TestReferenceR4.test_trend) (filters={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 182, in test_trend
+    self.exact("r4", "trend", s.r4_trend(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 8 column orders: api=84924 reference=84923\n  api: {'change_vs_previous_pct': -0.5, 'days': 31, 'moving_avg_orders_per_day': 2741.5, 'orders': 84924, 'orders_per_day': 2739.5, 'period_label': '2025 May', 'period_start': '2025-05-01', 'units': 931403}\n  ref: {'period_label': '2025 May', 'period_start': '2025-05-01', 'days': 31, 'orders': 84923, 'units': 931391, 'orders_per_day': Decimal('2739.5'), 'change_vs_previous_pct': Decimal('-0.5'), 'moving_avg_orders_per_day': Decimal('2741.5')}" is not None : r4/trend {}: row 8 column orders: api=84924 reference=84923
+  api: {'change_vs_previous_pct': -0.5, 'days': 31, 'moving_avg_orders_per_day': 2741.5, 'orders': 84924, 'orders_per_day': 2739.5, 'period_label': '2025 May', 'period_start': '2025-05-01', 'units': 931403}
+  ref: {'period_label': '2025 May', 'period_start': '2025-05-01', 'days': 31, 'orders': 84923, 'units': 931391, 'orders_per_day': Decimal('2739.5'), 'change_vs_previous_pct': Decimal('-0.5'), 'moving_avg_orders_per_day': Decimal('2741.5')}
+
+======================================================================
+FAIL: test_trend (test_report_correctness.TestReferenceR4.test_trend) (filters={'level': 'year'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 182, in test_trend
+    self.exact("r4", "trend", s.r4_trend(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 1 column orders: api=728406 reference=728405\n  api: {'change_vs_previous_pct': -0.2, 'days': 266, 'moving_avg_orders_per_day': 2740.9, 'orders': 728406, 'orders_per_day': 2738.4, 'period_label': '2025', 'period_start': '2025-01-01', 'units': 8012807}\n  ref: {'period_label': '2025', 'period_start': '2025-01-01', 'days': 266, 'orders': 728405, 'units': 8012795, 'orders_per_day': Decimal('2738.4'), 'change_vs_previous_pct': Decimal('-0.2'), 'moving_avg_orders_per_day': Decimal('2740.9')}" is not None : r4/trend {'level': 'year'}: row 1 column orders: api=728406 reference=728405
+  api: {'change_vs_previous_pct': -0.2, 'days': 266, 'moving_avg_orders_per_day': 2740.9, 'orders': 728406, 'orders_per_day': 2738.4, 'period_label': '2025', 'period_start': '2025-01-01', 'units': 8012807}
+  ref: {'period_label': '2025', 'period_start': '2025-01-01', 'days': 266, 'orders': 728405, 'units': 8012795, 'orders_per_day': Decimal('2738.4'), 'change_vs_previous_pct': Decimal('-0.2'), 'moving_avg_orders_per_day': Decimal('2740.9')}
+
+======================================================================
+FAIL: test_trend (test_report_correctness.TestReferenceR4.test_trend) (filters={'level': 'quarter'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 182, in test_trend
+    self.exact("r4", "trend", s.r4_trend(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 3 column orders: api=249419 reference=249418\n  api: {'change_vs_previous_pct': 0.2, 'days': 91, 'moving_avg_orders_per_day': 2738.6, 'orders': 249419, 'orders_per_day': 2740.9, 'period_label': '2025 Q2', 'period_start': '2025-04-01', 'units': 2742693}\n  ref: {'period_label': '2025 Q2', 'period_start': '2025-04-01', 'days': 91, 'orders': 249418, 'units': 2742681, 'orders_per_day': Decimal('2740.9'), 'change_vs_previous_pct': Decimal('0.2'), 'moving_avg_orders_per_day': Decimal('2738.6')}" is not None : r4/trend {'level': 'quarter'}: row 3 column orders: api=249419 reference=249418
+  api: {'change_vs_previous_pct': 0.2, 'days': 91, 'moving_avg_orders_per_day': 2738.6, 'orders': 249419, 'orders_per_day': 2740.9, 'period_label': '2025 Q2', 'period_start': '2025-04-01', 'units': 2742693}
+  ref: {'period_label': '2025 Q2', 'period_start': '2025-04-01', 'days': 91, 'orders': 249418, 'units': 2742681, 'orders_per_day': Decimal('2740.9'), 'change_vs_previous_pct': Decimal('0.2'), 'moving_avg_orders_per_day': Decimal('2738.6')}
+
+======================================================================
+FAIL: test_trend (test_report_correctness.TestReferenceR4.test_trend) (filters={'level': 'month'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 182, in test_trend
+    self.exact("r4", "trend", s.r4_trend(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 8 column orders: api=84924 reference=84923\n  api: {'change_vs_previous_pct': -0.5, 'days': 31, 'moving_avg_orders_per_day': 2741.5, 'orders': 84924, 'orders_per_day': 2739.5, 'period_label': '2025 May', 'period_start': '2025-05-01', 'units': 931403}\n  ref: {'period_label': '2025 May', 'period_start': '2025-05-01', 'days': 31, 'orders': 84923, 'units': 931391, 'orders_per_day': Decimal('2739.5'), 'change_vs_previous_pct': Decimal('-0.5'), 'moving_avg_orders_per_day': Decimal('2741.5')}" is not None : r4/trend {'level': 'month'}: row 8 column orders: api=84924 reference=84923
+  api: {'change_vs_previous_pct': -0.5, 'days': 31, 'moving_avg_orders_per_day': 2741.5, 'orders': 84924, 'orders_per_day': 2739.5, 'period_label': '2025 May', 'period_start': '2025-05-01', 'units': 931403}
+  ref: {'period_label': '2025 May', 'period_start': '2025-05-01', 'days': 31, 'orders': 84923, 'units': 931391, 'orders_per_day': Decimal('2739.5'), 'change_vs_previous_pct': Decimal('-0.5'), 'moving_avg_orders_per_day': Decimal('2741.5')}
+
+======================================================================
+FAIL: test_trend (test_report_correctness.TestReferenceR4.test_trend) (filters={'level': 'week'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 182, in test_trend
+    self.exact("r4", "trend", s.r4_trend(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 37 column orders: api=19238 reference=19237\n  api: {'change_vs_previous_pct': 0.7, 'days': 7, 'moving_avg_orders_per_day': 2747.4, 'orders': 19238, 'orders_per_day': 2748.3, 'period_label': '2025 W21', 'period_start': '2025-05-21', 'units': 211125}\n  ref: {'period_label': '2025 W21', 'period_start': '2025-05-21', 'days': 7, 'orders': 19237, 'units': 211113, 'orders_per_day': Decimal('2748.1'), 'change_vs_previous_pct': Decimal('0.6'), 'moving_avg_orders_per_day': Decimal('2747.4')}" is not None : r4/trend {'level': 'week'}: row 37 column orders: api=19238 reference=19237
+  api: {'change_vs_previous_pct': 0.7, 'days': 7, 'moving_avg_orders_per_day': 2747.4, 'orders': 19238, 'orders_per_day': 2748.3, 'period_label': '2025 W21', 'period_start': '2025-05-21', 'units': 211125}
+  ref: {'period_label': '2025 W21', 'period_start': '2025-05-21', 'days': 7, 'orders': 19237, 'units': 211113, 'orders_per_day': Decimal('2748.1'), 'change_vs_previous_pct': Decimal('0.6'), 'moving_avg_orders_per_day': Decimal('2747.4')}
+
+======================================================================
+FAIL: test_trend (test_report_correctness.TestReferenceR4.test_trend) (filters={'level': 'month', 'day_type': 'weekend'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 182, in test_trend
+    self.exact("r4", "trend", s.r4_trend(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 8 column orders: api=24538 reference=24537\n  api: {'change_vs_previous_pct': -0.1, 'days': 9, 'moving_avg_orders_per_day': 2733.6, 'orders': 24538, 'orders_per_day': 2726.4, 'period_label': '2025 May', 'period_start': '2025-05-03', 'units': 269938}\n  ref: {'period_label': '2025 May', 'period_start': '2025-05-03', 'days': 9, 'orders': 24537, 'units': 269926, 'orders_per_day': Decimal('2726.3'), 'change_vs_previous_pct': Decimal('-0.1'), 'moving_avg_orders_per_day': Decimal('2733.6')}" is not None : r4/trend {'level': 'month', 'day_type': 'weekend'}: row 8 column orders: api=24538 reference=24537
+  api: {'change_vs_previous_pct': -0.1, 'days': 9, 'moving_avg_orders_per_day': 2733.6, 'orders': 24538, 'orders_per_day': 2726.4, 'period_label': '2025 May', 'period_start': '2025-05-03', 'units': 269938}
+  ref: {'period_label': '2025 May', 'period_start': '2025-05-03', 'days': 9, 'orders': 24537, 'units': 269926, 'orders_per_day': Decimal('2726.3'), 'change_vs_previous_pct': Decimal('-0.1'), 'moving_avg_orders_per_day': Decimal('2733.6')}
+
+======================================================================
+FAIL: test_trend (test_report_correctness.TestReferenceR4.test_trend) (filters={'level': 'quarter', 'size_group': 'Heavy'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 182, in test_trend
+    self.exact("r4", "trend", s.r4_trend(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 3 column orders: api=118774 reference=118773\n  api: {'change_vs_previous_pct': 0, 'days': 91, 'moving_avg_orders_per_day': 1306.6, 'orders': 118774, 'orders_per_day': 1305.2, 'period_label': '2025 Q2', 'period_start': '2025-04-01', 'units': 1928748}\n  ref: {'period_label': '2025 Q2', 'period_start': '2025-04-01', 'days': 91, 'orders': 118773, 'units': 1928736, 'orders_per_day': Decimal('1305.2'), 'change_vs_previous_pct': Decimal('0.0'), 'moving_avg_orders_per_day': Decimal('1306.6')}" is not None : r4/trend {'level': 'quarter', 'size_group': 'Heavy'}: row 3 column orders: api=118774 reference=118773
+  api: {'change_vs_previous_pct': 0, 'days': 91, 'moving_avg_orders_per_day': 1306.6, 'orders': 118774, 'orders_per_day': 1305.2, 'period_label': '2025 Q2', 'period_start': '2025-04-01', 'units': 1928748}
+  ref: {'period_label': '2025 Q2', 'period_start': '2025-04-01', 'days': 91, 'orders': 118773, 'units': 1928736, 'orders_per_day': Decimal('1305.2'), 'change_vs_previous_pct': Decimal('0.0'), 'moving_avg_orders_per_day': Decimal('1306.6')}
+
+======================================================================
+FAIL: test_weekday_pivot (test_report_correctness.TestReferenceR4.test_weekday_pivot) (filters={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 190, in test_weekday_pivot
+    self.exact("r4", "weekday_pivot", s.r4_weekday_pivot(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 8 column sat: api=2729.4 reference=Decimal('2729.2')\n  api: {'all_days': 2739.5, 'fri': 2759.4, 'is_total': False, 'mon': 2736.8, 'month_label': '2025 May', 'sat': 2729.4, 'sun': 2722.8, 'thu': 2736.2, 'tue': 2748.3, 'wed': 2742.0}\n  ref: {'month_label': '2025 May', 'mon': Decimal('2736.8'), 'tue': Decimal('2748.3'), 'wed': Decimal('2742.0'), 'thu': Decimal('2736.2'), 'fri': Decimal('2759.4'), 'sat': Decimal('2729.2'), 'sun': Decimal('2722.8'), 'all_days': Decimal('2739.5'), 'is_total': False}" is not None : r4/weekday_pivot {}: row 8 column sat: api=2729.4 reference=Decimal('2729.2')
+  api: {'all_days': 2739.5, 'fri': 2759.4, 'is_total': False, 'mon': 2736.8, 'month_label': '2025 May', 'sat': 2729.4, 'sun': 2722.8, 'thu': 2736.2, 'tue': 2748.3, 'wed': 2742.0}
+  ref: {'month_label': '2025 May', 'mon': Decimal('2736.8'), 'tue': Decimal('2748.3'), 'wed': Decimal('2742.0'), 'thu': Decimal('2736.2'), 'fri': Decimal('2759.4'), 'sat': Decimal('2729.2'), 'sun': Decimal('2722.8'), 'all_days': Decimal('2739.5'), 'is_total': False}
+
+======================================================================
+FAIL: test_weekday_pivot (test_report_correctness.TestReferenceR4.test_weekday_pivot) (filters={'year': 2025})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 190, in test_weekday_pivot
+    self.exact("r4", "weekday_pivot", s.r4_weekday_pivot(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 4 column sat: api=2729.4 reference=Decimal('2729.2')\n  api: {'all_days': 2739.5, 'fri': 2759.4, 'is_total': False, 'mon': 2736.8, 'month_label': '2025 May', 'sat': 2729.4, 'sun': 2722.8, 'thu': 2736.2, 'tue': 2748.3, 'wed': 2742.0}\n  ref: {'month_label': '2025 May', 'mon': Decimal('2736.8'), 'tue': Decimal('2748.3'), 'wed': Decimal('2742.0'), 'thu': Decimal('2736.2'), 'fri': Decimal('2759.4'), 'sat': Decimal('2729.2'), 'sun': Decimal('2722.8'), 'all_days': Decimal('2739.5'), 'is_total': False}" is not None : r4/weekday_pivot {'year': 2025}: row 4 column sat: api=2729.4 reference=Decimal('2729.2')
+  api: {'all_days': 2739.5, 'fri': 2759.4, 'is_total': False, 'mon': 2736.8, 'month_label': '2025 May', 'sat': 2729.4, 'sun': 2722.8, 'thu': 2736.2, 'tue': 2748.3, 'wed': 2742.0}
+  ref: {'month_label': '2025 May', 'mon': Decimal('2736.8'), 'tue': Decimal('2748.3'), 'wed': Decimal('2742.0'), 'thu': Decimal('2736.2'), 'fri': Decimal('2759.4'), 'sat': Decimal('2729.2'), 'sun': Decimal('2722.8'), 'all_days': Decimal('2739.5'), 'is_total': False}
+
+======================================================================
+FAIL: test_weekday_pivot (test_report_correctness.TestReferenceR4.test_weekday_pivot) (filters={'quarter': 2})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 190, in test_weekday_pivot
+    self.exact("r4", "weekday_pivot", s.r4_weekday_pivot(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 1 column sat: api=2729.4 reference=Decimal('2729.2')\n  api: {'all_days': 2739.5, 'fri': 2759.4, 'is_total': False, 'mon': 2736.8, 'month_label': '2025 May', 'sat': 2729.4, 'sun': 2722.8, 'thu': 2736.2, 'tue': 2748.3, 'wed': 2742.0}\n  ref: {'month_label': '2025 May', 'mon': Decimal('2736.8'), 'tue': Decimal('2748.3'), 'wed': Decimal('2742.0'), 'thu': Decimal('2736.2'), 'fri': Decimal('2759.4'), 'sat': Decimal('2729.2'), 'sun': Decimal('2722.8'), 'all_days': Decimal('2739.5'), 'is_total': False}" is not None : r4/weekday_pivot {'quarter': 2}: row 1 column sat: api=2729.4 reference=Decimal('2729.2')
+  api: {'all_days': 2739.5, 'fri': 2759.4, 'is_total': False, 'mon': 2736.8, 'month_label': '2025 May', 'sat': 2729.4, 'sun': 2722.8, 'thu': 2736.2, 'tue': 2748.3, 'wed': 2742.0}
+  ref: {'month_label': '2025 May', 'mon': Decimal('2736.8'), 'tue': Decimal('2748.3'), 'wed': Decimal('2742.0'), 'thu': Decimal('2736.2'), 'fri': Decimal('2759.4'), 'sat': Decimal('2729.2'), 'sun': Decimal('2722.8'), 'all_days': Decimal('2739.5'), 'is_total': False}
+
+======================================================================
+FAIL: test_weekday_pivot (test_report_correctness.TestReferenceR4.test_weekday_pivot) (filters={'payday': 'no', 'size_group': 'Heavy'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 190, in test_weekday_pivot
+    self.exact("r4", "weekday_pivot", s.r4_weekday_pivot(**filters), **filters)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_report_correctness.py", line 29, in exact
+    self.assertIsNone(problem, "%s/%s %r: %s" % (rid, level, filters, problem))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "row 8 column sat: api=1333.8 reference=Decimal('1333.5')\n  api: {'all_days': 1302.2, 'fri': 1291.6, 'is_total': False, 'mon': 1295.5, 'month_label': '2025 May', 'sat': 1333.8, 'sun': 1290.0, 'thu': 1280.5, 'tue': 1319.8, 'wed': 1307.0}\n  ref: {'month_label': '2025 May', 'mon': Decimal('1295.5'), 'tue': Decimal('1319.8'), 'wed': Decimal('1307.0'), 'thu': Decimal('1280.5'), 'fri': Decimal('1291.6'), 'sat': Decimal('1333.5'), 'sun': Decimal('1290.0'), 'all_days': Decimal('1302.2'), 'is_total': False}" is not None : r4/weekday_pivot {'payday': 'no', 'size_group': 'Heavy'}: row 8 column sat: api=1333.8 reference=Decimal('1333.5')
+  api: {'all_days': 1302.2, 'fri': 1291.6, 'is_total': False, 'mon': 1295.5, 'month_label': '2025 May', 'sat': 1333.8, 'sun': 1290.0, 'thu': 1280.5, 'tue': 1319.8, 'wed': 1307.0}
+  ref: {'month_label': '2025 May', 'mon': Decimal('1295.5'), 'tue': Decimal('1319.8'), 'wed': Decimal('1307.0'), 'thu': Decimal('1280.5'), 'fri': Decimal('1291.6'), 'sat': Decimal('1333.5'), 'sun': Decimal('1290.0'), 'all_days': Decimal('1302.2'), 'is_total': False}
+
+======================================================================
+FAIL: test_every_source_order_is_in_the_warehouse_on_the_right_day_rider_and_customer (test_warehouse_integrity.TestFacts.test_every_source_order_is_in_the_warehouse_on_the_right_day_rider_and_customer)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_warehouse_integrity.py", line 149, in test_every_source_order_is_in_the_warehouse_on_the_right_day_rider_and_customer
+    self.assertEqual(len(got), len(s.orders()))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1000000 != 999999
+
+======================================================================
+FAIL: test_row_counts_and_totals_reconcile_with_source (test_warehouse_integrity.TestFacts.test_row_counts_and_totals_reconcile_with_source)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\STADVDB Companion\data-warehouse-olap-dashboard\olap\tests\test_warehouse_integrity.py", line 124, in test_row_counts_and_totals_reconcile_with_source
+    self.assertEqual(int(s.dw_scalar('SELECT count(*) FROM "FACT_ORDERDELIVERY"')), n_orders)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1000000 != 999999
+
+----------------------------------------------------------------------
+Ran 74 tests in 162.823s
+
+FAILED (failures=29)
