@@ -18,10 +18,11 @@
 -- Columns: courier, motorcycle, bicycle, car, trike, total, riders, is_total
 --   Cells hold orders (measure 'orders') or orders per rider ('per_rider');
 --   a cell with no riders of that vehicle is NULL in 'per_rider'.
+-- OPTIMIZED (Strategy C): reads AGG_RIDER_DAY instead of FACT_ORDERDELIVERY; same columns and types.
 
 WITH orders AS (
-  SELECT r."riderKey", r."courierName", r."vehicleType"
-  FROM "FACT_ORDERDELIVERY" f
+  SELECT r."riderKey", r."courierName", r."vehicleType", f.orders AS n_orders
+  FROM "AGG_RIDER_DAY" f
   JOIN "DIM_RIDER"     r USING ("riderKey")
   JOIN "DIM_DATE"      d ON d."dateKey" = f."deliveryDateKey"
   JOIN "DIM_ORDERSIZE" s USING ("orderSizeKey")
@@ -36,15 +37,15 @@ WITH orders AS (
 pivoted AS (
   SELECT
     CASE WHEN GROUPING("courierName") = 1 THEN 'All couriers' ELSE "courierName" END AS courier,
-    count(*) FILTER (WHERE "vehicleType" = 'Motorcycle') AS motorcycle_orders,
-    count(*) FILTER (WHERE "vehicleType" = 'Bicycle')    AS bicycle_orders,
-    count(*) FILTER (WHERE "vehicleType" = 'Car')        AS car_orders,
-    count(*) FILTER (WHERE "vehicleType" = 'Trike')      AS trike_orders,
+    coalesce(sum(n_orders) FILTER (WHERE "vehicleType" = 'Motorcycle'), 0)::bigint AS motorcycle_orders,
+    coalesce(sum(n_orders) FILTER (WHERE "vehicleType" = 'Bicycle'), 0)::bigint AS bicycle_orders,
+    coalesce(sum(n_orders) FILTER (WHERE "vehicleType" = 'Car'), 0)::bigint AS car_orders,
+    coalesce(sum(n_orders) FILTER (WHERE "vehicleType" = 'Trike'), 0)::bigint AS trike_orders,
     count(DISTINCT "riderKey") FILTER (WHERE "vehicleType" = 'Motorcycle') AS motorcycle_riders,
     count(DISTINCT "riderKey") FILTER (WHERE "vehicleType" = 'Bicycle')    AS bicycle_riders,
     count(DISTINCT "riderKey") FILTER (WHERE "vehicleType" = 'Car')        AS car_riders,
     count(DISTINCT "riderKey") FILTER (WHERE "vehicleType" = 'Trike')      AS trike_riders,
-    count(*) AS total_orders,
+    coalesce(sum(n_orders), 0)::bigint AS total_orders,
     count(DISTINCT "riderKey") AS riders,
     GROUPING("courierName") = 1 AS is_total
   FROM orders

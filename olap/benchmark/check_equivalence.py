@@ -1,7 +1,7 @@
-"""Check that the rewritten queries in db/dw/optimize/queries return exactly the
-same rows (and column types) as the originals in olap/queries, across many
-randomized filter combinations. Covers the R2 and R4 rewrites that read
-AGG_RIDER_DAY.
+"""Check that the optimized queries in olap/queries (the set the API serves)
+return exactly the same rows (and column types) as the original queries, across
+many randomized filter combinations. The originals are the snapshot in
+evidence/benchmark/original-queries (git HEAD before the Phase 2 copy).
 
 Run: uv run --project etl python olap/benchmark/check_equivalence.py
 Exit code 1 on any mismatch.
@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent)); sys.path.insert(0, "etl")
 import run_benchmark as rb
 conn = rb.connect("force_custom_plan")
-orig, opt = Path("olap/queries"), Path("db/dw/optimize/queries")
+orig, opt = Path("evidence/benchmark/original-queries"), Path("olap/queries")
 V = ["", "Bicycle", "Motorcycle", "Car", "Trike"]; SG = ["", "Light", "Heavy"]
 Y = ["", "2024", "2025"]; Q = ["", "1", "4"]; M = ["", "2", "12"]
 C = ["", "FEDEZ", "JNT", "LBCD"]; A = ["", "18-29", "50-60"]

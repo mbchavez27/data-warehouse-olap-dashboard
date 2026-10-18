@@ -1,5 +1,15 @@
 # OLAP report queries
 
+> **Optimized (Phase 2).** These are the queries the API serves. Every report file reads a
+> pre-aggregated materialized view created by `db/dw/optimize/03_preagg.sql` instead of the two
+> large fact tables (`rider.sql` still joins the small `FACT_RIDERDAILY`, 36,500 rows, for active
+> days): `AGG_CATEGORY_PERIOD` and `AGG_PRODUCT_PERIOD` (R1), `AGG_RIDER_DAY` (R2, R4),
+> `AGG_CUSTOMER_PERIOD` (R3 and the R3 customer drill). Same parameters, columns and types as the
+> originals, checked on 1,600 randomized filter combinations (`olap/benchmark/check_equivalence.py`).
+> The views are snapshots: **run `db/scripts/apply_optimizations.sh` after every ETL load and after
+> `--rebuild`**, or the reports show stale or missing data. The original, unoptimized queries are
+> kept in `evidence/benchmark/original-queries/`. See `evidence/optimization-log.md`.
+
 Four analytical reports over the warehouse (`dw_db`). Each report is a folder;
 each file in it is one drill level of that report and returns a fixed set of
 columns. Every filter and drill choice is a bound parameter; nothing is

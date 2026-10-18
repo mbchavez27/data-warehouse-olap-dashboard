@@ -15,15 +15,16 @@
 --
 -- Columns: month_label, mon, tue, wed, thu, fri, sat, sun, all_days, is_total
 --   All cells are average orders per day for that month and weekday.
+-- OPTIMIZED (Strategy C): reads AGG_RIDER_DAY instead of FACT_ORDERDELIVERY; same columns and types.
 
 WITH daily AS (
   SELECT d."dateKey", d."year", d."monthNumber", d."monthName",
          extract(isodow FROM d."fullDate")::int AS dow,
-         count(f."orderDeliveryKey") AS orders
+         coalesce(sum(f.orders), 0)::bigint AS orders
   FROM "DIM_DATE" d
   LEFT JOIN (
-    SELECT f.*
-    FROM "FACT_ORDERDELIVERY" f
+    SELECT f."deliveryDateKey", f.orders, f.units
+    FROM "AGG_RIDER_DAY" f
     JOIN "DIM_RIDER"     r USING ("riderKey")
     JOIN "DIM_ORDERSIZE" s USING ("orderSizeKey")
     WHERE (:'vehicle'    = '' OR r."vehicleType" = :'vehicle')

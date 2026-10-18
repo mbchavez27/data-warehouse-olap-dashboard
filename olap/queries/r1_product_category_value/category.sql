@@ -14,24 +14,21 @@
 --   One row per category plus an 'All categories' grand total (is_total).
 --   value = list-price value (quantity x current list price), not revenue.
 
+-- OPTIMIZED (Strategy C): reads AGG_CATEGORY_PERIOD instead of FACT_ORDERITEM + 4 dimension joins; same columns and types.
 WITH filtered AS (
-  SELECT p."category", i."quantity", i."lineValue"
-  FROM "FACT_ORDERITEM" i
-  JOIN "DIM_PRODUCT"   p USING ("productKey")
-  JOIN "DIM_DATE"      d ON d."dateKey" = i."deliveryDateKey"
-  JOIN "DIM_RIDER"     r USING ("riderKey")
-  JOIN "DIM_ORDERSIZE" s USING ("orderSizeKey")
-  WHERE (:'year'       = '' OR d."year"        = nullif(:'year', '')::int)
-    AND (:'quarter'    = '' OR d."quarter"     = nullif(:'quarter', '')::int)
-    AND (:'month'      = '' OR d."monthNumber" = nullif(:'month', '')::int)
-    AND (:'vehicle'    = '' OR r."vehicleType" = :'vehicle')
-    AND (:'size_group' = '' OR s."sizeGroup"   = :'size_group')
+  SELECT a."category", a."units", a."value"
+  FROM "AGG_CATEGORY_PERIOD" a
+  WHERE (:'year'       = '' OR a."year"        = nullif(:'year', '')::int)
+    AND (:'quarter'    = '' OR a."quarter"     = nullif(:'quarter', '')::int)
+    AND (:'month'      = '' OR a."monthNumber" = nullif(:'month', '')::int)
+    AND (:'vehicle'    = '' OR a."vehicleType" = :'vehicle')
+    AND (:'size_group' = '' OR a."sizeGroup"   = :'size_group')
 ),
 rolled AS (
   SELECT
     CASE WHEN GROUPING("category") = 1 THEN 'All categories' ELSE "category" END AS category,
-    sum("quantity")  AS units,
-    sum("lineValue") AS value,
+    sum("units")::bigint AS units,
+    sum("value") AS value,
     GROUPING("category") = 1 AS is_total
   FROM filtered
   GROUP BY ROLLUP ("category")

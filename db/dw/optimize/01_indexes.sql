@@ -1,10 +1,19 @@
--- Strategy A: B-tree indexes on the fact tables' foreign keys.
+-- Strategy A (fact foreign-key indexes): measured, then retired.
 --
--- The DDL (db/dw/init/01_dw_schema.sql) leaves the facts with primary-key
--- indexes only, so every report reads FACT_ORDERITEM / FACT_ORDERDELIVERY in
--- full. These indexes let a filtered (slice/dice) report reach only its rows.
--- 01_dw_schema.sql drops the tables, so after `run_pipeline.py --rebuild`
--- run this file again. A normal reload TRUNCATEs and keeps them.
+-- Five B-tree indexes were tried on the fact foreign keys (deliveryDateKey,
+-- customerKey, productKey, geoKey on FACT_ORDERITEM; deliveryDateKey on
+-- FACT_ORDERDELIVERY), plus four more on riderKey / orderSizeKey. They only helped
+-- the original queries, and only slightly. Every final-state query reads a
+-- materialized view (03_preagg.sql), and none of the five is used by any final
+-- plan (evidence/benchmark/optimized-v3 and optimized-v3-defaultcfg). The
+-- rider/order-size four had idx_scan = 0 across all 18 cases
+-- (evidence/benchmark/indexes/index-usage.txt). Indexes make no difference to the
+-- R3-customer-top20 regression either (evidence/benchmark/iso-* vs noidx-*).
+-- The five fact indexes take about 64 MB and slow every load, so they are not
+-- kept. The measurements stay in evidence/optimization-log.md.
+--
+-- This file now only removes them, so applying it brings an older database into
+-- line with the final state. It is safe to run on a database that never had them.
 --
 -- Apply (PowerShell):
 --   docker cp db/dw/optimize/01_indexes.sql stadvdb-mco1-dw-db:/tmp/run.sql
@@ -12,16 +21,11 @@
 
 \timing on
 
-CREATE INDEX IF NOT EXISTS ix_item_deliverydate     ON "FACT_ORDERITEM" ("deliveryDateKey");
-CREATE INDEX IF NOT EXISTS ix_item_customer         ON "FACT_ORDERITEM" ("customerKey");
-CREATE INDEX IF NOT EXISTS ix_item_product          ON "FACT_ORDERITEM" ("productKey");
-CREATE INDEX IF NOT EXISTS ix_item_geo              ON "FACT_ORDERITEM" ("geoKey");
-CREATE INDEX IF NOT EXISTS ix_delivery_deliverydate ON "FACT_ORDERDELIVERY" ("deliveryDateKey");
-
--- Measured and dropped: ix_item_rider, ix_item_ordersize, ix_delivery_rider,
--- ix_delivery_ordersize had idx_scan = 0 across all 18 cases (see
--- evidence/benchmark/indexes/index-usage.txt). Their DIM_RIDER / DIM_ORDERSIZE
--- joins are small hash joins, which the planner keeps.
+DROP INDEX IF EXISTS ix_item_deliverydate;
+DROP INDEX IF EXISTS ix_item_customer;
+DROP INDEX IF EXISTS ix_item_product;
+DROP INDEX IF EXISTS ix_item_geo;
+DROP INDEX IF EXISTS ix_delivery_deliverydate;
 DROP INDEX IF EXISTS ix_item_rider;
 DROP INDEX IF EXISTS ix_item_ordersize;
 DROP INDEX IF EXISTS ix_delivery_rider;
@@ -30,6 +34,7 @@ DROP INDEX IF EXISTS ix_delivery_ordersize;
 ANALYZE "FACT_ORDERITEM";
 ANALYZE "FACT_ORDERDELIVERY";
 
+-- Remaining secondary indexes (expected: none).
 SELECT indexrelname AS index, pg_size_pretty(pg_relation_size(indexrelid)) AS size
 FROM pg_stat_user_indexes
 WHERE schemaname = 'public' AND indexrelname LIKE 'ix\_%'

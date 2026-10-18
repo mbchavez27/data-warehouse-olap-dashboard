@@ -22,6 +22,7 @@ uv run --project etl python olap/benchmark/run_benchmark.py --label baseline-gen
 | `optimized-v3-defaultcfg/` | Final queries and views with default settings (`jit` on, `work_mem` 4 MB): 4,308 ms. Shows what the config contributes. |
 | `ablate-jitonly/`, `ablate-workmemonly/`, `ablate-both-recheck/` | Final state with one or both config settings (4,092 / 2,493 / 2,578 ms). `work_mem` carries the effect. `-both-recheck` is a later re-run of the final config and shows 25% session drift. |
 | `iso-default/`, `iso-jit-off-only/`, `iso-workmem-only/`, `iso-both/` | R3-customer-top20 with the **original** query, five indexes present, one config setting at a time. Isolates the config regression. |
+| `original-queries/` | Snapshot of the unoptimized `olap/queries/` (git `HEAD` before the Phase 2 copy). The "before" SQL; `check_equivalence.py` compares it with the live `olap/queries/`. Re-run the baseline with `run_benchmark.py --queries-dir evidence/benchmark/original-queries`. |
 | `noidx-default/`, `noidx-jit-off-only/`, `noidx-workmem-only/`, `noidx-both/` | Same, with the indexes dropped: indexes do not change the regression. |
 
 Phase 2 comparison: `uv run --project etl python olap/benchmark/compare_runs.py baseline-r4 preagg config indexes optimized optimized-v2 optimized-v3`

@@ -17,26 +17,23 @@
 --   Top N products per category, plus one 'All products' subtotal row per
 --   category (is_subtotal) that covers every product, not only the top N.
 
+-- OPTIMIZED (Strategy C): reads AGG_PRODUCT_PERIOD instead of FACT_ORDERITEM + 4 dimension joins; same columns and types.
 WITH filtered AS (
-  SELECT p."category", p."productName", i."quantity", i."lineValue"
-  FROM "FACT_ORDERITEM" i
-  JOIN "DIM_PRODUCT"   p USING ("productKey")
-  JOIN "DIM_DATE"      d ON d."dateKey" = i."deliveryDateKey"
-  JOIN "DIM_RIDER"     r USING ("riderKey")
-  JOIN "DIM_ORDERSIZE" s USING ("orderSizeKey")
-  WHERE (:'category'   = '' OR p."category"    = :'category')
-    AND (:'year'       = '' OR d."year"        = nullif(:'year', '')::int)
-    AND (:'quarter'    = '' OR d."quarter"     = nullif(:'quarter', '')::int)
-    AND (:'month'      = '' OR d."monthNumber" = nullif(:'month', '')::int)
-    AND (:'vehicle'    = '' OR r."vehicleType" = :'vehicle')
-    AND (:'size_group' = '' OR s."sizeGroup"   = :'size_group')
+  SELECT a."category", a."productName", a."units", a."value"
+  FROM "AGG_PRODUCT_PERIOD" a
+  WHERE (:'category'   = '' OR a."category"    = :'category')
+    AND (:'year'       = '' OR a."year"        = nullif(:'year', '')::int)
+    AND (:'quarter'    = '' OR a."quarter"     = nullif(:'quarter', '')::int)
+    AND (:'month'      = '' OR a."monthNumber" = nullif(:'month', '')::int)
+    AND (:'vehicle'    = '' OR a."vehicleType" = :'vehicle')
+    AND (:'size_group' = '' OR a."sizeGroup"   = :'size_group')
 ),
 rolled AS (
   SELECT
     "category" AS category,
     CASE WHEN GROUPING("productName") = 1 THEN 'All products' ELSE "productName" END AS product,
-    sum("quantity")  AS units,
-    sum("lineValue") AS value,
+    sum("units")::bigint AS units,
+    sum("value") AS value,
     GROUPING("productName") = 1 AS is_subtotal
   FROM filtered
   GROUP BY ROLLUP ("category", "productName")

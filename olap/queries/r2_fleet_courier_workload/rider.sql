@@ -21,6 +21,7 @@
 --          avg_orders_per_active_day, peak_day_orders, workload_percentile
 --   workload_rank: 1 = most orders in the selected period.
 --   utilization_pct = active days / calendar days (rider-day snapshot).
+-- OPTIMIZED (Strategy C): reads AGG_RIDER_DAY instead of FACT_ORDERDELIVERY; same columns and types.
 
 WITH rider_dates AS (
   SELECT d."dateKey"
@@ -39,8 +40,8 @@ riders AS (
 ),
 -- Order fact: orders and units per rider in the period.
 order_side AS (
-  SELECT f."riderKey", count(*) AS orders, sum(f."totalQuantity") AS units
-  FROM "FACT_ORDERDELIVERY" f
+  SELECT f."riderKey", sum(f.orders)::bigint AS orders, sum(f.units)::bigint AS units
+  FROM "AGG_RIDER_DAY" f
   JOIN rider_dates rdt ON rdt."dateKey" = f."deliveryDateKey"
   GROUP BY f."riderKey"
 ),

@@ -16,7 +16,7 @@ drifts about 25% between sessions. Quote the range, **8-10x**, not a single figu
 
 | # | Strategy | Files | Used by the final (rewritten) queries? |
 |---|---|---|---|
-| A | Five B-tree indexes on fact foreign keys | `db/dw/optimize/01_indexes.sql` | No. No plan in `optimized-v3` or `optimized-v3-defaultcfg` references them. They help the original queries (R3-geo-city, R4-busiest-days). |
+| A | Five B-tree indexes on fact foreign keys (**retired**) | `db/dw/optimize/01_indexes.sql` (now only drops them) | No. No plan in `optimized-v3` or `optimized-v3-defaultcfg` references them. They helped only the original queries (R3-geo-city, R4-busiest-days). The `optimized-v3` runs had them present; they are removed from the applied set because no final plan uses them. |
 | B | `jit = off`, `work_mem = 64MB` on `dw_db` | `db/dw/optimize/02_config.sql` | Yes. `work_mem` carries it (see the ablation). |
 | C | Four materialized views and query rewrites that read them | `db/dw/optimize/03_preagg.sql`, `db/dw/optimize/queries/` | Yes. This is the main win. |
 
@@ -245,12 +245,15 @@ number of grouping sets times the rows per set.
   customer view and 0.9 s for the rider view. A `--rebuild` drops the views and indexes, so re-run
   the script afterwards. `ALTER DATABASE` settings survive a rebuild.
 - **Storage.** Database size 355 MB (baseline) -> 531 MB (all three strategies). The four views are
-  28 + 8.7 + 0.14 + 76 MB. The five indexes add about 63 MB.
+  28 + 8.7 + 0.14 + 76 MB. The five indexes added about 64 MB; they are retired (see strategy A), so
+  the applied total is about 467 MB.
 - **Filters not covered.** The rewrites serve the filters the reports expose. A new filter on a
   column a summary lacks needs the original query.
-- **Not yet wired into the app.** `olap-backend` and CI still read the original `olap/queries/`.
-  The optimized copies in `db/dw/optimize/queries/` are measured and checked, but the API does not
-  use them yet.
+- **Wired into the app.** `olap/queries/` now holds the optimized queries, so `olap-backend` and CI
+  read them. The unoptimized originals are kept in `evidence/benchmark/original-queries/`, and
+  `check_equivalence.py` compares the two sets. The API needs the four `AGG_*` views to exist, so
+  `db/scripts/apply_optimizations.sh` is a required step after every load or rebuild. Without it the
+  report queries fail with "relation does not exist".
 
 ## Measurement notes
 
