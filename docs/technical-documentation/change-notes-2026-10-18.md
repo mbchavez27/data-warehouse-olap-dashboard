@@ -74,7 +74,7 @@ All frontend; the report queries and the API are unchanged. Details are in
   macOS and Windows pass no file events: edits now reach the browser without a
   restart.
 - **Tests.** `npm test` is 407 checks (from 234): all four reports rendered
-  across their views (R1–R3 in the new `tests/report-views.test.mjs`), plus the
+  across their views (R1–R3 in the new `olap-frontend/tests/report-views.test.mjs`), plus the
   table sort, the chart keyboard and pointer handling, and the theme's contrast
   and dark tokens.
 

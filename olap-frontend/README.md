@@ -294,7 +294,14 @@ declares. Only the schema is needed, not the data.
 ## Folder layout
 
 ```
+index.html                 page shell; applies a saved light/dark choice before the first paint
+public/                    favicon
+scripts/                   sync-contracts (regenerate the contract), check-contracts (diff it against the API)
+tests/                     column-contract suite and the two rendered-report suites (npm test)
+tests/support/             the test seam: initial view state, the mock data hook, the render entry
 src/
+  main.jsx                 mounts the app
+  styles.css               every style, on light and dark colour tokens
   App.jsx                  sidebar + report header; the open page is in the URL hash (#home, #r1..#r4)
   Home.jsx                 home page: title, overview and a card per report
   NotFound.jsx             page for a link to a page that doesn't exist
@@ -302,19 +309,16 @@ src/
   api/useReport.js         React hook: loads one report level, keeps old rows while reloading
   api/mock.js              sample rows shaped exactly like each SQL file's output
   api/contracts.js         generated: the columns each level returns (see Tests above)
-  scripts/                 sync-contracts (regenerate the contract), check-contracts (diff it against the API)
-  tests/                   column-contract suite and the two rendered-report suites (npm test)
-  tests/support/           the test seam: initial view state, the mock data hook, the render entry
   components/              FilterBar, Panel, Figures (KPI cards), RoutePath (drill path), ScopeLine
                            (scope sentence), Legend (encoding key), Tooltip (hover hint), DataTable,
                            Bar, HeatCell (heat matrix cell), LineChart (time series), ParetoChart
                            (concentration), DotStrip (spread around the median), CalendarGrid
                            (demand calendar), Segmented, ExportButton, ReportStatus,
                            ThemeToggle (light / dark switch), ErrorPage and ErrorBoundary
-                           (not-found and crashed-page screens), Icons
+                           (not-found and crashed-page screens), Logo (the Road Runner mark), Icons
   lib/chartKeys.js         keyboard and pointer reading shared by the charts
   lib/theme.js             light / dark choice: system default, pinned and remembered
-  lib/route.js             which page a URL hash opens (a report, else home)
+  lib/route.js             which page a URL hash opens: home, a report, or not found
   lib/csv.js               Export CSV
   lib/dimensions.js        filter options shared by all reports (values match the SQL)
   lib/format.js            peso / percent / count formatting
