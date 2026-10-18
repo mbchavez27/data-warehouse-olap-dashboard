@@ -92,6 +92,8 @@ services:
     environment:
       API_TARGET: http://api:8080
       VITE_API_MODE: live
+      # Bind mounts on macOS/Windows send no file events, so poll for edits.
+      VITE_POLL: "true"
     volumes:
       - ./olap-frontend:/app
       - web_node_modules:/app/node_modules
