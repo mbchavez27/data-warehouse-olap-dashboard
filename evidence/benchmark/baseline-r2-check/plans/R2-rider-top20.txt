@@ -1,0 +1,81 @@
+-- R2-rider-top20: Top 20 riders, all period
+-- file: olap/queries/r2_fleet_courier_workload/rider.sql
+-- params: {"top_n": "20"}
+
+Limit  (cost=63655.05..63655.10 rows=20 width=189) (actual time=378.862..378.871 rows=20 loops=1)
+  Buffers: shared hit=5447 read=5156, temp read=3447 written=3447
+  CTE rider_dates
+    ->  Seq Scan on "DIM_DATE" d  (cost=0.00..7.65 rows=365 width=4) (actual time=0.006..0.052 rows=365 loops=1)
+          Buffers: shared hit=4
+  ->  Sort  (cost=63647.40..63647.65 rows=100 width=189) (actual time=378.860..378.867 rows=20 loops=1)
+        Sort Key: ranked.orders DESC, ranked.rider
+        Sort Method: top-N heapsort  Memory: 33kB
+        Buffers: shared hit=5447 read=5156, temp read=3447 written=3447
+        ->  Subquery Scan on ranked  (cost=63639.49..63644.74 rows=100 width=189) (actual time=378.732..378.830 rows=100 loops=1)
+              Buffers: shared hit=5447 read=5156, temp read=3447 written=3447
+              ->  WindowAgg  (cost=63639.49..63644.74 rows=100 width=173) (actual time=378.731..378.822 rows=100 loops=1)
+                    Buffers: shared hit=5447 read=5156, temp read=3447 written=3447
+                    ->  Sort  (cost=63639.49..63639.74 rows=100 width=85) (actual time=378.707..378.715 rows=100 loops=1)
+                          Sort Key: (COALESCE(o.orders, '0'::bigint))
+                          Sort Method: quicksort  Memory: 36kB
+                          Buffers: shared hit=5447 read=5156, temp read=3447 written=3447
+                          ->  WindowAgg  (cost=63634.42..63636.17 rows=100 width=85) (actual time=378.658..378.690 rows=100 loops=1)
+                                Buffers: shared hit=5447 read=5156, temp read=3447 written=3447
+                                ->  Sort  (cost=63634.42..63634.67 rows=100 width=77) (actual time=378.652..378.660 rows=100 loops=1)
+                                      Sort Key: (COALESCE(o.orders, '0'::bigint)) DESC
+                                      Sort Method: quicksort  Memory: 35kB
+                                      Buffers: shared hit=5447 read=5156, temp read=3447 written=3447
+                                      ->  Hash Left Join  (cost=63628.83..63631.09 rows=100 width=77) (actual time=378.586..378.629 rows=100 loops=1)
+                                            Hash Cond: (r."riderKey" = dy."riderKey")
+                                            Buffers: shared hit=5447 read=5156, temp read=3447 written=3447
+                                            ->  Merge Left Join  (cost=61745.56..61747.55 rows=100 width=53) (actual time=368.948..368.981 rows=100 loops=1)
+                                                  Merge Cond: (r."riderKey" = o."riderKey")
+                                                  Buffers: shared hit=5178 read=5156, temp read=3447 written=3447
+                                                  ->  Sort  (cost=6.58..6.83 rows=100 width=37) (actual time=0.036..0.040 rows=100 loops=1)
+                                                        Sort Key: r."riderKey"
+                                                        Sort Method: quicksort  Memory: 31kB
+                                                        Buffers: shared hit=2
+                                                        ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.26 rows=100 width=37) (actual time=0.009..0.018 rows=100 loops=1)
+                                                              Filter: ("riderKey" <> 0)
+                                                              Rows Removed by Filter: 1
+                                                              Buffers: shared hit=2
+                                                  ->  Sort  (cost=61738.98..61739.23 rows=100 width=20) (actual time=368.909..368.916 rows=100 loops=1)
+                                                        Sort Key: o."riderKey"
+                                                        Sort Method: quicksort  Memory: 29kB
+                                                        Buffers: shared hit=5176 read=5156, temp read=3447 written=3447
+                                                        ->  Subquery Scan on o  (cost=61733.66..61735.66 rows=100 width=20) (actual time=368.868..368.882 rows=100 loops=1)
+                                                              Buffers: shared hit=5176 read=5156, temp read=3447 written=3447
+                                                              ->  HashAggregate  (cost=61733.66..61734.66 rows=100 width=20) (actual time=368.868..368.876 rows=100 loops=1)
+                                                                    Group Key: f."riderKey"
+                                                                    Batches: 1  Memory Usage: 32kB
+                                                                    Buffers: shared hit=5176 read=5156, temp read=3447 written=3447
+                                                                    ->  Hash Join  (cost=37711.00..54233.66 rows=1000000 width=8) (actual time=146.280..290.926 rows=1000000 loops=1)
+                                                                          Hash Cond: (rdt."dateKey" = f."deliveryDateKey")
+                                                                          Buffers: shared hit=5176 read=5156, temp read=3447 written=3447
+                                                                          ->  CTE Scan on rider_dates rdt  (cost=0.00..7.30 rows=365 width=4) (actual time=0.006..0.123 rows=365 loops=1)
+                                                                                Buffers: shared hit=4
+                                                                          ->  Hash  (cost=20328.00..20328.00 rows=1000000 width=12) (actual time=144.882..144.883 rows=1000000 loops=1)
+                                                                                Buckets: 262144  Batches: 8  Memory Usage: 7223kB
+                                                                                Buffers: shared hit=5172 read=5156, temp written=3433
+                                                                                ->  Seq Scan on "FACT_ORDERDELIVERY" f  (cost=0.00..20328.00 rows=1000000 width=12) (actual time=0.009..63.682 rows=1000000 loops=1)
+                                                                                      Buffers: shared hit=5172 read=5156
+                                            ->  Hash  (cost=1882.02..1882.02 rows=100 width=24) (actual time=9.623..9.624 rows=100 loops=1)
+                                                  Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                                                  Buffers: shared hit=269
+                                                  ->  Subquery Scan on dy  (cost=1880.02..1882.02 rows=100 width=24) (actual time=9.591..9.603 rows=100 loops=1)
+                                                        Buffers: shared hit=269
+                                                        ->  HashAggregate  (cost=1880.02..1881.02 rows=100 width=24) (actual time=9.591..9.598 rows=100 loops=1)
+                                                              Group Key: rd."riderKey"
+                                                              Batches: 1  Memory Usage: 32kB
+                                                              Buffers: shared hit=269
+                                                              ->  Hash Join  (cost=1090.25..1515.02 rows=36500 width=10) (actual time=5.101..6.847 rows=36500 loops=1)
+                                                                    Hash Cond: (rider_dates."dateKey" = rd."dateKey")
+                                                                    Buffers: shared hit=269
+                                                                    ->  CTE Scan on rider_dates  (cost=0.00..7.30 rows=365 width=4) (actual time=0.001..0.023 rows=365 loops=1)
+                                                                    ->  Hash  (cost=634.00..634.00 rows=36500 width=14) (actual time=4.922..4.922 rows=36500 loops=1)
+                                                                          Buckets: 65536  Batches: 1  Memory Usage: 2223kB
+                                                                          Buffers: shared hit=269
+                                                                          ->  Seq Scan on "FACT_RIDERDAILY" rd  (cost=0.00..634.00 rows=36500 width=14) (actual time=0.012..1.861 rows=36500 loops=1)
+                                                                                Buffers: shared hit=269
+Planning Time: 0.401 ms
+Execution Time: 379.927 ms

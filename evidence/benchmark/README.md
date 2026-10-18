@@ -12,6 +12,13 @@ uv run --project etl python olap/benchmark/run_benchmark.py --label baseline-gen
 |---|---|
 | `baseline/` | **The "before" for Step 6.** 18 cases, 1 warm-up + 5 measured runs each, custom plans. |
 | `baseline-generic-plan/` | Same cases under `force_generic_plan` (3 runs): shows the slowdown a reused prepared statement causes. |
+| `baseline-r2/`, `baseline-r2-check/` | Phase 2 repeats of the baseline (9 runs): same state, used to measure run-to-run noise (18/18 md5 equal). |
+| `baseline-r3/` | First run of the Phase 2 session; cold cache, inflated on R1 cases. Not used as the reference. |
+| `baseline-r4/` | **Phase 2 reference**: warm, no secondary indexes, default settings, original queries (9 runs). |
+| `preagg/`, `config/`, `indexes/` | Each Phase 2 strategy measured alone (see `evidence/optimization-log.md`). |
+| `optimized/` | All three strategies together. |
+
+Phase 2 comparison: `uv run --project etl python olap/benchmark/compare_runs.py baseline-r4 preagg config indexes optimized`
 
 Each folder holds `results.json` (environment + every run), `results.csv` (one row
 per case, for tables and charts) and `plans/<case>.txt` (`EXPLAIN (ANALYZE, BUFFERS)`).

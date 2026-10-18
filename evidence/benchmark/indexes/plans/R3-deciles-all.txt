@@ -1,0 +1,79 @@
+-- R3-deciles-all: Deciles, all customers
+-- file: olap/queries/r3_customer_value_distribution/deciles.sql
+-- params: {}
+
+WindowAgg  (cost=153442.33..153452.83 rows=200 width=204) (actual time=896.134..897.262 rows=10 loops=1)
+  Buffers: shared hit=11517 read=11113, temp read=9918 written=14672
+  ->  WindowAgg  (cost=153442.33..153445.83 rows=200 width=140) (actual time=896.110..897.236 rows=10 loops=1)
+        Buffers: shared hit=11517 read=11113, temp read=9918 written=14672
+        ->  Sort  (cost=153442.33..153442.83 rows=200 width=108) (actual time=896.098..897.218 rows=10 loops=1)
+              Sort Key: (ntile(10) OVER (?))
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=11517 read=11113, temp read=9918 written=14672
+              ->  HashAggregate  (cost=153432.19..153434.69 rows=200 width=108) (actual time=896.062..897.185 rows=10 loops=1)
+                    Group Key: ntile(10) OVER (?)
+                    Batches: 1  Memory Usage: 40kB
+                    Buffers: shared hit=11517 read=11113, temp read=9918 written=14672
+                    ->  WindowAgg  (cost=149809.19..151394.25 rows=90575 width=36) (actual time=864.502..875.369 rows=99996 loops=1)
+                          Buffers: shared hit=11517 read=11113, temp read=9918 written=14672
+                          ->  Sort  (cost=149809.19..150035.63 rows=90575 width=32) (actual time=847.789..854.940 rows=99996 loops=1)
+                                Sort Key: customer_value.value DESC
+                                Sort Method: external merge  Disk: 1568kB
+                                Buffers: shared hit=11517 read=11113, temp read=9637 written=14391
+                                ->  Subquery Scan on customer_value  (cost=115649.57..140181.78 rows=90575 width=32) (actual time=667.833..825.180 rows=99996 loops=1)
+                                      Buffers: shared hit=11517 read=11113, temp read=9441 written=14194
+                                      ->  Finalize GroupAggregate  (cost=115649.57..139276.03 rows=90575 width=36) (actual time=667.830..819.249 rows=99996 loops=1)
+                                            Group Key: i."customerKey"
+                                            Buffers: shared hit=11517 read=11113, temp read=9441 written=14194
+                                            ->  Gather Merge  (cost=115649.57..136785.21 rows=181150 width=36) (actual time=667.773..713.864 rows=289210 loops=1)
+                                                  Workers Planned: 2
+                                                  Workers Launched: 2
+                                                  Buffers: shared hit=11517 read=11113, temp read=9441 written=14194
+                                                  ->  Sort  (cost=114649.55..114875.98 rows=90575 width=36) (actual time=648.749..658.563 rows=96403 loops=3)
+                                                        Sort Key: i."customerKey"
+                                                        Sort Method: external merge  Disk: 7616kB
+                                                        Buffers: shared hit=11517 read=11113, temp read=9441 written=14194
+                                                        Worker 0:  Sort Method: external merge  Disk: 7672kB
+                                                        Worker 1:  Sort Method: external merge  Disk: 7664kB
+                                                        ->  Partial HashAggregate  (cost=95444.64..104714.13 rows=90575 width=36) (actual time=483.072..623.042 rows=96403 loops=3)
+                                                              Group Key: i."customerKey"
+                                                              Planned Partitions: 4  Batches: 5  Memory Usage: 8241kB  Disk Usage: 15928kB
+                                                              Buffers: shared hit=11503 read=11113, temp read=6572 written=11319
+                                                              Worker 0:  Batches: 33  Memory Usage: 8249kB  Disk Usage: 18184kB
+                                                              Worker 1:  Batches: 5  Memory Usage: 8241kB  Disk Usage: 16104kB
+                                                              ->  Hash Join  (cost=5095.82..42063.92 rows=833260 width=12) (actual time=22.126..349.167 rows=666608 loops=3)
+                                                                    Hash Cond: (i."deliveryDateKey" = d."dateKey")
+                                                                    Buffers: shared hit=11503 read=11113
+                                                                    ->  Parallel Hash Join  (cost=5083.61..39839.00 rows=833260 width=16) (actual time=12.442..280.935 rows=666608 loops=3)
+                                                                          Hash Cond: (i."geoKey" = g."geoKey")
+                                                                          Buffers: shared hit=11491 read=11113
+                                                                          ->  Parallel Hash Join  (cost=2541.81..35109.80 rows=833260 width=20) (actual time=6.104..170.227 rows=666608 loops=3)
+                                                                                Hash Cond: (i."customerKey" = c."customerKey")
+                                                                                Buffers: shared hit=11213 read=11113
+                                                                                ->  Parallel Seq Scan on "FACT_ORDERITEM" i  (cost=0.00..30380.60 rows=833260 width=20) (actual time=0.025..36.068 rows=666608 loops=3)
+                                                                                      Buffers: shared hit=10935 read=11113
+                                                                                ->  Parallel Hash  (cost=2020.97..2020.97 rows=41667 width=4) (actual time=5.930..5.931 rows=33334 loops=3)
+                                                                                      Buckets: 131072  Batches: 1  Memory Usage: 4992kB
+                                                                                      Buffers: shared hit=278
+                                                                                      ->  Parallel Index Only Scan using "DIM_CUSTOMER_pkey" on "DIM_CUSTOMER" c  (cost=0.29..2020.97 rows=41667 width=4) (actual time=0.031..1.737 rows=33334 loops=3)
+                                                                                            Heap Fetches: 0
+                                                                                            Buffers: shared hit=278
+                                                                          ->  Parallel Hash  (cost=2020.97..2020.97 rows=41667 width=4) (actual time=5.957..5.958 rows=33334 loops=3)
+                                                                                Buckets: 131072  Batches: 1  Memory Usage: 4992kB
+                                                                                Buffers: shared hit=278
+                                                                                ->  Parallel Index Only Scan using "DIM_GEOGRAPHY_pkey" on "DIM_GEOGRAPHY" g  (cost=0.29..2020.97 rows=41667 width=4) (actual time=0.028..1.909 rows=33334 loops=3)
+                                                                                      Heap Fetches: 0
+                                                                                      Buffers: shared hit=278
+                                                                    ->  Hash  (cost=7.65..7.65 rows=365 width=4) (actual time=9.668..9.668 rows=365 loops=3)
+                                                                          Buckets: 1024  Batches: 1  Memory Usage: 21kB
+                                                                          Buffers: shared hit=12
+                                                                          ->  Seq Scan on "DIM_DATE" d  (cost=0.00..7.65 rows=365 width=4) (actual time=9.610..9.633 rows=365 loops=3)
+                                                                                Buffers: shared hit=12
+Planning:
+  Buffers: shared hit=40
+Planning Time: 0.601 ms
+JIT:
+  Functions: 104
+  Options: Inlining false, Optimization false, Expressions true, Deforming true
+  Timing: Generation 4.336 ms, Inlining 0.000 ms, Optimization 1.679 ms, Emission 35.337 ms, Total 41.352 ms
+Execution Time: 902.835 ms

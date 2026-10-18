@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import platform
 import re
@@ -116,11 +117,12 @@ def connect(plan_cache_mode: str):
     return conn
 
 
-def run_case(conn, case, runs: int, plans_dir: Path) -> Dict[str, Any]:
-    sql_text = (QUERIES_DIR / case.query_file).read_text(encoding="utf-8")
+def run_case(conn, case, runs: int, plans_dir: Path, queries_dir: Path) -> Dict[str, Any]:
+    sql_text = (queries_dir / case.query_file).read_text(encoding="utf-8")
     statement, bound = to_driver_sql(sql_text, case.params)
     timings: List[float] = []
     rows = columns = 0
+    result_md5 = ""
     with conn.cursor() as cur:
         for attempt in range(runs + 1):  # attempt 0 is the warm-up
             started = time.perf_counter()
@@ -129,6 +131,8 @@ def run_case(conn, case, runs: int, plans_dir: Path) -> Dict[str, Any]:
             elapsed_ms = (time.perf_counter() - started) * 1000
             if attempt == 0:
                 rows, columns = len(result), len(cur.description)
+                # repr, not json: lineValue is numeric (Decimal), which json cannot encode.
+                result_md5 = hashlib.md5(repr(result).encode("utf-8")).hexdigest()
                 continue
             timings.append(round(elapsed_ms, 2))
         cur.execute("EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) " + statement, bound)
@@ -149,6 +153,7 @@ def run_case(conn, case, runs: int, plans_dir: Path) -> Dict[str, Any]:
         "note": case.note,
         "resultRows": rows,
         "resultColumns": columns,
+        "resultMd5": result_md5,
         "runsMs": timings,
         "medianMs": round(statistics.median(timings), 2),
         "meanMs": round(statistics.mean(timings), 2),
@@ -166,6 +171,8 @@ def main(argv=None) -> int:
     parser.add_argument("--label", required=True, help="e.g. baseline, optimized")
     parser.add_argument("--runs", type=int, default=5, help="measured runs per case (default 5)")
     parser.add_argument("--only", help="run only case ids containing this text")
+    parser.add_argument("--queries-dir", default=str(QUERIES_DIR),
+                        help="query tree with the same relative paths")
     parser.add_argument(
         "--plan-cache-mode",
         choices=("force_custom_plan", "force_generic_plan"),
@@ -194,7 +201,7 @@ def main(argv=None) -> int:
         print(f"{case.case_id:<26}", end="", flush=True)
         conn = connect(args.plan_cache_mode)  # fresh session: no plan carried between cases
         try:
-            result = run_case(conn, case, args.runs, plans_dir)
+            result = run_case(conn, case, args.runs, plans_dir, Path(args.queries_dir))
         finally:
             conn.close()
         results.append(result)
@@ -215,6 +222,7 @@ def main(argv=None) -> int:
             "plans": "one EXPLAIN (ANALYZE, BUFFERS) run after the timed runs",
             "planCacheMode": args.plan_cache_mode,
             "session": "fresh connection per case",
+            "queriesDir": args.queries_dir,
         },
         "environment": env,
         "cases": results,
@@ -223,11 +231,11 @@ def main(argv=None) -> int:
     with (out_dir / "results.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(["case_id", "report", "query_file", "params", "result_rows",
-                         "result_columns", "median_ms", "mean_ms", "min_ms", "max_ms",
+                         "result_columns", "result_md5", "median_ms", "mean_ms", "min_ms", "max_ms",
                          "stdev_ms", "explain_execution_ms"])
         for r in results:
             writer.writerow([r["caseId"], r["report"], r["queryFile"], json.dumps(r["params"]),
-                             r["resultRows"], r["resultColumns"], r["medianMs"], r["meanMs"],
+                             r["resultRows"], r["resultColumns"], r["resultMd5"], r["medianMs"], r["meanMs"],
                              r["minMs"], r["maxMs"], r["stdevMs"], r["explainExecutionMs"]])
     print(f"\nwrote {out_dir.relative_to(REPO_ROOT)}/results.json, results.csv, plans/ "
           f"({len(results)} cases)")
