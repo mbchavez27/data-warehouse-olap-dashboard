@@ -9,6 +9,7 @@ import { useState } from 'react'
 //   cumulative  number[]  the line series (running total, in %)
 //   format      (v) => string
 //   barName / lineName    legend and hover names
+//   lineHint    what the line means, shown beside its name in the legend (optional)
 //   title       accessible name
 //   max         top of the scale; pass it to pin the axis (a Pareto of shares
 //               wants 100 so the cumulative line lands on the top gridline)
@@ -19,6 +20,7 @@ export default function ParetoChart({
   format = String,
   barName = 'Share',
   lineName = 'Cumulative',
+  lineHint,
   title = 'Concentration',
   max,
 }) {
@@ -122,6 +124,7 @@ export default function ParetoChart({
         <li>
           <i />
           {lineName}
+          {lineHint && <span className="chart-legend-hint">— {lineHint}</span>}
         </li>
       </ul>
     </div>

@@ -734,6 +734,10 @@ select {
   background: repeating-linear-gradient(to right, var(--ink-3) 0 3px, transparent 3px 6px);
 }
 
+.chart-legend-hint {
+  color: var(--ink-3);
+}
+
 .chart-bar {
   fill: color-mix(in srgb, var(--route) 34%, var(--surface));
   transition: fill 0.15s ease;

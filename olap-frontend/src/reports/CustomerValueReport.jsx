@@ -117,6 +117,7 @@ export default function CustomerValueReport() {
         max={100}
         barName="Share of value"
         lineName="Running total"
+        lineHint="the share of value held by decile 1 through that decile, so it ends at 100%"
       />
     )
     columns = [
