@@ -274,7 +274,13 @@ export default function CustomerValueReport() {
 
     figures = [
       { label: 'Customers listed', value: num(rows.length) },
-      { label: 'Average customer', value: peso(average), title: pesoFull(average) },
+      // Only the top N rows come back, so this is the average of those, not of every customer in the slice.
+      {
+        label: 'Average of those listed',
+        value: peso(average),
+        title: pesoFull(average),
+        sub: rows.length ? `across the top ${num(rows.length)} by list-price value` : null,
+      },
       {
         label: 'Top customer',
         value: top?.customer ?? '–',
