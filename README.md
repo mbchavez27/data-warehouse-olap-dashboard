@@ -190,7 +190,7 @@ dashboard (`.github/workflows/dashboard-build.yml`).
 
 The dashboard has its own suite. `npm test` in `olap-frontend` holds the sample
 data to a generated column contract for all 12 report levels and renders the
-four reports server-side in every view state (233 checks, no database, run in
+four reports server-side in every view state (234 checks, no database, run in
 CI by `.github/workflows/dashboard-tests.yml`); `npm run check:contracts` diffs
 that contract, and the value types of the sample data, against the live API and
 writes `evidence/contract-check.json`. The SQL-to-catalog link is checked from
@@ -224,7 +224,7 @@ testing, the optimization pass, and the report itself.
 | 2. Data warehouse construction | Done — 3 facts, 6 dimensions, 5 hierarchies, executable readiness gate |
 | 3. ETL pipeline | Done — 1,000,000 deliveries + 1,999,824 order items + 36,500 rider-days, 15/15 reconciliation checks, 0 rejects |
 | 4. OLAP application | Done — 12 parameterized query levels, the Go API, and the dashboard's four reports |
-| 5. Functional testing | **Pending** — the dashboard has a column-contract suite and a rendered-report suite (`npm test`, 233 checks), a live contract check (`npm run check:contracts`) and a Go schema↔query contract test in CI; a report-level script that reconciles analytical results to the ETL baseline is still missing |
+| 5. Functional testing | **Pending** — the dashboard has a column-contract suite and a rendered-report suite (`npm test`, 234 checks), a live contract check (`npm run check:contracts`) and a Go schema↔query contract test in CI; a report-level script that reconciles analytical results to the ETL baseline is still missing |
 | 6. Performance testing | Baseline measured (18 cases, medians 66–8,224 ms) plus the generic-plan comparison; optimization and the before/after comparison **pending** |
 | 7. Final technical report | **Pending** — evidence is indexed in `docs/technical-documentation/index.md`; the report template is not filled in |
 
