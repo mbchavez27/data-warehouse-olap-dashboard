@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-18T07:21:40.527Z",
+  "generatedAt": "2026-10-18T14:34:52.925Z",
   "command": "reconcile",
   "source": {
     "orders": 1000000,
@@ -44,14 +44,14 @@
     "schemaVersion": 1,
     "modes": {
       "dims": {
-        "generatedAt": "2026-10-18T07:21:32.194Z",
+        "generatedAt": "2026-10-18T14:34:44.317Z",
         "rejectCount": 0,
         "byReason": {},
         "rejects": [],
         "passed": true
       },
       "facts": {
-        "generatedAt": "2026-10-18T07:21:39.634Z",
+        "generatedAt": "2026-10-18T14:34:51.994Z",
         "rejectCount": 0,
         "byReason": {},
         "rejects": [],
