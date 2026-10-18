@@ -248,10 +248,21 @@ export default function FleetWorkloadReport() {
       rows.length > 1 && Math.min(...orders) > 0
         ? (100 * (Math.max(...orders) - Math.min(...orders))) / Math.min(...orders)
         : null
+    // Only the top N riders come back in the chosen order, so both figures
+    // describe the rows listed, not every rider in the slice.
+    const listed = `the ${num(rows.length)} ${sort === 'most' ? 'busiest' : 'quietest'} riders`
     figures = [
       { label: 'Riders listed', value: num(rows.length) },
-      { label: 'Average orders per rider', value: rows.length ? num(orders.reduce((a, b) => a + b, 0) / rows.length) : '–' },
-      { label: 'Busiest vs quietest listed', value: gap === null ? '–' : `+${dec1(gap)}%`, sub: 'more orders for the busiest rider' },
+      {
+        label: 'Average of those listed',
+        value: rows.length ? num(orders.reduce((a, b) => a + b, 0) / rows.length) : '–',
+        sub: rows.length ? `orders per rider, across ${listed}` : null,
+      },
+      {
+        label: 'Busiest vs quietest listed',
+        value: gap === null ? '–' : `+${dec1(gap)}%`,
+        sub: gap === null ? null : `more orders, busiest against quietest within ${listed}`,
+      },
     ]
     columns = [
       { key: 'workload_rank', label: 'Rank', align: 'right' },
