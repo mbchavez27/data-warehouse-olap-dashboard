@@ -1,6 +1,6 @@
 # Project Checklist — Data Warehouse OLAP Dashboard
 
-> Status as of 2026-10-18. Checked items have repository evidence; unchecked items are scaffold-only (`.gitkeep`) or empty.
+> Status as of 2026-10-18, re-verified after PR #15 (query optimizations) and PR #16 (functional tests): every suite below was re-run and passed. Checked items have repository evidence. The final technical report is tracked separately and is not part of this checklist.
 
 ## 1. Source Database Setup
 
@@ -38,14 +38,14 @@
 - [x] Write code to **Load** the transformed data into the data warehouse.
   - Evidence: `etl/load/date.py`, `etl/load/dimensions.py`, and `etl/load/facts.py` are invoked by the stable `etl/main.py --date` / `--dims` / `--facts` modes: 365 dates; 100 / 100,000 / 100,000 / 10,000 dimension rows; 1,000,000 / 1,999,824 / 36,500 fact rows; 0 rejects (`evidence/etl-rejects.json`); full rebuild ~40 s; reruns byte-identical. `etl/main.py --reconcile` produced `evidence/etl-reconciliation.json`: 15/15 source-to-warehouse checks passed, including 10,999,917 units in all three facts, exact Unknown seed rows, and 0 fact references to Unknown members.
 - [x] Provide a reproducible, fail-fast full-pipeline command.
-  - Evidence: `etl/run_pipeline.py` orchestrates date → dimensions → facts → reconciliation → final readiness check; `etl/run_etl.sh` is a thin Bash wrapper. The default refuses a populated warehouse before any load, while explicit `--rebuild` recreates only `dw_db`; runner and wrapper safety is covered by `etl/tests/test_run_pipeline.py`.
+  - Evidence: `etl/run_pipeline.py` orchestrates date → dimensions → facts → reconciliation → summary views (`--optimize`) → final readiness check; `etl/run_etl.sh` is a thin Bash wrapper. The default refuses a populated warehouse before any load, while explicit `--rebuild` recreates only `dw_db`; runner and wrapper safety is covered by `etl/tests/test_run_pipeline.py`.
 
 ## 4. OLAP Application Development
 
 - [x] Formulate complex queries utilizing OLAP operations (roll-up, drill-down, slice, dice, pivot).
   - Evidence: `olap/queries/` holds the four reports (12 parameterized level files) documented in `olap/queries/README.md`; all five OLAP operations are covered (`ROLLUP`, `CUBE`, `GROUPING SETS`, pivot via `FILTER`, window functions). They realize the 22 business questions in `docs/database/data-warehouse-schema.md` and are benchmarked in `evidence/benchmark/`. Every filter is a bound parameter (`:'name'`), never concatenated SQL.
 - [x] Develop a web-based dashboard application.
-  - Evidence: Go API in `olap-backend/` (`net/http` + `pgx/v5`, read-only pool, `force_custom_plan`; 11 tests via `go test ./...`) and React dashboard in `olap-frontend/` (Vite, no UI libraries) covering all four reports: R1 (Products & Categories), R2 (Fleet & Rider Workload), R3 (Customer Value) and R4 (Demand Calendar).
+  - Evidence: Go API in `olap-backend/` (`net/http` + `pgx/v5`, read-only pool, `force_custom_plan`; 11 tests via `go test ./...`) and React dashboard in `olap-frontend/` (Vite, no UI libraries) covering all four reports: R1 (Products & Categories), R2 (Fleet & Rider Workload), R3 (Customer Value) and R4 (Demand Calendar). The dashboard reads the reports with charts sized to the data (Pareto with an 80% line, trend line, rider dot strip, demand calendar, heat grids with "against its average" colourings), sortable tables, column explanations, keyboard and touch reading of the charts, and a light/dark switch; `olap-frontend/README.md` describes each.
 - [x] Implement UI features allowing users to specify query parameters and filters (for slice and dice).
   - Evidence: `olap-frontend/src/components/FilterBar.jsx` with `src/lib/dimensions.js` drives the per-report filter sets — year/quarter/month/vehicle/order size for R1, those plus courier and rider age for R2, year/quarter/customer gender for R3, and period/day type (weekday or weekend)/payday/vehicle/order size for R4 — all exposed by the API (see `olap-frontend/README.md`). Each report sends an endpoint only the filters that level declares, since the API rejects an undeclared parameter.
 - [x] Implement UI features allowing users to view reports at varying levels of granularity (for drill-down and roll-up).
@@ -53,17 +53,17 @@
 
 ## 5. Functional Testing
 
-- [ ] Prepare functional test scripts designed for efficient testing.
-  - State: unit and contract suites exist — `go test ./...` (API), `uv run --project etl pytest etl/tests` (ETL), `uv run --project db pytest db/source/importer` (importer) — plus the dashboard's `npm test` (234 checks: a column contract for all 12 report levels and a server-rendered markup pass over the four reports in every view state, run in CI by `.github/workflows/dashboard-tests.yml`) and `go test -tags integration ./internal/reports/`, which prepares every query against the warehouse schema in CI (`.github/workflows/api-tests.yml`). A script that drives the reports end to end and reconciles their numbers is still pending.
-- [ ] Execute each query multiple times using different parameter values.
-  - State: `olap/benchmark/run_benchmark.py` runs all 18 report cases with varied filters, `npm run check:contracts` replays all 14 requestable levels against the live API (evidence: `evidence/contract-check.json`), the markup suite renders each R4 view pinned and unpinned, and the Go integration test prepares every query against an empty schema. Timings, columns and rendering are covered; a correctness pass over parameter combinations is still pending.
-- [ ] Verify that the resulting reports and analytical data are correct.
-  - ETL input baseline: `evidence/etl-reconciliation.json` fixes the official warehouse totals that future report tests must reconcile against (1,000,000 deliveries; 1,999,824 order items; 36,500 rider-days; 10,999,917 units). `evidence/contract-check.json` records column- and value-type agreement between the dashboard and the warehouse, and the markup suite checks the reports' own arithmetic against the data they are given — but no report total has been reconciled to that baseline yet.
+- [x] Prepare functional test scripts designed for efficient testing.
+  - Evidence: `olap/tests/` (PR #16) holds 74 read-only end-to-end tests against the loaded warehouse and the live API — `test_api_contract.py` (17), `test_warehouse_integrity.py` (20), `test_report_correctness.py` (37) — with a preflight that fails fast when a container or the API is down; one command, about 50–95 s (`olap/tests/README.md`). Below them sit the unit and contract suites, all passing on re-run: `go test ./...` (11 API tests) and `go test -tags integration ./internal/reports/` (every query prepared against the schema, in CI); `uv run --project etl pytest etl/tests` (210 tests; the 19 that need a `dw_test` database run in CI, `.github/workflows/pipeline-tests.yml`); `uv run --project db pytest db/source/importer` (33); and the dashboard's `npm test` (407 checks: the column contract for all 12 levels, all four reports rendered server-side across their views and drill levels, the table sort, the chart keyboard and pointer handling, and the theme's contrast and dark tokens), run in CI by `.github/workflows/dashboard-tests.yml`.
+- [x] Execute each query multiple times using different parameter values.
+  - Evidence: `test_report_correctness.py` runs every report level over about 115 filter combinations; `olap/benchmark/check_equivalence.py` compared each optimized query with its original on 1,600 randomized filter combinations (0 mismatches, `evidence/optimization-log.md`); `olap/benchmark/run_benchmark.py` times 18 report cases with varied filters; `npm run check:contracts` replays all 14 requestable levels against the live API (`evidence/contract-check.json`: columns and value types match).
+- [x] Verify that the resulting reports and analytical data are correct.
+  - Evidence: every report level is compared with an independent reference model computed straight from the fact tables, plus pinned hand-checked figures and internal consistency (parts sum to totals, ranks, shares, subtotals); the warehouse is checked against `source_db` (row, unit and value totals, every order on the right day, rider and customer, each `AGG_*` view an exact rollup of the base facts). `evidence/functional-tests/results.txt` records 74/74 passing and `evidence/functional-tests/negative-control.txt` shows the suite failing on deliberately wrong data. Re-run on 2026-10-18: 74/74 OK. The totals reconcile to the ETL baseline in `evidence/etl-reconciliation.json` (1,000,000 deliveries; 1,999,824 order items; 36,500 rider-days; 10,999,917 units).
 
 ## 6. Performance Testing & Optimization
 
 - [x] Run each query multiple times (varying parameters, structure, or setup) and record baseline execution times.
-  - Evidence: `olap/benchmark/run_benchmark.py` ran the 18 cases (1 warm-up + 5 measured runs each) into `evidence/benchmark/baseline/`; a second folder `evidence/benchmark/baseline-generic-plan/` records the same cases under `force_generic_plan`.
+  - Evidence: `olap/benchmark/run_benchmark.py` ran the 18 cases into `evidence/benchmark/baseline/` (1 warm-up + 5 measured runs) and, for the final comparison, `evidence/benchmark/baseline-r4/` (1 warm-up + 9 timed runs, median); `evidence/benchmark/baseline-generic-plan/` records the same cases under `force_generic_plan`.
 
   | Baseline input | Current value | Evidence |
   |---|---:|---|
@@ -71,19 +71,13 @@
   | Loaded order-item facts | 1,999,824 rows | `evidence/etl-reconciliation.json` |
   | Loaded rider-day facts | 36,500 rows | `evidence/etl-reconciliation.json` |
   | Full ETL rebuild | ~40 seconds | `docs/database/data-warehouse-implementation.md` |
-  | OLAP query timings before optimization | 18 cases, medians 66–8,224 ms | `evidence/benchmark/baseline/results.csv` |
-  | OLAP query timings after optimization | Pending | To be captured after applying optimizations |
+  | OLAP query timings before optimization | 18 cases, sum of medians 20,625 ms | `evidence/benchmark/baseline-r4/results.csv` |
+  | OLAP query timings after optimization | 18 cases, sum of medians 2,066 ms (about 8–10x; a re-run of the same state gave 2,578 ms) | `evidence/benchmark/optimized-v3/results.csv`, `evidence/optimization-log.md` |
 - [x] Evaluate performance and identify bottlenecks using the `EXPLAIN` feature.
-  - Evidence: `EXPLAIN (ANALYZE, BUFFERS)` per case in `evidence/benchmark/baseline/plans/`; bottlenecks (disk sorts, full fact scans, missing planner statistics) summarized in `evidence/benchmark/README.md`.
-- [ ] Apply database optimization strategies (e.g., secondary indexes, query reformulation, denormalization).
-  - State: not yet applied; the baseline's "no secondary indexes" floor and candidates are documented in `evidence/benchmark/README.md`.
-- [ ] Compare execution times between the original implementation and the optimized implementation.
-- [ ] Analyze and explain the causes for performance improvement (or lack thereof) to include in the final report.
-
-## 7. Final Technical Report
-
-- [ ] Download the prescribed Technical Report template.
-- [ ] Gather all data, execution times, and analyses collected from Steps 1 through 6.
-  - Evidence trail established in `docs/technical-documentation/index.md`; ETL executions are in `evidence/etl-runs.jsonl`, OLAP queries in `olap/queries/`, and the performance baseline in `evidence/benchmark/`. Functional-test and post-optimization evidence remain pending.
-- [ ] Complete and finalize the Technical Report.
-  - State: evidence index and consolidated profiling record exist; the prescribed report template and Sections 4–6 results remain pending.
+  - Evidence: `EXPLAIN (ANALYZE, BUFFERS)` per case in `evidence/benchmark/<label>/plans/`; bottlenecks (disk sorts, full fact scans, missing planner statistics) summarized in `evidence/benchmark/README.md`.
+- [x] Apply database optimization strategies (e.g., secondary indexes, query reformulation, denormalization).
+  - Evidence: three strategies, applied by `db/scripts/apply_optimizations.sh` (PR #15): (A) B-tree indexes on fact foreign keys, tried and then retired because no final plan uses them (`db/dw/optimize/01_indexes.sql`); (B) `jit = off` and `work_mem = 64MB` on `dw_db` (`02_config.sql`); (C) four materialized summary views (`AGG_CATEGORY_PERIOD`, `AGG_PRODUCT_PERIOD`, `AGG_CUSTOMER_PERIOD`, `AGG_RIDER_DAY`) with the report queries rewritten to read them (`03_preagg.sql`, now served from `olap/queries/`). The ETL pipeline rebuilds the views after every load (`etl/main.py --optimize`, `etl/load/summaries.py`), in one transaction checked against the facts, so a fresh or rebuilt warehouse serves the reports without a manual step.
+- [x] Compare execution times between the original implementation and the optimized implementation.
+  - Evidence: per-case table in `evidence/optimization-log.md` (`baseline-r4` vs `optimized-v3`, plus `optimized-v3-defaultcfg`); every optimized result set matched the baseline by md5 (`olap/benchmark/compare_runs.py`, 0 mismatches).
+- [x] Analyze and explain the causes for performance improvement (or lack thereof) to include in the final report.
+  - Evidence: `evidence/optimization-log.md` — the summary views replace multi-million-row fact scans (the main win), a config ablation attributes strategy B to `work_mem`, the index findings explain why the indexes were retired, an isolated R3-customer-top20 regression, costs and risks (refresh after every load), and a "Report guide questions" section for the write-up.

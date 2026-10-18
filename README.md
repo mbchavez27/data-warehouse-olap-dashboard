@@ -62,7 +62,10 @@ The parameterless command is deliberately non-destructive. It starts
 the first load when warehouse facts already exist. `--rebuild` is the only
 full-pipeline option that replaces the warehouse schema; it delegates to
 `db/scripts/setup_dw.sh --schema-only`. Neither command resets or writes to
-the source database.
+the source database. After loading, both rebuild the four `AGG_*` summary views
+the report queries read (the `--optimize` phase, from `db/dw/optimize/`) and
+check them against the facts, so a fresh or rebuilt warehouse is ready for the
+dashboard without a separate step.
 
 The equivalent direct Python commands are:
 
@@ -87,6 +90,7 @@ uv run --project etl python etl/main.py --dims
 uv run --project etl python etl/main.py --facts
 uv run --project etl python etl/main.py --reconcile
 uv run --project etl python etl/main.py --reconcile --output evidence/etl-reconciliation.json
+uv run --project etl python etl/main.py --optimize   # rebuild the summary views after a manual --facts
 ```
 
 Implementation is organized by responsibility under `etl/core/`,
@@ -190,14 +194,18 @@ dashboard (`.github/workflows/dashboard-build.yml`).
 
 The dashboard has its own suite. `npm test` in `olap-frontend` holds the sample
 data to a generated column contract for all 12 report levels and renders the
-four reports server-side in every view state (234 checks, no database, run in
-CI by `.github/workflows/dashboard-tests.yml`); `npm run check:contracts` diffs
+four reports server-side across their views and drill levels (407 checks, no
+database, run in CI by `.github/workflows/dashboard-tests.yml`);
+`npm run check:contracts` diffs
 that contract, and the value types of the sample data, against the live API and
 writes `evidence/contract-check.json`. The SQL-to-catalog link is checked from
 the Go side too: `go test -tags integration ./internal/reports/` prepares every
 query against the warehouse schema in CI (`.github/workflows/api-tests.yml`).
-All of it is structural: report-level end-to-end checks that reconcile the
-analytical results to the ETL baseline are still to be added.
+Above those, `olap/tests/` holds 74 read-only functional tests against the
+loaded warehouse and the live API: every report level against an independent
+reference model over about 115 filter combinations, the warehouse against
+`source_db`, and the API contract (`olap/tests/README.md`; results and a
+negative control in `evidence/functional-tests/`).
 
 Performance baseline: `olap/benchmark/run_benchmark.py` runs the 18 report cases
 (1 warm-up plus 5 measured runs each) and writes timings and
@@ -208,15 +216,17 @@ uv run --project etl python olap/benchmark/run_benchmark.py --label baseline
 ```
 
 `evidence/benchmark/README.md` records the baseline medians, the bottlenecks
-found in the plans, and the measured generic-plan hazard. Optimization
-(secondary indexes, query reformulation, pre-aggregation) has not been applied
-yet, so the "before" side of the comparison exists and the "after" side is
-pending.
+found in the plans, and the measured generic-plan hazard. The optimizations
+(four materialized summary views with rewritten queries, plus `jit` and
+`work_mem` settings; indexes were tried and retired) are applied by
+the ETL pipeline's `--optimize` phase after every load (or by hand with
+`db/scripts/apply_optimizations.sh`), and `evidence/optimization-log.md` compares
+them with the baseline: the 18 cases' sum of medians went from 20,625 ms to
+2,066 ms, about 8–10x, with every result set unchanged.
 
 ## Project status
 
-Steps 1–4 are complete and Step 6 has its baseline; what is left is functional
-testing, the optimization pass, and the report itself.
+Steps 1–6 are complete. The final technical report is tracked separately.
 
 | Step | State |
 |---|---|
@@ -224,9 +234,8 @@ testing, the optimization pass, and the report itself.
 | 2. Data warehouse construction | Done — 3 facts, 6 dimensions, 5 hierarchies, executable readiness gate |
 | 3. ETL pipeline | Done — 1,000,000 deliveries + 1,999,824 order items + 36,500 rider-days, 15/15 reconciliation checks, 0 rejects |
 | 4. OLAP application | Done — 12 parameterized query levels, the Go API, and the dashboard's four reports |
-| 5. Functional testing | **Pending** — the dashboard has a column-contract suite and a rendered-report suite (`npm test`, 234 checks), a live contract check (`npm run check:contracts`) and a Go schema↔query contract test in CI; a report-level script that reconciles analytical results to the ETL baseline is still missing |
-| 6. Performance testing | Baseline measured (18 cases, medians 66–8,224 ms) plus the generic-plan comparison; optimization and the before/after comparison **pending** |
-| 7. Final technical report | **Pending** — evidence is indexed in `docs/technical-documentation/index.md`; the report template is not filled in |
+| 5. Functional testing | Done — 74 functional tests (every report level against an independent reference over ~115 filter combinations, warehouse vs source, API contract) plus the unit and contract suites, all passing |
+| 6. Performance testing | Done — baseline, `EXPLAIN` analysis, three strategies applied, 20,625 → 2,066 ms sum of medians (about 8–10x) with results unchanged, causes analysed in `evidence/optimization-log.md` |
 
 `docs/project-checklist.md` carries the same status with the artifact behind
 every checked item.

@@ -6,8 +6,9 @@
 > `AGG_CATEGORY_PERIOD` and `AGG_PRODUCT_PERIOD` (R1), `AGG_RIDER_DAY` (R2, R4),
 > `AGG_CUSTOMER_PERIOD` (R3 and the R3 customer drill). Same parameters, columns and types as the
 > originals, checked on 1,600 randomized filter combinations
-> (`olap/benchmark/check_equivalence.py`). The views are snapshots: run
-> `db/scripts/apply_optimizations.sh` after every ETL load. See `evidence/optimization-log.md`.
+> (`olap/benchmark/check_equivalence.py`). The views are snapshots: the ETL
+> pipeline rebuilds them after every load (`etl/main.py --optimize`), and
+> `db/scripts/apply_optimizations.sh` does the same by hand. See `evidence/optimization-log.md`.
 
 Four analytical reports over the warehouse (`dw_db`). Each report is a folder;
 each file in it is one drill level of that report and returns a fixed set of

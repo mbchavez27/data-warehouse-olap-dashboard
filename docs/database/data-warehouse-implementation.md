@@ -265,7 +265,8 @@ The orchestrated order is:
 | 2 | `etl/main.py --dims` | 100 riders, 100,000 geographies, 100,000 customers, 10,000 products | ~5 s |
 | 3 | `etl/main.py --facts` | 1,000,000 orders, 1,999,824 order items, 36,500 rider-days | ~30 s |
 | 4 | `etl/main.py --reconcile` | 15/15 read-only source-to-warehouse checks; JSON evidence emitted | ~3 s |
-| 5 | `etl/main.py --check` | exact source counts and structurally ready loaded warehouse | < 1 s |
+| 5 | `etl/main.py --optimize` | rebuilds the four `AGG_*` summary views the reports read (`db/dw/optimize/`) in one transaction and checks each against the facts | ~8 s |
+| 6 | `etl/main.py --check` | exact source counts and structurally ready loaded warehouse | < 1 s |
 
 These `etl/main.py` modes remain available for diagnostics and targeted
 reruns. The orchestrator performs a strict preflight before the sequence, and

@@ -22,14 +22,16 @@ from memory for the final report.
 | [`olap/queries/README.md`](../../olap/queries/README.md) | Four parameterized reports (12 level files) covering all five OLAP operations, with their parameters, measures and advanced SQL. | OLAP queries |
 | [`evidence/benchmark/README.md`](../../evidence/benchmark/README.md) | An 18-case read-only baseline (median of 5 runs), the `EXPLAIN (ANALYZE, BUFFERS)` plans, the bottlenecks they expose, and the measured generic-plan hazard. | Performance baseline |
 | [`olap-backend/`](../../olap-backend/) | The Go API (`net/http` + `pgx/v5`) that runs the report SQL read-only and serves validated JSON, plus [`olap-backend/README.md`](../../olap-backend/README.md). | OLAP application |
-| [`olap-frontend/`](../../olap-frontend/) | The React dashboard: all four reports (R1–R4) with filters, drill-down, OLAP-level switching and CSV export, built without UI or chart libraries. | OLAP application |
+| [`olap-frontend/`](../../olap-frontend/) | The React dashboard: all four reports (R1–R4) with filters, drill-down, OLAP-level switching, charts, sortable and explained tables, keyboard and touch reading, light/dark mode and CSV export, built without UI or chart libraries. | OLAP application |
 | [`evidence/contract-check.json`](../../evidence/contract-check.json) | All 14 requestable report levels return exactly the columns the dashboard's committed contract and the API catalog declare, and the sample data carries the value types the warehouse sends. | OLAP application |
 | [`docs/technical-documentation/application-architecture.md`](application-architecture.md) | Component map, request flow, and the safety and plan-cache decisions behind the API. | OLAP application |
+| [`olap/tests/`](../../olap/tests/) and [`evidence/functional-tests/`](../../evidence/functional-tests/) | 74 read-only functional tests — every report level against an independent reference over about 115 filter combinations, the warehouse against `source_db`, and the API contract — with two clean runs and a negative control. | Functional testing |
+| [`evidence/optimization-log.md`](../../evidence/optimization-log.md) | The three optimization strategies, the before/after comparison over the 18 cases (20,625 → 2,066 ms sum of medians, results unchanged), the config ablation, the index findings, and the causes behind each change. | Performance optimization |
 | [`docs/project-checklist.md`](../project-checklist.md) | Repository-backed completion status across the full MCO1 methodology. | Project tracking |
+| [`change-notes-2026-10-18.md`](change-notes-2026-10-18.md) | What changed after PRs #15 and #16 — the pipeline building the summary views, the dashboard refinements, the status docs — and what each teammate needs to do. | Project tracking |
 
-Still pending: report-level functional-test evidence (the contract and markup
-checks above are structural, not a reconciliation to the ETL baseline) and the
-post-optimization performance comparison (Step 6).
+Steps 1–6 have their evidence above. The final technical report is tracked
+separately.
 
 ## Evidence convention for future work
 

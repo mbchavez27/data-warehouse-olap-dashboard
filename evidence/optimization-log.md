@@ -22,6 +22,11 @@ drifts about 25% between sessions. Quote the range, **8-10x**, not a single figu
 
 Apply and refresh all three with `db/scripts/apply_optimizations.sh`.
 
+> **Update (2026-10-18):** the ETL pipeline now applies the same three files after every load, as its
+> `--optimize` phase (`etl/load/summaries.py`, over the ETL's own connection, in one transaction that
+> checks each view against the facts). The freshness and "required step" risks below are handled by
+> the pipeline; the script remains for refreshing by hand.
+
 Labels:
 - `baseline-r4`: no secondary indexes, default settings, original queries. The reference.
 - `preagg`, `config`, `indexes`: each strategy alone, from the first round.
