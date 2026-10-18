@@ -1,0 +1,66 @@
+-- R1-product-toys: Drill into Toys
+-- file: olap/queries/r1_product_category_value/product.sql
+-- params: {"category": "Toys", "top_n": "10"}
+
+Subquery Scan on ranked  (cost=61830.71..61831.43 rows=8 width=120) (actual time=448.138..448.788 rows=11 loops=1)
+  Filter: (ranked.is_subtotal OR (ranked.rank_in_category <= 10))
+  Rows Removed by Filter: 1914
+  Buffers: shared hit=8695 read=13467
+  ->  WindowAgg  (cost=61830.71..61831.28 rows=12 width=120) (actual time=448.136..448.728 rows=1925 loops=1)
+        Buffers: shared hit=8695 read=13467
+        ->  WindowAgg  (cost=61830.71..61830.98 rows=12 width=88) (actual time=447.142..447.783 rows=1925 loops=1)
+              Buffers: shared hit=8695 read=13467
+              ->  Sort  (cost=61830.71..61830.74 rows=12 width=80) (actual time=447.131..447.192 rows=1925 loops=1)
+                    Sort Key: rolled.category, rolled.is_subtotal, rolled.value DESC
+                    Sort Method: quicksort  Memory: 184kB
+                    Buffers: shared hit=8695 read=13467
+                    ->  Subquery Scan on rolled  (cost=276.76..61830.50 rows=12 width=80) (actual time=443.870..444.248 rows=1925 loops=1)
+                          Buffers: shared hit=8695 read=13467
+                          ->  MixedAggregate  (cost=276.76..61830.38 rows=12 width=101) (actual time=443.870..444.159 rows=1925 loops=1)
+                                Hash Key: p.category, p."productName"
+                                Hash Key: p.category
+                                Group Key: ()
+                                Filter: (GROUPING(p.category) = 0)
+                                Batches: 1  Memory Usage: 1145kB
+                                Rows Removed by Filter: 1
+                                Buffers: shared hit=8695 read=13467
+                                ->  Hash Join  (cost=276.76..52022.46 rows=434318 width=40) (actual time=0.795..312.458 rows=433556 loops=1)
+                                      Hash Cond: (i."orderSizeKey" = s."orderSizeKey")
+                                      Buffers: shared hit=8695 read=13467
+                                      ->  Hash Join  (cost=275.65..49914.90 rows=434318 width=44) (actual time=0.782..281.349 rows=433556 loops=1)
+                                            Hash Cond: (i."riderKey" = r."riderKey")
+                                            Buffers: shared hit=8694 read=13467
+                                            ->  Hash Join  (cost=271.37..48722.70 rows=434318 width=48) (actual time=0.765..249.751 rows=433556 loops=1)
+                                                  Hash Cond: (i."deliveryDateKey" = d."dateKey")
+                                                  Buffers: shared hit=8692 read=13467
+                                                  ->  Hash Join  (cost=259.16..47557.17 rows=434318 width=52) (actual time=0.724..216.386 rows=433556 loops=1)
+                                                        Hash Cond: (i."productKey" = p."productKey")
+                                                        Buffers: shared hit=8688 read=13467
+                                                        ->  Seq Scan on "FACT_ORDERITEM" i  (cost=0.00..42046.24 rows=1999824 width=28) (actual time=0.012..77.606 rows=1999824 loops=1)
+                                                              Buffers: shared hit=8581 read=13467
+                                                        ->  Hash  (cost=232.01..232.01 rows=2172 width=32) (actual time=0.695..0.695 rows=2172 loops=1)
+                                                              Buckets: 4096  Batches: 1  Memory Usage: 169kB
+                                                              Buffers: shared hit=107
+                                                              ->  Seq Scan on "DIM_PRODUCT" p  (cost=0.00..232.01 rows=2172 width=32) (actual time=0.003..0.476 rows=2172 loops=1)
+                                                                    Filter: ((category)::text = 'Toys'::text)
+                                                                    Rows Removed by Filter: 7829
+                                                                    Buffers: shared hit=107
+                                                  ->  Hash  (cost=7.65..7.65 rows=365 width=4) (actual time=0.036..0.038 rows=365 loops=1)
+                                                        Buckets: 1024  Batches: 1  Memory Usage: 21kB
+                                                        Buffers: shared hit=4
+                                                        ->  Seq Scan on "DIM_DATE" d  (cost=0.00..7.65 rows=365 width=4) (actual time=0.001..0.015 rows=365 loops=1)
+                                                              Buffers: shared hit=4
+                                            ->  Hash  (cost=3.01..3.01 rows=101 width=4) (actual time=0.013..0.013 rows=101 loops=1)
+                                                  Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                                                  Buffers: shared hit=2
+                                                  ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.01 rows=101 width=4) (actual time=0.001..0.005 rows=101 loops=1)
+                                                        Buffers: shared hit=2
+                                      ->  Hash  (cost=1.05..1.05 rows=5 width=4) (actual time=0.007..0.008 rows=5 loops=1)
+                                            Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                            Buffers: shared hit=1
+                                            ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..1.05 rows=5 width=4) (actual time=0.003..0.004 rows=5 loops=1)
+                                                  Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=34
+Planning Time: 0.859 ms
+Execution Time: 449.043 ms

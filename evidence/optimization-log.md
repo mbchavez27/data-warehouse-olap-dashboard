@@ -43,6 +43,42 @@ Labels: `baseline-r4` (no secondary indexes, default settings, original queries;
 The three heaviest cases (R3-geo-country, R3-customer-top20, R4-busiest-days) total 12,672 ms
 at baseline and 1,050 ms in `optimized`.
 
+## Second round: R2 and R4 on `AGG_RIDER_DAY` (label `optimized-v2`)
+
+`AGG_RIDER_DAY` (date x rider x order size, 145,825 rows) already holds `orders` and `units`, so the
+remaining R2 and R4 reports can read it instead of the 1M-row `FACT_ORDERDELIVERY`. Six more queries
+were rewritten in `db/dw/optimize/queries/` (R2 cube, pivot, rider; R4 trend, rollup, weekday pivot).
+No new table or index was added. `count(*)` became `sum(orders)` and `sum(totalQuantity)` became
+`sum(units)`; `count(DISTINCT riderKey)` is unchanged because `riderKey` is a grain column.
+
+Verification: `compare_runs.py` shows md5 equal on all 18 cases (0 mismatches), and
+`olap/benchmark/check_equivalence.py` compares every rewritten R2/R4 query against its original on
+1,000 randomized filter combinations (values and column types): 0 mismatches. 204 of those combinations
+return no rows (impossible filter mixes), so they only show the empty cases agree.
+
+| Case | baseline-r4 | optimized (A+B+C, R3 + busiest-days only) | optimized-v2 |
+|---|---:|---:|---:|
+| R2-cube-all | 1250.5 | 943.1 (1.33x) | 100.8 (**12.41x**) |
+| R2-pivot-orders | 730.8 | 575.0 (1.27x) | 65.5 (**11.15x**) |
+| R2-pivot-per-rider-q1 | 226.6 | 220.3 (1.03x) | 27.0 (**8.39x**) |
+| R2-rider-top20 | 293.2 | 297.8 (0.98x) | 35.7 (**8.20x**) |
+| R4-rollup-all | 259.2 | 255.1 (1.02x) | 31.3 (**8.27x**) |
+| R4-trend-month | 261.6 | 249.1 (1.05x) | 32.9 (**7.96x**) |
+| R4-trend-day | 266.4 | 249.2 (1.07x) | 33.4 (**7.98x**) |
+| R4-weekday-pivot | 243.4 | 242.2 (1.00x) | 30.3 (**8.03x**) |
+
+R3 and R4-busiest-days are unchanged within noise (for example R3-geo-country 451 -> 411 ms,
+R3-customer-top20 534 -> 501 ms). **Sum of medians over all 18 cases: 20,625 ms (baseline-r4) ->
+7,023 ms (`optimized`) -> 4,210 ms (`optimized-v2`), 4.90x.** 14 of 18 cases are now at least 3x
+faster. The four R1 cases are the only ones left at 1.16-1.38x, and those gains are inside baseline
+drift (see Measurement notes); R1 needs a product-level summary table and has not been optimized.
+These R2/R4 gains are far outside the ~15% noise and the 37% baseline drift.
+
+The R2/R4 timings were taken with the `optimized` configuration in place (5 indexes, `jit=off`,
+`work_mem=64MB`); strategies A and B were not measured separately for these rewrites. The speedup is
+attributed to C because the same cases moved 1.0-1.35x under A+B alone and the plans no longer touch
+`FACT_ORDERDELIVERY`.
+
 ## What each strategy did (plan evidence)
 
 **C, pre-aggregation: the main win.** `AGG_CUSTOMER_PERIOD` (383,024 rows, 28 MB) and `AGG_RIDER_DAY`
@@ -82,8 +118,9 @@ build log: 15 + 15 + 13 + 13 + 7 MB).
 - **Filters not covered.** The rewrites serve the filters the reports expose (year, quarter,
   gender, country, rider and size attributes). A new filter on a column the summary lacks
   (for example product) needs the original query.
-- **R4 trend / rollup / weekday pivot and R2-rider-top20 do not improve** (about 250 ms, 1.00x):
-  they are single sequential scans that already run in parallel.
+- **R2 and the other R4 cases did not improve in the first round** (about 250-300 ms, 1.00x)
+  because their queries still scanned `FACT_ORDERDELIVERY`, not because they cannot be helped.
+  The second round below rewrites them onto `AGG_RIDER_DAY`.
 
 ## Measurement notes
 

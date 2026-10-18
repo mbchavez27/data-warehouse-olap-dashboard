@@ -1,5 +1,12 @@
 # OLAP report queries
 
+> **Optimized copies.** These are the Phase 2 versions of `olap/queries/`. Files that read the
+> pre-aggregated views (`AGG_CUSTOMER_PERIOD`, `AGG_RIDER_DAY`, created by `../03_preagg.sql`) are:
+> R2 `courier_vehicle_cube`, `courier_vehicle_pivot`, `rider`; R3 `customer`, `deciles`, `geography`;
+> R4 `busiest_days`, `rollup`, `trend`, `weekday_pivot`. The R1 files are
+> unchanged copies. Same parameters, columns and types as the originals
+> (`olap/benchmark/check_equivalence.py`). See `evidence/optimization-log.md`.
+
 Four analytical reports over the warehouse (`dw_db`). Each report is a folder;
 each file in it is one drill level of that report and returns a fixed set of
 columns. Every filter and drill choice is a bound parameter; nothing is

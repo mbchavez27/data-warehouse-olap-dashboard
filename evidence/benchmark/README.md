@@ -16,9 +16,11 @@ uv run --project etl python olap/benchmark/run_benchmark.py --label baseline-gen
 | `baseline-r3/` | First run of the Phase 2 session; cold cache, inflated on R1 cases. Not used as the reference. |
 | `baseline-r4/` | **Phase 2 reference**: warm, no secondary indexes, default settings, original queries (9 runs). |
 | `preagg/`, `config/`, `indexes/` | Each Phase 2 strategy measured alone (see `evidence/optimization-log.md`). |
-| `optimized/` | All three strategies together. |
+| `optimized/` | All three strategies together; only R3 and R4-busiest-days rewritten. |
+| `optimized-v2/` | Same, with R2 and the remaining R4 queries also rewritten onto `AGG_RIDER_DAY`. 4.90x overall. |
 
-Phase 2 comparison: `uv run --project etl python olap/benchmark/compare_runs.py baseline-r4 preagg config indexes optimized`
+Phase 2 comparison: `uv run --project etl python olap/benchmark/compare_runs.py baseline-r4 preagg config indexes optimized optimized-v2`
+Rewrite equivalence check: `uv run --project etl python olap/benchmark/check_equivalence.py`
 
 Each folder holds `results.json` (environment + every run), `results.csv` (one row
 per case, for tables and charts) and `plans/<case>.txt` (`EXPLAIN (ANALYZE, BUFFERS)`).

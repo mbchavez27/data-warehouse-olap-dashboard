@@ -14,15 +14,16 @@
 -- Columns: hierarchy_level, year, quarter, month, month_name, days, orders,
 --          units, orders_per_day
 --   hierarchy_level: 'month' | 'quarter' | 'year' | 'all'
+-- OPTIMIZED (Strategy C): reads AGG_RIDER_DAY instead of FACT_ORDERDELIVERY; same columns and types.
 
 WITH daily AS (
   SELECT d."dateKey", d."year", d."quarter", d."monthNumber", d."monthName",
-         count(f."orderDeliveryKey") AS orders,
-         coalesce(sum(f."totalQuantity"), 0) AS units
+         coalesce(sum(f.orders), 0)::bigint AS orders,
+         coalesce(sum(f.units), 0)::bigint AS units
   FROM "DIM_DATE" d
   LEFT JOIN (
-    SELECT f.*
-    FROM "FACT_ORDERDELIVERY" f
+    SELECT f."deliveryDateKey", f.orders, f.units
+    FROM "AGG_RIDER_DAY" f
     JOIN "DIM_RIDER"     r USING ("riderKey")
     JOIN "DIM_ORDERSIZE" s USING ("orderSizeKey")
     WHERE (:'vehicle'    = '' OR r."vehicleType" = :'vehicle')
