@@ -1,0 +1,66 @@
+-- R4-busiest-days under force_generic_plan
+-- file: olap/queries/r4_demand_calendar/busiest_days.sql
+-- params: {"top_n": "10"}
+
+Limit  (cost=16913.22..16913.22 rows=1 width=150) (actual time=55376.104..55378.899 rows=10 loops=1)
+  Buffers: shared hit=3827397 read=1
+  ->  Sort  (cost=16913.22..16913.23 rows=4 width=150) (actual time=55376.100..55378.894 rows=10 loops=1)
+        Sort Key: (CASE WHEN ($6 = 'quietest'::text) THEN ranked.orders ELSE NULL::bigint END), (CASE WHEN ($6 = 'quietest'::text) THEN NULL::bigint ELSE ranked.orders END) DESC, ranked.date
+        Sort Method: top-N heapsort  Memory: 26kB
+        Buffers: shared hit=3827397 read=1
+        ->  Subquery Scan on ranked  (cost=16912.93..16913.18 rows=4 width=150) (actual time=55375.643..55378.752 rows=365 loops=1)
+              Buffers: shared hit=3827397 read=1
+              ->  WindowAgg  (cost=16912.93..16913.16 rows=4 width=134) (actual time=55375.640..55378.710 rows=365 loops=1)
+                    Buffers: shared hit=3827397 read=1
+                    ->  WindowAgg  (cost=16912.93..16913.00 rows=4 width=70) (actual time=55375.264..55378.180 rows=365 loops=1)
+                          Buffers: shared hit=3827397 read=1
+                          ->  Sort  (cost=16912.93..16912.94 rows=4 width=62) (actual time=55375.249..55378.059 rows=365 loops=1)
+                                Sort Key: daily.orders DESC
+                                Sort Method: quicksort  Memory: 47kB
+                                Buffers: shared hit=3827397 read=1
+                                ->  Subquery Scan on daily  (cost=16912.60..16912.89 rows=4 width=62) (actual time=297.073..55377.393 rows=365 loops=1)
+                                      Buffers: shared hit=3827397 read=1
+                                      ->  GroupAggregate  (cost=16912.60..16912.85 rows=4 width=70) (actual time=297.073..55377.052 rows=365 loops=1)
+                                            Group Key: d."fullDate", d."dayName", d."isWeekend", d."isPayDay"
+                                            Buffers: shared hit=3827397 read=1
+                                            ->  Incremental Sort  (cost=16912.60..16912.69 rows=6 width=30) (actual time=151.019..55277.200 rows=1000000 loops=1)
+                                                  Sort Key: d."fullDate", d."dayName", d."isWeekend", d."isPayDay", f."riderKey"
+                                                  Presorted Key: d."fullDate"
+                                                  Full-sort Groups: 365  Sort Method: quicksort  Average Memory: 28kB  Peak Memory: 28kB
+                                                  Pre-sorted Groups: 365  Sort Method: quicksort  Average Memory: 253kB  Peak Memory: 254kB
+                                                  Buffers: shared hit=3827397 read=1
+                                                  ->  Nested Loop Left Join  (cost=1022.70..16912.52 rows=6 width=30) (actual time=0.709..54467.331 rows=1000000 loops=1)
+                                                        Join Filter: (f."deliveryDateKey" = d."dateKey")
+                                                        Rows Removed by Join Filter: 364000000
+                                                        Buffers: shared hit=3827397 read=1
+                                                        ->  Index Scan using "DIM_DATE_fullDate_key" on "DIM_DATE" d  (cost=0.15..39.79 rows=1 width=18) (actual time=0.359..2.953 rows=365 loops=1)
+                                                              Filter: ((($1 = ''::text) OR ("isWeekend" = ($1 = 'weekend'::text))) AND (($3 = ''::text) OR ("isPayDay" = ($3 = 'yes'::text))) AND (($9 = ''::text) OR (year = (NULLIF($9, ''::text))::integer)) AND (($4 = ''::text) OR (quarter = (NULLIF($4, ''::text))::integer)) AND (($2 = ''::text) OR ("monthNumber" = (NULLIF($2, ''::text))::integer)))
+                                                              Buffers: shared hit=4 read=1
+                                                        ->  Gather  (cost=1022.55..16845.85 rows=2151 width=20) (actual time=4.946..108.926 rows=1000000 loops=365)
+                                                              Workers Planned: 2
+                                                              Workers Launched: 2
+                                                              Buffers: shared hit=3827393
+                                                              ->  Hash Join  (cost=22.55..15630.75 rows=896 width=20) (actual time=0.271..83.582 rows=333333 loops=1095)
+                                                                    Hash Cond: (f."riderKey" = r."riderKey")
+                                                                    Buffers: shared hit=3827393
+                                                                    ->  Hash Join  (cost=18.77..15615.18 rows=4310 width=20) (actual time=0.026..53.135 rows=333333 loops=1095)
+                                                                          Hash Cond: (f."orderSizeKey" = s."orderSizeKey")
+                                                                          Buffers: shared hit=3770451
+                                                                          ->  Parallel Seq Scan on "FACT_ORDERDELIVERY" f  (cost=0.00..14494.67 rows=416667 width=24) (actual time=0.008..15.200 rows=333333 loops=1095)
+                                                                                Buffers: shared hit=3769720
+                                                                          ->  Hash  (cost=18.70..18.70 rows=6 width=4) (actual time=0.011..0.011 rows=5 loops=731)
+                                                                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                                Buffers: shared hit=731
+                                                                                ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..18.70 rows=6 width=4) (actual time=0.006..0.007 rows=5 loops=731)
+                                                                                      Filter: (($5 = ''::text) OR (("sizeGroup")::text = $5))
+                                                                                      Buffers: shared hit=731
+                                                                    ->  Hash  (cost=3.51..3.51 rows=21 width=4) (actual time=0.041..0.041 rows=101 loops=731)
+                                                                          Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                                                                          Buffers: shared hit=1462
+                                                                          ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.51 rows=21 width=4) (actual time=0.015..0.026 rows=101 loops=731)
+                                                                                Filter: (($8 = ''::text) OR (("vehicleType")::text = $8))
+                                                                                Buffers: shared hit=1462
+Planning:
+  Buffers: shared hit=11
+Planning Time: 0.528 ms
+Execution Time: 55379.133 ms

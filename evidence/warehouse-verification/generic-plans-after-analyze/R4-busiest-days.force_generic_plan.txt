@@ -1,0 +1,62 @@
+-- R4-busiest-days under force_generic_plan
+-- file: olap/queries/r4_demand_calendar/busiest_days.sql
+-- params: {"top_n": "10"}
+
+Limit  (cost=24338.03..24338.03 rows=1 width=150) (actual time=1885.654..1885.662 rows=10 loops=1)
+  Buffers: shared hit=10335, temp read=10288 written=10307
+  ->  Sort  (cost=24338.03..24338.04 rows=4 width=150) (actual time=1885.649..1885.656 rows=10 loops=1)
+        Sort Key: (CASE WHEN ($6 = 'quietest'::text) THEN ranked.orders ELSE NULL::bigint END), (CASE WHEN ($6 = 'quietest'::text) THEN NULL::bigint ELSE ranked.orders END) DESC, ranked.date
+        Sort Method: top-N heapsort  Memory: 26kB
+        Buffers: shared hit=10335, temp read=10288 written=10307
+        ->  Subquery Scan on ranked  (cost=24337.74..24337.99 rows=4 width=150) (actual time=1885.285..1885.561 rows=365 loops=1)
+              Buffers: shared hit=10335, temp read=10288 written=10307
+              ->  WindowAgg  (cost=24337.74..24337.97 rows=4 width=134) (actual time=1885.282..1885.523 rows=365 loops=1)
+                    Buffers: shared hit=10335, temp read=10288 written=10307
+                    ->  WindowAgg  (cost=24337.74..24337.81 rows=4 width=70) (actual time=1885.055..1885.186 rows=365 loops=1)
+                          Buffers: shared hit=10335, temp read=10288 written=10307
+                          ->  Sort  (cost=24337.74..24337.75 rows=4 width=62) (actual time=1885.038..1885.063 rows=365 loops=1)
+                                Sort Key: daily.orders DESC
+                                Sort Method: quicksort  Memory: 47kB
+                                Buffers: shared hit=10335, temp read=10288 written=10307
+                                ->  Subquery Scan on daily  (cost=24333.05..24337.70 rows=4 width=62) (actual time=1593.359..1884.773 rows=365 loops=1)
+                                      Buffers: shared hit=10335, temp read=10288 written=10307
+                                      ->  GroupAggregate  (cost=24333.05..24337.66 rows=4 width=70) (actual time=1593.358..1884.635 rows=365 loops=1)
+                                            Group Key: d."fullDate", d."dayName", d."isWeekend", d."isPayDay"
+                                            Buffers: shared hit=10335, temp read=10288 written=10307
+                                            ->  Sort  (cost=24333.05..24333.62 rows=228 width=30) (actual time=1592.742..1770.059 rows=1000000 loops=1)
+                                                  Sort Key: d."fullDate", d."dayName", d."isWeekend", d."isPayDay", f."riderKey"
+                                                  Sort Method: external merge  Disk: 41200kB
+                                                  Buffers: shared hit=10335, temp read=10288 written=10307
+                                                  ->  Hash Right Join  (cost=31.70..24324.12 rows=228 width=30) (actual time=0.317..347.196 rows=1000000 loops=1)
+                                                        Hash Cond: (f."deliveryDateKey" = d."dateKey")
+                                                        Buffers: shared hit=10335
+                                                        ->  Hash Join  (cost=4.88..24076.44 rows=83168 width=20) (actual time=0.120..245.276 rows=1000000 loops=1)
+                                                              Hash Cond: (f."orderSizeKey" = s."orderSizeKey")
+                                                              Buffers: shared hit=10331
+                                                              ->  Hash Join  (cost=3.78..23066.93 rows=207921 width=24) (actual time=0.099..158.588 rows=1000000 loops=1)
+                                                                    Hash Cond: (f."riderKey" = r."riderKey")
+                                                                    Buffers: shared hit=10330
+                                                                    ->  Seq Scan on "FACT_ORDERDELIVERY" f  (cost=0.00..20328.00 rows=1000000 width=24) (actual time=0.046..45.748 rows=1000000 loops=1)
+                                                                          Buffers: shared hit=10328
+                                                                    ->  Hash  (cost=3.51..3.51 rows=21 width=4) (actual time=0.038..0.039 rows=101 loops=1)
+                                                                          Buckets: 1024  Batches: 1  Memory Usage: 12kB
+                                                                          Buffers: shared hit=2
+                                                                          ->  Seq Scan on "DIM_RIDER" r  (cost=0.00..3.51 rows=21 width=4) (actual time=0.005..0.018 rows=101 loops=1)
+                                                                                Filter: (($8 = ''::text) OR (("vehicleType")::text = $8))
+                                                                                Buffers: shared hit=2
+                                                              ->  Hash  (cost=1.07..1.07 rows=2 width=4) (actual time=0.011..0.011 rows=5 loops=1)
+                                                                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                                    Buffers: shared hit=1
+                                                                    ->  Seq Scan on "DIM_ORDERSIZE" s  (cost=0.00..1.07 rows=2 width=4) (actual time=0.004..0.005 rows=5 loops=1)
+                                                                          Filter: (($5 = ''::text) OR (("sizeGroup")::text = $5))
+                                                                          Buffers: shared hit=1
+                                                        ->  Hash  (cost=26.81..26.81 rows=1 width=18) (actual time=0.182..0.183 rows=365 loops=1)
+                                                              Buckets: 1024  Batches: 1  Memory Usage: 27kB
+                                                              Buffers: shared hit=4
+                                                              ->  Seq Scan on "DIM_DATE" d  (cost=0.00..26.81 rows=1 width=18) (actual time=0.010..0.100 rows=365 loops=1)
+                                                                    Filter: ((($1 = ''::text) OR ("isWeekend" = ($1 = 'weekend'::text))) AND (($3 = ''::text) OR ("isPayDay" = ($3 = 'yes'::text))) AND (($9 = ''::text) OR (year = (NULLIF($9, ''::text))::integer)) AND (($4 = ''::text) OR (quarter = (NULLIF($4, ''::text))::integer)) AND (($2 = ''::text) OR ("monthNumber" = (NULLIF($2, ''::text))::integer)))
+                                                                    Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=15
+Planning Time: 0.732 ms
+Execution Time: 1889.972 ms

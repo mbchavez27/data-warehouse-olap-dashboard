@@ -1,0 +1,16 @@
+# captured 2026-10-18T11:15:37+08:00 before the Phase 1 rebuild (state the existing baseline ran under)
+relname|reltuples|relpages|n_live_tup|last_analyze|last_autoanalyze|last_vacuum|last_autovacuum
+DIM_CUSTOMER|100001|835|0||||
+DIM_DATE|365|4|0||||
+DIM_GEOGRAPHY|100001|839|0||||
+DIM_ORDERSIZE|-1|0|0||||
+DIM_PRODUCT|10001|107|0||||
+DIM_RIDER|101|2|0||||
+FACT_ORDERDELIVERY|1000000|10328|0||||
+FACT_ORDERITEM|1999824|22048|0||||
+FACT_RIDERDAILY|36500|269|0||||
+(9 rows)
+pg_stat_database.stats_reset=null
+# docker info
+NCPU=16 MemTotal=8204251136 ServerVersion=28.4.0 Kernel=6.6.87.2-microsoft-standard-WSL2
+PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
