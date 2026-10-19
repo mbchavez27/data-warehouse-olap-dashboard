@@ -1,0 +1,44 @@
+# ─── Stage 1: Build the Go binary ─────────────────────────────────────────────
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /build
+
+# Cache module downloads before copying the full source tree.
+COPY olap-backend/go.mod olap-backend/go.sum ./olap-backend/
+RUN cd olap-backend && go mod download
+
+# Copy only what the build needs.
+COPY olap-backend/ ./olap-backend/
+
+# Produce a fully static binary (CGO disabled) so we can run on scratch/distroless.
+RUN cd olap-backend && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -ldflags="-s -w" -o /olap-api .
+
+# ─── Stage 2: Minimal production runner ───────────────────────────────────────
+FROM alpine:3.21 AS runner
+
+# curl is required by the HEALTHCHECK and for debugging.
+RUN apk add --no-cache curl \
+    && adduser -D -u 1000 appuser
+
+WORKDIR /app
+
+# Copy the compiled binary.
+COPY --from=builder /olap-api ./olap-api
+
+# Copy the SQL query files the API loads at startup.
+COPY olap/queries/ ./olap/queries/
+
+# The API resolves queries relative to its working directory; set the env var
+# so it always finds them regardless of where `go run` vs the binary starts.
+ENV OLAP_QUERIES_DIR=/app/olap/queries
+
+# Switch to non-root.
+USER appuser
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:8080/api/health || exit 1
+
+CMD ["./olap-api"]

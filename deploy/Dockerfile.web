@@ -1,0 +1,32 @@
+# ─── Stage 1: Build static assets ─────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY olap-frontend/package.json olap-frontend/package-lock.json ./
+RUN npm ci
+
+COPY olap-frontend/ ./
+
+# In production mode the dashboard must talk to the API through nginx's
+# reverse-proxy on the same origin, so no special VITE_API_MODE is needed —
+# the proxy config in nginx.conf forwards /api/* to the API container.
+ENV VITE_API_MODE=live
+RUN npm run build
+
+# ─── Stage 2: Serve with nginx ────────────────────────────────────────────────
+FROM nginx:1.27-alpine AS runner
+
+# Remove default site.
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy our reverse-proxy + SPA config.
+COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built assets.
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1

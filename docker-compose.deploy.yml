@@ -1,0 +1,109 @@
+# docker-compose.deploy.yml
+# Production deployment stack for Dokploy / VPS.
+# The DW database is pre-seeded from a pg_dump, not rebuilt by ETL on the server.
+#
+# Usage:
+#   docker compose -f docker-compose.deploy.yml up -d --build
+#   docker compose -f docker-compose.deploy.yml logs -f
+
+name: roadrunner
+
+services:
+  # ── Data Warehouse PostgreSQL ──────────────────────────────────────────
+  dw_db:
+    image: postgres:16-alpine
+    container_name: roadrunner-dw
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DW_DB:-dw_db}
+      POSTGRES_USER: ${DW_USER:-postgres}
+      POSTGRES_PASSWORD: ${DW_PASSWORD:-postgres}
+    volumes:
+      - pg_dw_data:/var/lib/postgresql/data
+      # Mount the seed dump so init scripts can restore it on first boot.
+      - ./deploy/seed:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          memory: 128M
+    networks:
+      - dw-net
+
+  # ── Go OLAP API ────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    container_name: roadrunner-api
+    restart: unless-stopped
+    environment:
+      DW_HOST: dw_db
+      DW_PORT: "5432"
+      DW_DB: ${DW_DB:-dw_db}
+      DW_USER: ${DW_USER:-postgres}
+      DW_PASSWORD: ${DW_PASSWORD:-postgres}
+      API_PORT: "8080"
+      CORS_ORIGINS: "*"
+    depends_on:
+      dw_db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          memory: 64M
+    networks:
+      - dw-net
+
+  # ── Nginx + React frontend ────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    container_name: roadrunner-web
+    restart: unless-stopped
+    expose:
+      - "80"
+    ports:
+      - "${WEB_PORT:-3001}:80"
+    depends_on:
+      - api
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          memory: 32M
+    networks:
+      - dw-net
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.roadrunner.rule=Host(`roadrunner.dlsu-lscs.org`)"
+      - "traefik.http.routers.roadrunner.entrypoints=websecure"
+      - "traefik.http.routers.roadrunner.tls=true"
+      - "traefik.http.routers.roadrunner.tls.certresolver=letsencrypt"
+      - "traefik.http.services.roadrunner.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.roadrunner-compress.compress=true"
+      - "traefik.http.routers.roadrunner.middlewares=roadrunner-compress"
+
+volumes:
+  pg_dw_data:
+
+networks:
+  dw-net:
+    driver: bridge
+  dokploy-network:
+    external: true
